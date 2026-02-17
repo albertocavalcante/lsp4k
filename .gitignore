@@ -29,6 +29,7 @@ Thumbs.db
 
 # Local configuration
 local.properties
+lefthook-local.yml
 
 # Kotlin/JS
 kotlin-js-store/
