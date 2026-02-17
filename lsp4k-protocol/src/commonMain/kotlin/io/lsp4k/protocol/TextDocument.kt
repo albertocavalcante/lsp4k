@@ -93,20 +93,37 @@ public data class WillSaveTextDocumentParams(
 /**
  * Represents reasons why a text document is saved.
  */
-@Serializable
-public enum class TextDocumentSaveReason {
+@Serializable(with = TextDocumentSaveReasonSerializer::class)
+public enum class TextDocumentSaveReason(
+    public val value: Int,
+) {
     /**
      * Manually triggered, e.g. by the user pressing save.
      */
-    Manual,
+    Manual(1),
 
     /**
      * Automatic after a delay.
      */
-    AfterDelay,
+    AfterDelay(2),
 
     /**
      * When the editor lost focus.
      */
-    FocusOut,
+    FocusOut(3),
+
+    ;
+
+    public companion object {
+        public fun fromValue(value: Int): TextDocumentSaveReason =
+            entries.firstOrNull { it.value == value }
+                ?: throw IllegalArgumentException("Unknown TextDocumentSaveReason: $value")
+    }
 }
+
+/**
+ * Serializer for TextDocumentSaveReason that encodes/decodes as integer.
+ */
+public object TextDocumentSaveReasonSerializer : IntEnumSerializer<TextDocumentSaveReason>(
+    "TextDocumentSaveReason", TextDocumentSaveReason::fromValue, { it.value },
+)

@@ -1,6 +1,34 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+
+/**
+ * Abstract base serializer for integer-backed enum types in LSP.
+ * Subclasses only need to provide the serial name and conversion functions.
+ */
+public abstract class IntEnumSerializer<E>(
+    serialName: String,
+    private val fromValue: (Int) -> E,
+    private val toValue: (E) -> Int,
+) : KSerializer<E> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.INT)
+
+    override fun serialize(encoder: Encoder, value: E): Unit = encoder.encodeInt(toValue(value))
+
+    override fun deserialize(decoder: Decoder): E = fromValue(decoder.decodeInt())
+}
 
 /**
  * Type aliases for LSP primitive types.
@@ -8,7 +36,58 @@ import kotlinx.serialization.Serializable
  */
 public typealias DocumentUri = String
 public typealias URI = String
-public typealias ProgressToken = String // Can be Int or String, we use String for simplicity
+public typealias ProgressToken = Either<Int, String>
+
+/**
+ * Serializer for [ProgressToken] (`Either<Int, String>`).
+ * Discriminates based on whether the JSON primitive is a string or integer.
+ */
+public object ProgressTokenSerializer : KSerializer<ProgressToken> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("ProgressToken", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: ProgressToken) {
+        val jsonEncoder = encoder as JsonEncoder
+        when (value) {
+            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
+            is Either.Right -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): ProgressToken {
+        val jsonDecoder = decoder as JsonDecoder
+        val element = jsonDecoder.decodeJsonElement() as JsonPrimitive
+        return if (element.isString) {
+            Either.right(element.content)
+        } else {
+            Either.left(element.content.toInt())
+        }
+    }
+}
+
+/**
+ * Serializer for nullable [ProgressToken].
+ */
+public object NullableProgressTokenSerializer : KSerializer<ProgressToken?> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("ProgressToken?", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: ProgressToken?) {
+        if (value == null) {
+            encoder.encodeNull()
+        } else {
+            ProgressTokenSerializer.serialize(encoder, value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): ProgressToken? {
+        return if (decoder.decodeNotNullMark()) {
+            ProgressTokenSerializer.deserialize(decoder)
+        } else {
+            decoder.decodeNull()
+        }
+    }
+}
 
 /**
  * Position in a text document expressed as zero-based line and character offset.
@@ -192,6 +271,72 @@ public data class TextEdit(
 )
 
 /**
+ * A special text edit with an additional change annotation.
+ */
+@Serializable
+public data class AnnotatedTextEdit(
+    val range: Range,
+    val newText: String,
+    val annotationId: String,
+)
+
+/**
+ * A snippet text edit. The snippet can contain placeholders and tab stops
+ * following the TextMate snippet syntax.
+ *
+ * @since 3.18.0 (proposed)
+ */
+@Serializable
+public data class SnippetTextEdit(
+    val range: Range,
+    val snippet: StringValue,
+    val annotationId: String? = null,
+)
+
+/**
+ * A string value used in snippet text edits.
+ */
+@Serializable
+public data class StringValue(
+    val kind: String = "snippet",
+    val value: String,
+)
+
+/**
+ * A text edit that is either a plain [TextEdit] or an [AnnotatedTextEdit].
+ * Per LSP spec, `TextDocumentEdit.edits` can contain both types.
+ */
+public typealias TextOrAnnotatedEdit = Either<TextEdit, AnnotatedTextEdit>
+
+/**
+ * Serializer for [TextOrAnnotatedEdit] that discriminates based on the
+ * presence of the `annotationId` field: if present, deserializes as
+ * [AnnotatedTextEdit] (Right); otherwise as [TextEdit] (Left).
+ */
+public object TextOrAnnotatedEditSerializer : KSerializer<TextOrAnnotatedEdit> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("TextOrAnnotatedEdit")
+
+    override fun serialize(encoder: Encoder, value: TextOrAnnotatedEdit) {
+        val jsonEncoder = encoder as JsonEncoder
+        when (value) {
+            is Either.Left -> jsonEncoder.encodeSerializableValue(TextEdit.serializer(), value.value)
+            is Either.Right -> jsonEncoder.encodeSerializableValue(AnnotatedTextEdit.serializer(), value.value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): TextOrAnnotatedEdit {
+        val jsonDecoder = decoder as JsonDecoder
+        val element = jsonDecoder.decodeJsonElement()
+        return if (element is JsonObject && element.containsKey("annotationId")) {
+            Either.Right(jsonDecoder.json.decodeFromJsonElement(AnnotatedTextEdit.serializer(), element))
+        } else {
+            Either.Left(jsonDecoder.json.decodeFromJsonElement(TextEdit.serializer(), element))
+        }
+    }
+}
+
+/**
  * Describes textual changes on a single text document.
  */
 @Serializable
@@ -202,6 +347,78 @@ public data class TextDocumentEdit(
     val textDocument: OptionalVersionedTextDocumentIdentifier,
     /**
      * The edits to be applied.
+     * Per LSP spec, each edit can be either a [TextEdit] or an [AnnotatedTextEdit].
      */
-    val edits: List<TextEdit>,
+    val edits: List<@Serializable(with = TextOrAnnotatedEditSerializer::class) TextOrAnnotatedEdit>,
 )
+
+/**
+ * A set of predefined position encoding kinds.
+ */
+@Serializable
+public enum class PositionEncodingKind {
+    @SerialName("utf-32") UTF32,
+    @SerialName("utf-16") UTF16,
+    @SerialName("utf-8") UTF8,
+}
+
+/**
+ * Serializer for `Either<String, MarkupContent>` as used in LSP spec for fields
+ * like `tooltip` and `documentation` that can be either a plain string or a MarkupContent object.
+ *
+ * On serialization: if Left (String), writes a JsonPrimitive; if Right (MarkupContent), serializes as object.
+ * On deserialization: checks if the element is a JsonPrimitive (string) or a JsonObject (MarkupContent).
+ */
+public object StringOrMarkupContentSerializer : KSerializer<Either<String, MarkupContent>> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("Either<String, MarkupContent>")
+
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<String, MarkupContent>,
+    ) {
+        val jsonEncoder = encoder as JsonEncoder
+        when (value) {
+            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
+            is Either.Right -> jsonEncoder.encodeSerializableValue(MarkupContent.serializer(), value.value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): Either<String, MarkupContent> {
+        val jsonDecoder = decoder as JsonDecoder
+        val element = jsonDecoder.decodeJsonElement()
+        return if (element is JsonPrimitive && element.isString) {
+            Either.Left(element.content)
+        } else {
+            Either.Right(jsonDecoder.json.decodeFromJsonElement(MarkupContent.serializer(), element))
+        }
+    }
+}
+
+/**
+ * Serializer for nullable `Either<String, MarkupContent>?`.
+ * Handles null, plain string, or MarkupContent object.
+ */
+public object NullableStringOrMarkupContentSerializer : KSerializer<Either<String, MarkupContent>?> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("Either<String, MarkupContent>?")
+
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<String, MarkupContent>?,
+    ) {
+        if (value == null) {
+            encoder.encodeNull()
+        } else {
+            StringOrMarkupContentSerializer.serialize(encoder, value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): Either<String, MarkupContent>? {
+        return if (decoder.decodeNotNullMark()) {
+            StringOrMarkupContentSerializer.deserialize(decoder)
+        } else {
+            decoder.decodeNull()
+        }
+    }
+}

@@ -1,37 +1,49 @@
 package io.lsp4k.protocol
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
  * The message type.
  */
-@Serializable
-public enum class MessageType {
+@Serializable(with = MessageTypeSerializer::class)
+public enum class MessageType(
+    public val value: Int,
+) {
     /**
      * An error message.
      */
-    @SerialName("1")
-    Error,
+    Error(1),
 
     /**
      * A warning message.
      */
-    @SerialName("2")
-    Warning,
+    Warning(2),
 
     /**
      * An information message.
      */
-    @SerialName("3")
-    Info,
+    Info(3),
 
     /**
      * A log message.
      */
-    @SerialName("4")
-    Log,
+    Log(4),
+
+    ;
+
+    public companion object {
+        public fun fromValue(value: Int): MessageType =
+            entries.firstOrNull { it.value == value }
+                ?: throw IllegalArgumentException("Unknown MessageType: $value")
+    }
 }
+
+/**
+ * Serializer for MessageType that encodes/decodes as integer.
+ */
+public object MessageTypeSerializer : IntEnumSerializer<MessageType>(
+    "MessageType", MessageType::fromValue, { it.value },
+)
 
 /**
  * The parameters of a window/showMessage notification.
@@ -157,6 +169,7 @@ public data class WorkDoneProgressCreateParams(
     /**
      * The token to be used to report progress.
      */
+    @Serializable(with = ProgressTokenSerializer::class)
     val token: ProgressToken,
 )
 
@@ -168,9 +181,62 @@ public data class ProgressParams<T>(
     /**
      * The progress token provided by the client or server.
      */
+    @Serializable(with = ProgressTokenSerializer::class)
     val token: ProgressToken,
     /**
      * The progress data.
      */
     val value: T,
+)
+
+/**
+ * Parameters for the window/workDoneProgress/cancel notification.
+ */
+@Serializable
+public data class WorkDoneProgressCancelParams(
+    /**
+     * The token to be used to report progress.
+     */
+    @Serializable(with = ProgressTokenSerializer::class)
+    val token: ProgressToken,
+)
+
+/**
+ * Parameters for the window/showDocument request.
+ */
+@Serializable
+public data class ShowDocumentParams(
+    /**
+     * The document URI to show.
+     */
+    val uri: String,
+    /**
+     * Indicates to show the resource in an external program.
+     * To show for example `https://code.visualstudio.com/`
+     * in the default WEB browser set `external` to `true`.
+     */
+    val external: Boolean? = null,
+    /**
+     * An optional property to indicate whether the editor showing the document
+     * should take focus or not. Clients might ignore this property if an
+     * external program is started.
+     */
+    val takeFocus: Boolean? = null,
+    /**
+     * An optional selection range if the document is a text document.
+     * Clients might ignore the property if an external program is started
+     * or the file is not a text file.
+     */
+    val selection: Range? = null,
+)
+
+/**
+ * The result of a show document request.
+ */
+@Serializable
+public data class ShowDocumentResult(
+    /**
+     * A boolean indicating if the show was successful.
+     */
+    val success: Boolean,
 )
