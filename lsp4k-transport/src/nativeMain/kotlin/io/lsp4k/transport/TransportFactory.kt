@@ -1,24 +1,39 @@
 package io.lsp4k.transport
 
+import kotlinx.coroutines.runBlocking
+
 /**
  * Native implementation of TransportFactory.
  *
- * Note: Full native transport implementation requires platform-specific APIs.
- * This is a placeholder that throws UnsupportedOperationException.
+ * Platform-specific transport implementations are provided by posixMain (macOS, Linux)
+ * and mingwMain (Windows).
  */
 public actual object TransportFactory {
-    public actual fun stdio(): Transport =
-        throw UnsupportedOperationException(
-            "Native stdio transport not yet implemented. " +
-                "Requires platform-specific stdin/stdout handling.",
-        )
+    /**
+     * Create a stdio transport.
+     */
+    public actual fun stdio(): Transport = createStdioTransport()
 
+    /**
+     * Create a socket transport that connects to the given host and port.
+     *
+     * Note: This is a blocking call.
+     */
     public actual fun socket(
         host: String,
         port: Int,
-    ): Transport =
-        throw UnsupportedOperationException(
-            "Native socket transport not yet implemented. " +
-                "Requires platform-specific socket APIs (POSIX or Windows).",
-        )
+    ): Transport = runBlocking { createSocketTransport(host, port) }
 }
+
+/**
+ * Create a platform-specific stdio transport.
+ */
+internal expect fun createStdioTransport(): Transport
+
+/**
+ * Create a platform-specific socket transport.
+ */
+internal expect suspend fun createSocketTransport(
+    host: String,
+    port: Int,
+): Transport

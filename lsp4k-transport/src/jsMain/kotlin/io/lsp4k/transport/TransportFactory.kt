@@ -1,24 +1,38 @@
 package io.lsp4k.transport
 
 /**
- * JS implementation of TransportFactory.
+ * JS implementation of TransportFactory for Node.js.
  *
- * Note: Full JS transport implementation requires Node.js or browser-specific APIs.
- * This is a placeholder that throws UnsupportedOperationException.
+ * Provides stdio and socket transports using Node.js APIs.
+ * Note: These implementations require a Node.js environment and will not work in browsers.
  */
 public actual object TransportFactory {
-    public actual fun stdio(): Transport =
-        throw UnsupportedOperationException(
-            "JS stdio transport not yet implemented. " +
-                "Use Node.js process.stdin/stdout or browser-specific APIs.",
-        )
+    /**
+     * Create a stdio transport using Node.js process.stdin/stdout.
+     *
+     * Note: This is only available in Node.js environments.
+     */
+    public actual fun stdio(): Transport = StdioTransport()
 
+    /**
+     * Create a socket transport that connects to the given host and port.
+     *
+     * Note: In JavaScript, socket connections are inherently asynchronous.
+     * This synchronous factory method cannot be properly implemented in JS.
+     *
+     * Use [SocketTransport.connect] instead for proper async socket creation:
+     * ```kotlin
+     * val transport = SocketTransport.connect(host, port)
+     * ```
+     *
+     * @throws TransportException Always, indicating that the async API should be used instead.
+     */
     public actual fun socket(
         host: String,
         port: Int,
     ): Transport =
-        throw UnsupportedOperationException(
-            "JS socket transport not yet implemented. " +
-                "Use Node.js net module or browser WebSocket.",
+        throw TransportException(
+            "Synchronous socket creation is not supported in JavaScript. " +
+                "Use SocketTransport.connect(host, port) in a coroutine context instead.",
         )
 }

@@ -25,5 +25,36 @@ kotlin {
                 implementation(libs.kotest.runner.junit5)
             }
         }
+
+        // Create native source set hierarchy manually
+        // The default hierarchy template doesn't support custom intermediate groups like posixMain
+        val nativeMain by creating {
+            dependsOn(commonMain.get())
+        }
+
+        val posixMain by creating {
+            dependsOn(nativeMain)
+        }
+
+        // Apple targets depend on posixMain
+        macosX64Main {
+            dependsOn(posixMain)
+        }
+        macosArm64Main {
+            dependsOn(posixMain)
+        }
+
+        // Linux targets depend on posixMain
+        linuxX64Main {
+            dependsOn(posixMain)
+        }
+        linuxArm64Main {
+            dependsOn(posixMain)
+        }
+
+        // Windows depends on nativeMain directly
+        mingwX64Main {
+            dependsOn(nativeMain)
+        }
     }
 }
