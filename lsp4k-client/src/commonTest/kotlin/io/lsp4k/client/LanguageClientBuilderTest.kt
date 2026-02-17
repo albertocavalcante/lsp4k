@@ -1,14 +1,14 @@
 package io.lsp4k.client
 
+import io.jsonrpc4k.core.NotificationHandler
+import io.jsonrpc4k.core.RequestHandler
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.lsp4k.jsonrpc.LspMethods
-import io.lsp4k.jsonrpc.NotificationHandler
-import io.lsp4k.jsonrpc.RequestHandler
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
+import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.MessageActionItem
 import io.lsp4k.protocol.WorkspaceFolder
 import kotlin.test.Test

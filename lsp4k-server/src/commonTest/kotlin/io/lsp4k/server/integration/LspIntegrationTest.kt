@@ -1,12 +1,13 @@
-package io.lsp4k.jsonrpc.integration
+package io.lsp4k.server.integration
 
+import io.jsonrpc4k.core.Connection
+import io.jsonrpc4k.core.JsonRpcCodec
+import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.ResponseError
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
-import io.lsp4k.jsonrpc.Connection
-import io.lsp4k.jsonrpc.LspCodec
-import io.lsp4k.jsonrpc.ResponseError
 import io.lsp4k.protocol.ClientCapabilities
 import io.lsp4k.protocol.CompletionItem
 import io.lsp4k.protocol.CompletionItemKind
@@ -75,7 +76,7 @@ private object Methods {
  * - Shutdown flow
  */
 class LspIntegrationTest {
-    private val json = LspCodec.defaultJson
+    private val json = JsonRpcCodec.defaultJson
 
     // ===== Test 1: Full Initialize Handshake =====
 
@@ -518,7 +519,7 @@ class LspIntegrationTest {
             }
 
             val exception =
-                assertFailsWith<io.lsp4k.jsonrpc.LspException> {
+                assertFailsWith<JsonRpcException> {
                     clientConnection.request<CompletionParams, CompletionList>(
                         "textDocument/unknownMethod",
                         CompletionParams(
@@ -543,7 +544,7 @@ class LspIntegrationTest {
             val serverConnection = Connection(scope = scope)
 
             serverConnection.onRequest("test/fail") { _: JsonElement? ->
-                throw io.lsp4k.jsonrpc.LspException(
+                throw JsonRpcException(
                     ResponseError.INVALID_PARAMS,
                     "Invalid parameters provided",
                 )
@@ -561,7 +562,7 @@ class LspIntegrationTest {
             }
 
             val exception =
-                assertFailsWith<io.lsp4k.jsonrpc.LspException> {
+                assertFailsWith<JsonRpcException> {
                     clientConnection.request<JsonElement?, String>("test/fail", null)
                 }
 
@@ -755,7 +756,7 @@ class LspIntegrationTest {
 
             serverConnection.onRequest(Methods.TEXT_DOCUMENT_COMPLETION) { _: JsonElement? ->
                 if (serverShutdown) {
-                    throw io.lsp4k.jsonrpc.LspException(
+                    throw JsonRpcException(
                         ResponseError.INVALID_REQUEST,
                         "Server is shutting down",
                     )
@@ -782,7 +783,7 @@ class LspIntegrationTest {
 
             // Try to make a request after shutdown
             val exception =
-                assertFailsWith<io.lsp4k.jsonrpc.LspException> {
+                assertFailsWith<JsonRpcException> {
                     clientConnection.request<CompletionParams, CompletionList>(
                         Methods.TEXT_DOCUMENT_COMPLETION,
                         CompletionParams(

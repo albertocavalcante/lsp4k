@@ -6,7 +6,8 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(projects.lsp4kTransport)
+                api(libs.jsonrpc4k.transport)
+                api(projects.lsp4kProtocol)
                 api(libs.kotlinx.coroutines.core)
             }
         }

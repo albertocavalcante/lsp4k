@@ -1,5 +1,6 @@
 package io.lsp4k.example
 
+import io.jsonrpc4k.transport.TransportFactory
 import io.lsp4k.protocol.CompletionItem
 import io.lsp4k.protocol.CompletionItemKind
 import io.lsp4k.protocol.CompletionList
@@ -21,7 +22,6 @@ import io.lsp4k.protocol.TextEdit
 import io.lsp4k.server.LanguageServer
 import io.lsp4k.server.languageServer
 import io.lsp4k.server.start
-import io.lsp4k.transport.TransportFactory
 import kotlinx.coroutines.runBlocking
 
 /**

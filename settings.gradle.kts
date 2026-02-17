@@ -19,9 +19,14 @@ dependencyResolutionManagement {
     }
 }
 
+includeBuild("../jsonrpc4k") {
+    dependencySubstitution {
+        substitute(module("io.jsonrpc4k:jsonrpc4k-core")).using(project(":jsonrpc4k-core"))
+        substitute(module("io.jsonrpc4k:jsonrpc4k-transport")).using(project(":jsonrpc4k-transport"))
+    }
+}
+
 include(":lsp4k-protocol")
-include(":lsp4k-jsonrpc")
-include(":lsp4k-transport")
 include(":lsp4k-server")
 include(":lsp4k-client")
 include(":example")

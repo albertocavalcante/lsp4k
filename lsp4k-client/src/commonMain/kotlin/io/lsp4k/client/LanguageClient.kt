@@ -1,11 +1,11 @@
 package io.lsp4k.client
 
-import io.lsp4k.jsonrpc.Connection
-import io.lsp4k.jsonrpc.LspCodec
-import io.lsp4k.jsonrpc.LspException
-import io.lsp4k.jsonrpc.LspMethods
-import io.lsp4k.jsonrpc.NotificationHandler
-import io.lsp4k.jsonrpc.RequestHandler
+import io.jsonrpc4k.core.Connection
+import io.jsonrpc4k.core.JsonRpcCodec
+import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.NotificationHandler
+import io.jsonrpc4k.core.RequestHandler
+import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.ApplyWorkspaceEditParams
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.CallHierarchyIncomingCall
@@ -73,6 +73,7 @@ import io.lsp4k.protocol.LinkedEditingRangeParams
 import io.lsp4k.protocol.LinkedEditingRanges
 import io.lsp4k.protocol.Location
 import io.lsp4k.protocol.LogMessageParams
+import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.MessageActionItem
 import io.lsp4k.protocol.MessageType
 import io.lsp4k.protocol.Moniker
@@ -108,7 +109,6 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
-import io.lsp4k.transport.Transport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -145,7 +145,7 @@ public class LanguageClientBuilder {
     private var rootUri: String? = null
     private val notificationHandlers = mutableMapOf<String, NotificationHandler>()
     private val requestHandlers = mutableMapOf<String, RequestHandler>()
-    private val json = LspCodec.defaultJson
+    private val json = JsonRpcCodec.defaultJson
 
     private inline fun <reified P> handleNotification(
         method: String,
@@ -168,7 +168,7 @@ public class LanguageClientBuilder {
             RequestHandler { params ->
                 val typed =
                     params?.let { json.decodeFromJsonElement(paramSer, it) }
-                        ?: throw LspException.invalidParams("Missing params for $method")
+                        ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 val result = handler(typed)
                 result?.let { json.encodeToJsonElement(resultSer, it) }
             }
@@ -322,7 +322,7 @@ public class LanguageClientSession internal constructor(
     private val connection: Connection,
     private val scope: CoroutineScope,
 ) {
-    private val json = LspCodec.defaultJson
+    private val json = JsonRpcCodec.defaultJson
 
     /**
      * Server proxy for sending requests to the server.
@@ -386,7 +386,7 @@ public class LanguageClientSession internal constructor(
 public class ServerProxy internal constructor(
     private val connection: Connection,
 ) {
-    private val json = LspCodec.defaultJson
+    private val json = JsonRpcCodec.defaultJson
 
     // ===== Private helpers =====
 

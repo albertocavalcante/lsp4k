@@ -5,8 +5,8 @@ import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.lsp4k.jsonrpc.LspMethods
 import io.lsp4k.protocol.CompletionOptions
+import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.TextDocumentSyncKind
 import kotlin.test.Test
 

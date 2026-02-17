@@ -3,6 +3,7 @@ kotlin = "2.3.0"
 kotlinx-serialization = "1.9.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-io = "0.7.0"
+jsonrpc4k = "0.1.0-SNAPSHOT"
 
 # Linting
 detekt = "1.23.8"
@@ -16,6 +17,10 @@ kotest = "6.0.0.M1"
 junit = "5.11.4"
 
 [libraries]
+# JSON-RPC
+jsonrpc4k-core = { module = "io.jsonrpc4k:jsonrpc4k-core", version.ref = "jsonrpc4k" }
+jsonrpc4k-transport = { module = "io.jsonrpc4k:jsonrpc4k-transport", version.ref = "jsonrpc4k" }
+
 # Kotlin
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

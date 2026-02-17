@@ -1,12 +1,12 @@
 package io.lsp4k.server
 
-import io.lsp4k.jsonrpc.Connection
-import io.lsp4k.jsonrpc.LspCodec
-import io.lsp4k.jsonrpc.LspException
-import io.lsp4k.jsonrpc.LspMethods
-import io.lsp4k.jsonrpc.NotificationHandler
-import io.lsp4k.jsonrpc.RequestHandler
-import io.lsp4k.jsonrpc.ResponseError
+import io.jsonrpc4k.core.Connection
+import io.jsonrpc4k.core.JsonRpcCodec
+import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.NotificationHandler
+import io.jsonrpc4k.core.RequestHandler
+import io.jsonrpc4k.core.ResponseError
+import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.ApplyWorkspaceEditParams
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.CallHierarchyIncomingCall
@@ -81,6 +81,7 @@ import io.lsp4k.protocol.Location
 import io.lsp4k.protocol.LocationLink
 import io.lsp4k.protocol.LogMessageParams
 import io.lsp4k.protocol.LogTraceParams
+import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.MessageActionItem
 import io.lsp4k.protocol.MessageType
 import io.lsp4k.protocol.Moniker
@@ -133,7 +134,6 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
-import io.lsp4k.transport.Transport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -455,7 +455,7 @@ public abstract class HandlersBuilder internal constructor(
             RequestHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
-                        ?: throw LspException.invalidParams("Missing params for $method")
+                        ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 val result = handler(typedParams)
                 result?.let { json.encodeToJsonElement(resultSerializer, it) }
             }
@@ -476,7 +476,7 @@ public abstract class HandlersBuilder internal constructor(
             RequestHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
-                        ?: throw LspException.invalidParams("Missing params for $method")
+                        ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 handler(typedParams)
             }
     }
@@ -495,7 +495,7 @@ public abstract class HandlersBuilder internal constructor(
             NotificationHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
-                        ?: throw LspException.invalidParams("Missing params for $method")
+                        ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 handler(typedParams)
             }
     }
@@ -515,7 +515,7 @@ public abstract class HandlersBuilder internal constructor(
 public class TextDocumentHandlersBuilder(
     requestHandlers: MutableMap<String, RequestHandler>,
     notificationHandlers: MutableMap<String, NotificationHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, requestHandlers, notificationHandlers) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, requestHandlers, notificationHandlers) {
     // ===== Document Synchronization =====
 
     /** Registers a handler for `textDocument/didOpen` notifications. */
@@ -757,7 +757,7 @@ public class TextDocumentHandlersBuilder(
 public class WorkspaceHandlersBuilder(
     requestHandlers: MutableMap<String, RequestHandler>,
     notificationHandlers: MutableMap<String, NotificationHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, requestHandlers, notificationHandlers) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, requestHandlers, notificationHandlers) {
     /** Registers a handler for `workspace/didChangeConfiguration` notifications. */
     public fun didChangeConfiguration(handler: suspend (DidChangeConfigurationParams) -> Unit) {
         registerNotification(LspMethods.WORKSPACE_DID_CHANGE_CONFIGURATION, handler)
@@ -834,7 +834,7 @@ public class WorkspaceHandlersBuilder(
 @LspServerDsl
 public class CallHierarchyHandlersBuilder(
     requestHandlers: MutableMap<String, RequestHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, requestHandlers, mutableMapOf()) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, requestHandlers, mutableMapOf()) {
     /** Registers a handler for `textDocument/prepareCallHierarchy` requests. */
     public fun prepare(handler: suspend (CallHierarchyPrepareParams) -> List<CallHierarchyItem>?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_PREPARE_CALL_HIERARCHY, handler)
@@ -861,7 +861,7 @@ public class CallHierarchyHandlersBuilder(
 @LspServerDsl
 public class TypeHierarchyHandlersBuilder(
     requestHandlers: MutableMap<String, RequestHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, requestHandlers, mutableMapOf()) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, requestHandlers, mutableMapOf()) {
     /** Registers a handler for `textDocument/prepareTypeHierarchy` requests. */
     public fun prepare(handler: suspend (TypeHierarchyPrepareParams) -> List<TypeHierarchyItem>?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_PREPARE_TYPE_HIERARCHY, handler)
@@ -888,7 +888,7 @@ public class TypeHierarchyHandlersBuilder(
 @LspServerDsl
 public class NotebookDocumentHandlersBuilder(
     notificationHandlers: MutableMap<String, NotificationHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, mutableMapOf(), notificationHandlers) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, mutableMapOf(), notificationHandlers) {
     /** Registers a handler for `notebookDocument/didOpen` notifications. */
     public fun didOpen(handler: suspend (DidOpenNotebookDocumentParams) -> Unit) {
         registerNotification(LspMethods.NOTEBOOK_DOCUMENT_DID_OPEN, handler)
@@ -920,7 +920,7 @@ public class NotebookDocumentHandlersBuilder(
 @LspServerDsl
 public class WindowHandlersBuilder(
     notificationHandlers: MutableMap<String, NotificationHandler>,
-) : HandlersBuilder(LspCodec.defaultJson, mutableMapOf(), notificationHandlers) {
+) : HandlersBuilder(JsonRpcCodec.defaultJson, mutableMapOf(), notificationHandlers) {
     /** Registers a handler for `window/workDoneProgress/cancel` notifications. */
     public fun workDoneProgressCancel(handler: suspend (WorkDoneProgressCancelParams) -> Unit) {
         registerNotification(LspMethods.WINDOW_WORK_DONE_PROGRESS_CANCEL, handler)
@@ -968,19 +968,19 @@ public class LanguageServer internal constructor(
     /**
      * Validates that the server is initialized and not shutting down.
      *
-     * @throws LspException with [ResponseError.INVALID_REQUEST] if shutdown has
+     * @throws JsonRpcException with [ResponseError.INVALID_REQUEST] if shutdown has
      *   been requested, or [ResponseError.SERVER_NOT_INITIALIZED] if the server
      *   has not yet received `initialized`.
      */
     private fun checkServerState(method: String) {
         if (shutdownRequested) {
-            throw LspException(
+            throw JsonRpcException(
                 ResponseError.INVALID_REQUEST,
                 "Server is shutting down, cannot process request: $method",
             )
         }
         if (!initialized) {
-            throw LspException(
+            throw JsonRpcException(
                 ResponseError.SERVER_NOT_INITIALIZED,
                 "Server not initialized",
             )
@@ -1008,7 +1008,7 @@ public class LanguageServer internal constructor(
         connection.onNotification(LspMethods.SET_TRACE) { params ->
             val setTraceParams =
                 params?.let {
-                    LspCodec.defaultJson.decodeFromJsonElement(SetTraceParams.serializer(), it)
+                    JsonRpcCodec.defaultJson.decodeFromJsonElement(SetTraceParams.serializer(), it)
                 }
             if (setTraceParams != null) {
                 traceLevel = setTraceParams.value
@@ -1033,7 +1033,7 @@ public class LanguageServer internal constructor(
     }
 
     private fun handleInitialize(params: JsonElement?): JsonElement {
-        val json = LspCodec.defaultJson
+        val json = JsonRpcCodec.defaultJson
         val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
 
         // Set initial trace level from initialize params
@@ -1063,7 +1063,7 @@ public class LanguageClient internal constructor(
     @PublishedApi internal val connection: Connection,
 ) {
     @PublishedApi
-    internal val json: Json = LspCodec.defaultJson
+    internal val json: Json = JsonRpcCodec.defaultJson
 
     @PublishedApi
     internal suspend inline fun <reified P> sendNotification(
