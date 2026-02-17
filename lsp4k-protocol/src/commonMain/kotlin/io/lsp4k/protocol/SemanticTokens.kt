@@ -182,51 +182,47 @@ public enum class TokenFormat {
 /**
  * Predefined semantic token types as defined by the LSP specification.
  */
-@Suppress("ktlint:standard:property-naming")
 public object SemanticTokenTypes {
-    public const val Namespace: String = "namespace"
-    public const val Type: String = "type"
-    public const val Class: String = "class"
-    public const val Enum: String = "enum"
-    public const val Interface: String = "interface"
-    public const val Struct: String = "struct"
-    public const val TypeParameter: String = "typeParameter"
-    public const val Parameter: String = "parameter"
-    public const val Variable: String = "variable"
-    public const val Property: String = "property"
-    public const val EnumMember: String = "enumMember"
-    public const val Event: String = "event"
-    public const val Function: String = "function"
-    public const val Method: String = "method"
-    public const val Macro: String = "macro"
-    public const val Keyword: String = "keyword"
-    public const val Modifier: String = "modifier"
-    public const val Comment: String = "comment"
-    public const val String: String = "string"
-    public const val Number: String = "number"
-    public const val Regexp: String = "regexp"
-    public const val Operator: String = "operator"
-    public const val Decorator: String = "decorator"
+    public const val NAMESPACE: String = "namespace"
+    public const val TYPE: String = "type"
+    public const val CLASS: String = "class"
+    public const val ENUM: String = "enum"
+    public const val INTERFACE: String = "interface"
+    public const val STRUCT: String = "struct"
+    public const val TYPE_PARAMETER: String = "typeParameter"
+    public const val PARAMETER: String = "parameter"
+    public const val VARIABLE: String = "variable"
+    public const val PROPERTY: String = "property"
+    public const val ENUM_MEMBER: String = "enumMember"
+    public const val EVENT: String = "event"
+    public const val FUNCTION: String = "function"
+    public const val METHOD: String = "method"
+    public const val MACRO: String = "macro"
+    public const val KEYWORD: String = "keyword"
+    public const val MODIFIER: String = "modifier"
+    public const val COMMENT: String = "comment"
+    public const val STRING: String = "string"
+    public const val NUMBER: String = "number"
+    public const val REGEXP: String = "regexp"
+    public const val OPERATOR: String = "operator"
+    public const val DECORATOR: String = "decorator"
 
-    /**
-     * @since 3.18.0
-     */
-    public const val Label: String = "label"
+    /** @since 3.18.0 */
+    public const val LABEL: String = "label"
 }
 
 /**
  * Predefined semantic token modifiers as defined by the LSP specification.
  */
-@Suppress("ktlint:standard:property-naming")
 public object SemanticTokenModifiers {
-    public const val Declaration: String = "declaration"
-    public const val Definition: String = "definition"
-    public const val Readonly: String = "readonly"
-    public const val Static: String = "static"
-    public const val Deprecated: String = "deprecated"
-    public const val Abstract: String = "abstract"
-    public const val Async: String = "async"
-    public const val Modification: String = "modification"
-    public const val Documentation: String = "documentation"
-    public const val DefaultLibrary: String = "defaultLibrary"
+    public const val DECLARATION: String = "declaration"
+    public const val DEFINITION: String = "definition"
+    public const val READONLY: String = "readonly"
+    public const val STATIC: String = "static"
+    public const val DEPRECATED: String = "deprecated"
+    public const val ABSTRACT: String = "abstract"
+    public const val ASYNC: String = "async"
+    public const val MODIFICATION: String = "modification"
+    public const val DOCUMENTATION: String = "documentation"
+    public const val DEFAULT_LIBRARY: String = "defaultLibrary"
 }

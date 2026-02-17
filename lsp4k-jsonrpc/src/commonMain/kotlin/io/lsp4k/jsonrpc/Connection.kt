@@ -31,8 +31,9 @@ public class Connection(
     private val codec: LspCodec = LspCodec.Default,
     @PublishedApi internal val json: Json = LspCodec.defaultJson,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    notificationErrorHandler: NotificationErrorHandler? = null,
 ) {
-    @PublishedApi internal val dispatcher: Dispatcher = Dispatcher(json)
+    @PublishedApi internal val dispatcher: Dispatcher = Dispatcher(json, notificationErrorHandler)
     private var requestIdValue = 0L
     private val requestIdMutex = Mutex()
     private val outgoingMessages = Channel<Message>(Channel.BUFFERED)

@@ -511,7 +511,6 @@ public abstract class HandlersBuilder internal constructor(
  * This class intentionally has many functions to cover all LSP text document
  * methods.
  */
-@Suppress("TooManyFunctions")
 @LspServerDsl
 public class TextDocumentHandlersBuilder(
     requestHandlers: MutableMap<String, RequestHandler>,
@@ -1060,7 +1059,6 @@ public class LanguageServer internal constructor(
  * An instance is available via [LanguageServer.client] after the server is
  * started.
  */
-@Suppress("TooManyFunctions")
 public class LanguageClient internal constructor(
     @PublishedApi internal val connection: Connection,
 ) {

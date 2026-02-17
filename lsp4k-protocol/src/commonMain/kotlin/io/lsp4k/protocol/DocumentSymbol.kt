@@ -100,7 +100,6 @@ public data class SymbolInformation(
 /**
  * A symbol kind.
  */
-@Suppress("MagicNumber")
 @Serializable(with = SymbolKindSerializer::class)
 public enum class SymbolKind(
     public val value: Int,

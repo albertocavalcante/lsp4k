@@ -9,7 +9,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.long
 import kotlinx.serialization.serializer
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
@@ -40,10 +39,32 @@ public fun interface NotificationHandler {
 }
 
 /**
+ * Callback invoked when a notification handler throws an exception.
+ *
+ * Since JSON-RPC notifications have no response, errors cannot be reported
+ * to the sender. This callback allows the host to log or handle such errors.
+ *
+ * @param method The notification method that failed.
+ * @param exception The exception thrown by the handler.
+ */
+public fun interface NotificationErrorHandler {
+    public fun onError(
+        method: String,
+        exception: Exception,
+    )
+}
+
+/**
  * Dispatches incoming JSON-RPC messages to registered handlers.
+ *
+ * @param json The JSON configuration used for serialization/deserialization.
+ * @param notificationErrorHandler Optional handler invoked when a notification handler throws.
+ *   By default, notification handler exceptions are silently ignored per the JSON-RPC spec
+ *   (notifications have no response). Provide a handler to log or react to these errors.
  */
 public class Dispatcher(
     @PublishedApi internal val json: Json = LspCodec.defaultJson,
+    private val notificationErrorHandler: NotificationErrorHandler? = null,
 ) {
     private val mutex = Mutex()
     private val requestHandlers = mutableMapOf<String, RequestHandler>()
@@ -211,26 +232,21 @@ public class Dispatcher(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Notifications don't return errors, but we might want to log
+            notificationErrorHandler?.onError(notification.method, e)
         }
     }
 
     private suspend fun handleCancelRequest(params: JsonElement?) {
-        if (params == null) return
-        try {
-            val idElement = (params as? JsonObject)?.get("id") ?: return
-            val requestId =
-                when {
-                    idElement is JsonPrimitive && idElement.isString ->
-                        RequestId.of(idElement.content)
-                    idElement is JsonPrimitive ->
-                        RequestId.of(idElement.long)
-                    else -> return
-                }
-            cancelPendingRequest(requestId)
-        } catch (_: Exception) {
-            // Ignore malformed cancel requests
-        }
+        val idElement = (params as? JsonObject)?.get("id") ?: return
+        val requestId =
+            when {
+                idElement is JsonPrimitive && idElement.isString ->
+                    RequestId.of(idElement.content)
+                idElement is JsonPrimitive ->
+                    RequestId.of(idElement.content.toLongOrNull() ?: return)
+                else -> return
+            }
+        cancelPendingRequest(requestId)
     }
 
     private suspend fun handleResponse(response: ResponseMessage) {

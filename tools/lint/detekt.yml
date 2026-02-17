@@ -3,7 +3,7 @@ build:
   excludeCorrectable: false
 config:
   validation: true
-  warningsAsErrors: false
+  warningsAsErrors: true
 complexity:
   active: true
   CyclomaticComplexMethod:
@@ -34,6 +34,11 @@ complexity:
     - '**/test/**'
     - '**/*Test/**'
     - '**/visitor/**'
+    # LSP proxy/facade classes map 1:1 to protocol methods, so they
+    # inherently have many functions. Centralised here to avoid
+    # scattering @Suppress annotations in source code.
+    - '**/server/LanguageServer.kt'
+    - '**/client/LanguageClient.kt'
     thresholdInFiles: 20
     thresholdInClasses: 18
     thresholdInInterfaces: 13
@@ -56,7 +61,10 @@ exceptions:
     active: true
     excludes:
     - '**/test/**'
+    # Transport must catch generic I/O exceptions at platform boundaries.
     - '**/transport/**'
+    # JSON-RPC dispatch catches Exception at protocol boundaries to
+    # convert handler failures into ResponseError messages (SEC-001).
     - '**/jsonrpc/**'
     exceptionNames:
     - ArrayIndexOutOfBoundsException
@@ -68,6 +76,8 @@ exceptions:
   SwallowedException:
     active: true
     excludes:
+    # Transport and jsonrpc modules legitimately catch and convert
+    # exceptions at protocol boundaries rather than re-throwing.
     - '**/transport/**'
     - '**/jsonrpc/**'
     ignoredExceptionTypes:
@@ -133,7 +143,7 @@ style:
       - 'kotlin.io.println'
       - 'kotlin.io.print'
     excludes:
-      - '**/test/**'  # Allow in tests for now (will clean up separately)
+      - '**/test/**'
   ForbiddenComment:
     active: true
     comments:
@@ -166,7 +176,7 @@ style:
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreAnnotation: false
     ignoreNamedArgument: true
-    ignoreEnums: false
+    ignoreEnums: true
     ignoreRanges: false
     ignoreExtensionFunctions: true
   ReturnCount:

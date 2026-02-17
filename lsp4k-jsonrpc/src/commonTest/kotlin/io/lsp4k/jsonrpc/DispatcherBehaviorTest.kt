@@ -196,7 +196,7 @@ class DispatcherBehaviorTest {
         }
 
     @Test
-    fun `notification handler exception is caught and logged`() =
+    fun `notification handler exception does not propagate without error handler`() =
         runTest {
             val dispatcher = Dispatcher()
 
@@ -207,6 +207,32 @@ class DispatcherBehaviorTest {
             // Should not throw
             val notification = NotificationMessage(method = "test/throws")
             dispatcher.dispatch(notification)
+        }
+
+    @Test
+    fun `notification handler exception is reported to error handler`() =
+        runTest {
+            var reportedMethod: String? = null
+            var reportedException: Exception? = null
+            val dispatcher =
+                Dispatcher(
+                    notificationErrorHandler =
+                        NotificationErrorHandler { method, exception ->
+                            reportedMethod = method
+                            reportedException = exception
+                        },
+                )
+
+            dispatcher.onNotification("test/throws") { _: JsonElement? ->
+                throw IllegalStateException("Handler error")
+            }
+
+            val notification = NotificationMessage(method = "test/throws")
+            dispatcher.dispatch(notification)
+
+            reportedMethod shouldBe "test/throws"
+            reportedException shouldNotBe null
+            reportedException!!.message shouldBe "Handler error"
         }
 
     @Test

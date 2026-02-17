@@ -14,7 +14,6 @@ import kotlinx.serialization.json.JsonObject
 /**
  * The kind of a completion entry.
  */
-@Suppress("MagicNumber")
 @Serializable(with = CompletionItemKindSerializer::class)
 public enum class CompletionItemKind(
     public val value: Int,

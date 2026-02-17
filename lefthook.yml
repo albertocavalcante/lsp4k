@@ -46,6 +46,8 @@ pre-commit:
       fail_text: "Do not commit files larger than 1MB"
 
     kotlin-format:
+      # The glob triggers this hook only when .kt/.kts files are staged,
+      # but spotlessCheck itself runs against the entire project.
       glob: "**/*.{kt,kts}"
       run: |
         if command -v java &> /dev/null; then

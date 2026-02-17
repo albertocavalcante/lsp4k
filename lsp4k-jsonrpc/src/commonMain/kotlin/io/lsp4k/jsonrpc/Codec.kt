@@ -119,13 +119,16 @@ public class LspMessageDecoder(
         headersParsed = false
     }
 
-    @Suppress("MagicNumber")
     private fun ensureCapacity(minCapacity: Int) {
         if (minCapacity <= byteBuffer.size) return
-        val newCapacity = maxOf(minCapacity, byteBuffer.size * 2, 1024)
+        val newCapacity = maxOf(minCapacity, byteBuffer.size * 2, DEFAULT_BUFFER_CAPACITY)
         val newBuffer = ByteArray(newCapacity)
         byteBuffer.copyInto(newBuffer, 0, 0, byteBufferSize)
         byteBuffer = newBuffer
+    }
+
+    private companion object {
+        private const val DEFAULT_BUFFER_CAPACITY = 1024
     }
 
     private fun consumeFromFront(count: Int) {

@@ -383,7 +383,6 @@ public class LanguageClientSession internal constructor(
 /**
  * Proxy for sending requests and notifications to the language server.
  */
-@Suppress("TooManyFunctions")
 public class ServerProxy internal constructor(
     private val connection: Connection,
 ) {

@@ -284,7 +284,7 @@ class DispatcherTest {
         }
 
     @Test
-    fun `notification handler exception is silently ignored`() =
+    fun `notification handler exception is silently ignored without error handler`() =
         runTest {
             dispatcher.onNotification("test/error") { _: kotlinx.serialization.json.JsonElement? ->
                 throw IllegalStateException("This should be caught")
@@ -351,9 +351,9 @@ class DispatcherTest {
         }
 
     @Test
-    fun `notification errors are silently ignored`() =
+    fun `notification errors are silently ignored without error handler`() =
         runTest {
-            // No error handler set
+            // No error handler set - errors are silently dropped
             dispatcher.onNotification("test/error-notify") { _: kotlinx.serialization.json.JsonElement? ->
                 throw IllegalStateException("This should be caught and ignored")
             }
@@ -363,6 +363,32 @@ class DispatcherTest {
             val response = dispatcher.dispatch(notification)
 
             response shouldBe null
+        }
+
+    @Test
+    fun `notification errors are reported to error handler`() =
+        runTest {
+            var reportedMethod: String? = null
+            var reportedException: Exception? = null
+            val dispatcher =
+                Dispatcher(
+                    notificationErrorHandler =
+                        NotificationErrorHandler { method, exception ->
+                            reportedMethod = method
+                            reportedException = exception
+                        },
+                )
+
+            dispatcher.onNotification("test/error-notify") { _: kotlinx.serialization.json.JsonElement? ->
+                throw IllegalStateException("Handler failed")
+            }
+
+            val notification = NotificationMessage(method = "test/error-notify")
+            dispatcher.dispatch(notification)
+
+            reportedMethod shouldBe "test/error-notify"
+            reportedException shouldNotBe null
+            reportedException!!.message shouldBe "Handler failed"
         }
 
     // ===== Response Handling Tests =====
