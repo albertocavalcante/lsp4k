@@ -37,7 +37,8 @@ public class LspCodec(
 
     /**
      * Parse Content-Length header from a header line.
-     * Returns null if the line is not a Content-Length header.
+     * Returns null if the line is not a Content-Length header or if the value is invalid.
+     * Only accepts non-negative integers (digits only, no signs).
      */
     public fun parseContentLength(headerLine: String): Int? {
         val trimmed = headerLine.trim()
@@ -45,11 +46,20 @@ public class LspCodec(
             return null
         }
         val value = trimmed.substringAfter(':').trim()
-        return value.toIntOrNull()
+        // Only accept digits (SEC-003: reject negative values and non-numeric input)
+        if (value.isEmpty() || !value.all { it.isDigit() }) {
+            return null
+        }
+        val length = value.toIntOrNull() ?: return null
+        if (length > MAX_CONTENT_LENGTH) {
+            return null
+        }
+        return length
     }
 
     public companion object {
         public const val CONTENT_LENGTH_HEADER: String = "Content-Length:"
+        public const val MAX_CONTENT_LENGTH: Int = 100 * 1024 * 1024 // 100 MB
         public const val HEADER_DELIMITER: String = "\r\n\r\n"
         public const val LINE_DELIMITER: String = "\r\n"
 
@@ -74,11 +84,15 @@ public class LspCodec(
 /**
  * A streaming decoder for LSP messages.
  * Handles partial reads and buffering.
+ *
+ * Note: Content-Length specifies the number of bytes, not characters.
+ * This decoder maintains a byte buffer to correctly handle multi-byte UTF-8 characters.
  */
 public class LspMessageDecoder(
     private val codec: LspCodec = LspCodec.Default,
 ) {
-    private var buffer = ""
+    private var byteBuffer = ByteArray(0)
+    private var byteBufferSize = 0
     private var expectedContentLength: Int? = null
     private var headersParsed = false
 
@@ -86,24 +100,40 @@ public class LspMessageDecoder(
      * Feed data into the decoder.
      * Returns a list of complete messages that were decoded.
      */
-    public fun feed(data: String): List<Message> {
-        buffer += data
-        return drainMessages()
-    }
+    public fun feed(data: String): List<Message> = feed(data.encodeToByteArray())
 
     /**
      * Feed data into the decoder.
      * Returns a list of complete messages that were decoded.
      */
-    public fun feed(data: ByteArray): List<Message> = feed(data.decodeToString())
+    public fun feed(data: ByteArray): List<Message> {
+        ensureCapacity(byteBufferSize + data.size)
+        data.copyInto(byteBuffer, byteBufferSize)
+        byteBufferSize += data.size
+        return drainMessages()
+    }
 
     /**
      * Reset the decoder state.
      */
     public fun reset() {
-        buffer = ""
+        byteBuffer = ByteArray(0)
+        byteBufferSize = 0
         expectedContentLength = null
         headersParsed = false
+    }
+
+    private fun ensureCapacity(minCapacity: Int) {
+        if (minCapacity <= byteBuffer.size) return
+        val newCapacity = maxOf(minCapacity, byteBuffer.size * 2, 1024)
+        val newBuffer = ByteArray(newCapacity)
+        byteBuffer.copyInto(newBuffer, 0, 0, byteBufferSize)
+        byteBuffer = newBuffer
+    }
+
+    private fun consumeFromFront(count: Int) {
+        byteBuffer.copyInto(byteBuffer, 0, count, byteBufferSize)
+        byteBufferSize -= count
     }
 
     private fun drainMessages(): List<Message> {
@@ -120,19 +150,24 @@ public class LspMessageDecoder(
     private fun tryDecodeOne(): Message? {
         // If we haven't parsed headers yet, look for the header delimiter
         if (!headersParsed) {
-            val headerEndIndex = buffer.indexOf(LspCodec.HEADER_DELIMITER)
+            val delimiterBytes = LspCodec.HEADER_DELIMITER.encodeToByteArray()
+            val headerEndIndex = byteBuffer.indexOf(delimiterBytes, byteBufferSize)
             if (headerEndIndex < 0) {
                 return null // Need more data
             }
 
-            val headerSection = buffer.substring(0, headerEndIndex)
+            val headerSection = byteBuffer.copyOfRange(0, headerEndIndex).decodeToString()
             val lines = headerSection.split(LspCodec.LINE_DELIMITER)
 
+            var foundContentLength = false
             for (line in lines) {
                 val contentLength = codec.parseContentLength(line)
                 if (contentLength != null) {
+                    if (foundContentLength) {
+                        throw LspProtocolException("Duplicate Content-Length header")
+                    }
                     expectedContentLength = contentLength
-                    break
+                    foundContentLength = true
                 }
             }
 
@@ -141,25 +176,44 @@ public class LspMessageDecoder(
             }
 
             // Remove headers from buffer
-            buffer = buffer.substring(headerEndIndex + LspCodec.HEADER_DELIMITER.length)
+            consumeFromFront(headerEndIndex + delimiterBytes.size)
             headersParsed = true
         }
 
-        // Check if we have enough content
+        // Check if we have enough content (in bytes)
         val contentLength = expectedContentLength ?: return null
-        if (buffer.length < contentLength) {
+        if (byteBufferSize < contentLength) {
             return null // Need more data
         }
 
         // Extract and decode the message
-        val jsonContent = buffer.substring(0, contentLength)
-        buffer = buffer.substring(contentLength)
+        val jsonContentBytes = byteBuffer.copyOfRange(0, contentLength)
+        val jsonContent = jsonContentBytes.decodeToString()
+        consumeFromFront(contentLength)
 
         // Reset state for next message
         expectedContentLength = null
         headersParsed = false
 
         return codec.decodeFromJson(jsonContent)
+    }
+
+    /**
+     * Find the index of a byte array pattern within a byte array.
+     * Only searches within the first [limit] bytes.
+     * Returns -1 if not found.
+     */
+    private fun ByteArray.indexOf(pattern: ByteArray, limit: Int): Int {
+        if (pattern.isEmpty()) return 0
+        if (pattern.size > limit) return -1
+
+        outer@ for (i in 0..(limit - pattern.size)) {
+            for (j in pattern.indices) {
+                if (this[i + j] != pattern[j]) continue@outer
+            }
+            return i
+        }
+        return -1
     }
 }
 
