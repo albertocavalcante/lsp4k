@@ -9,12 +9,15 @@ allprojects {
     version = property("VERSION_NAME").toString()
 }
 
+/** Library subprojects (excludes the example module). */
+val libraryProjects = subprojects.filter { it.name != "example" }
+
 // Detekt configuration
 detekt {
     buildUponDefaultConfig = true
     allRules = false
     config.setFrom(files("$rootDir/tools/lint/detekt.yml"))
-    source.setFrom(files(subprojects.map { "${it.projectDir}/src" }))
+    source.setFrom(files(libraryProjects.map { "${it.projectDir}/src" }))
 }
 
 dependencies {
@@ -39,14 +42,14 @@ tasks.named("check") {
     dependsOn(tasks.named("detekt"))
 }
 
-// Apply Kover to all subprojects
-subprojects {
-    apply(plugin = "org.jetbrains.kotlinx.kover")
+// Apply Kover to library subprojects
+libraryProjects.forEach { project ->
+    project.apply(plugin = "org.jetbrains.kotlinx.kover")
 }
 
-// Merge coverage from all subprojects
+// Merge coverage from library subprojects
 dependencies {
-    subprojects.forEach { subproject ->
+    libraryProjects.forEach { subproject ->
         kover(subproject)
     }
 }
