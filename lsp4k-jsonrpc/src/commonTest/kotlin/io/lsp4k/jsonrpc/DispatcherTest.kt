@@ -89,7 +89,7 @@ class DispatcherTest {
             response shouldNotBe null
             response!!.error shouldNotBe null
             response.error!!.code shouldBe ResponseError.METHOD_NOT_FOUND
-            response.error!!.message shouldBe "Method not found: unknown/method"
+            response.error.message shouldBe "Method not found: unknown/method"
         }
 
     @Test
@@ -106,7 +106,7 @@ class DispatcherTest {
             response shouldNotBe null
             response!!.error shouldNotBe null
             response.error!!.code shouldBe ResponseError.INTERNAL_ERROR
-            response.error!!.message shouldBe "Internal error"
+            response.error.message shouldBe "Internal error"
         }
 
     @Test
@@ -122,7 +122,7 @@ class DispatcherTest {
             response shouldNotBe null
             response!!.error shouldNotBe null
             response.error!!.code shouldBe ResponseError.INVALID_PARAMS
-            response.error!!.message shouldBe "Invalid parameters provided"
+            response.error.message shouldBe "Invalid parameters provided"
         }
 
     @Test
@@ -347,7 +347,7 @@ class DispatcherTest {
             response shouldNotBe null
             response!!.error shouldNotBe null
             response.error!!.code shouldBe ResponseError.INVALID_PARAMS
-            response.error!!.message shouldBe "Missing required params for method"
+            response.error.message shouldBe "Missing required params for method"
         }
 
     @Test

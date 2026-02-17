@@ -121,7 +121,7 @@ class ConnectionTest {
 
             receivedLog shouldNotBe null
             receivedLog!!.level shouldBe "info"
-            receivedLog!!.message shouldBe "Test"
+            receivedLog.message shouldBe "Test"
 
             connection.close()
         }

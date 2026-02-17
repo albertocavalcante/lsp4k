@@ -127,7 +127,7 @@ class InlineValueSerializationTest {
         encoded shouldContain "text"
         val decoded = json.decodeFromString<InlineValue>(encoded)
         decoded.shouldBeInstanceOf<InlineValueText>()
-        (decoded as InlineValueText).text shouldBe "value = 123"
+        decoded.text shouldBe "value = 123"
     }
 
     @Test
@@ -142,7 +142,7 @@ class InlineValueSerializationTest {
         encoded shouldContain "caseSensitiveLookup"
         val decoded = json.decodeFromString<InlineValue>(encoded)
         decoded.shouldBeInstanceOf<InlineValueVariableLookup>()
-        (decoded as InlineValueVariableLookup).variableName shouldBe "myVar"
+        decoded.variableName shouldBe "myVar"
     }
 
     @Test
@@ -155,7 +155,7 @@ class InlineValueSerializationTest {
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<InlineValue>(encoded)
         decoded.shouldBeInstanceOf<InlineValueEvaluatableExpression>()
-        (decoded as InlineValueEvaluatableExpression).expression shouldBe "x * 2"
+        decoded.expression shouldBe "x * 2"
     }
 
     @Test

@@ -279,7 +279,7 @@ class CompletionSerializationTest {
             )
         val encoded = json.encodeToString(item)
         val decoded = json.decodeFromString<CompletionItem>(encoded)
-        (decoded.textEdit?.left as? TextEdit)?.newText shouldBe "completedText"
+        decoded.textEdit?.left?.newText shouldBe "completedText"
     }
 
     @Test

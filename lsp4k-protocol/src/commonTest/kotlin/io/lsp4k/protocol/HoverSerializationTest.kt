@@ -281,7 +281,7 @@ class HoverSerializationTest {
         val decoded = json.decodeFromString<Hover>(jsonStr)
         val contents = decoded.contents.shouldBeInstanceOf<HoverContents.SingleMarked>()
         contents.value.shouldBeInstanceOf<Either.Right<MarkedString>>()
-        val markedString = (contents.value as Either.Right<MarkedString>).value
+        val markedString = contents.value.value
         markedString.language shouldBe "kotlin"
         markedString.value shouldBe "fun hello()"
     }

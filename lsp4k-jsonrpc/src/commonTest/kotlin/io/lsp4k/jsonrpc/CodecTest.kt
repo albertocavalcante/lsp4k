@@ -128,7 +128,7 @@ class CodecTest {
         val message = codec.decodeFromJson(jsonStr)
 
         message.shouldBeInstanceOf<RequestMessage>()
-        (message as RequestMessage).id shouldBe RequestId.of(1)
+        message.id shouldBe RequestId.of(1)
         message.method shouldBe "test"
     }
 
@@ -138,7 +138,7 @@ class CodecTest {
         val message = codec.decodeFromJson(jsonStr)
 
         message.shouldBeInstanceOf<NotificationMessage>()
-        (message as NotificationMessage).method shouldBe "initialized"
+        message.method shouldBe "initialized"
     }
 
     @Test
@@ -147,7 +147,7 @@ class CodecTest {
         val message = codec.decodeFromJson(jsonStr)
 
         message.shouldBeInstanceOf<ResponseMessage>()
-        (message as ResponseMessage).result shouldBe JsonPrimitive("ok")
+        message.result shouldBe JsonPrimitive("ok")
     }
 
     // ===== LspCodec.parseContentLength Tests =====

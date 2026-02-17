@@ -181,7 +181,7 @@ class PullDiagnosticsSerializationTest {
         encoded shouldContain "\"full\""
         val decoded = jsonWithDefaults.decodeFromString<DocumentDiagnosticReport>(encoded)
         decoded.shouldBeInstanceOf<DocumentDiagnosticReport.Full>()
-        (decoded as DocumentDiagnosticReport.Full).report.resultId shouldBe "full-result-1"
+        decoded.report.resultId shouldBe "full-result-1"
         decoded.report.items.size shouldBe 1
     }
 
@@ -193,7 +193,7 @@ class PullDiagnosticsSerializationTest {
         encoded shouldContain "\"unchanged\""
         val decoded = jsonWithDefaults.decodeFromString<DocumentDiagnosticReport>(encoded)
         decoded.shouldBeInstanceOf<DocumentDiagnosticReport.Unchanged>()
-        (decoded as DocumentDiagnosticReport.Unchanged).report.resultId shouldBe "unchanged-result-1"
+        decoded.report.resultId shouldBe "unchanged-result-1"
     }
 
     @Test
@@ -203,7 +203,7 @@ class PullDiagnosticsSerializationTest {
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<DocumentDiagnosticReport>(encoded)
         decoded.shouldBeInstanceOf<DocumentDiagnosticReport.Full>()
-        (decoded as DocumentDiagnosticReport.Full).report.items shouldBe emptyList()
+        decoded.report.items shouldBe emptyList()
     }
 
     // ==================== PreviousResultId Tests ====================

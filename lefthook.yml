@@ -1,4 +1,8 @@
-# Install: brew install lefthook && lefthook install
+# Lefthook configuration for git hooks
+# https://github.com/evilmartians/lefthook
+#
+# Install: lefthook install
+# Run manually: lefthook run pre-commit
 
 output:
   - meta
@@ -46,25 +50,17 @@ pre-commit:
       fail_text: "Do not commit files larger than 1MB"
 
     kotlin-format:
-      # The glob triggers this hook only when .kt/.kts files are staged,
-      # but spotlessCheck itself runs against the entire project.
+      skip:
+        - run: '! java -version > /dev/null 2>&1'
       glob: "**/*.{kt,kts}"
-      run: |
-        if command -v java &> /dev/null; then
-          ./gradlew spotlessCheck --quiet 2>&1
-        else
-          echo "Skipping: java not found"
-        fi
+      run: ./gradlew spotlessCheck --quiet 2>&1
       fail_text: "Run './gradlew spotlessApply' to fix formatting"
 
     workflow-lint:
+      skip:
+        - run: '! command -v actionlint > /dev/null 2>&1'
       glob: ".github/workflows/*.{yml,yaml}"
-      run: |
-        if command -v actionlint &> /dev/null; then
-          actionlint {staged_files}
-        else
-          echo "Skipping: actionlint not installed (brew install actionlint)"
-        fi
+      run: actionlint {staged_files}
       fail_text: "Fix GitHub Actions workflow lint errors"
 
 commit-msg:
