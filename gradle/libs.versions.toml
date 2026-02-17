@@ -8,6 +8,9 @@ kotlinx-io = "0.7.0"
 detekt = "1.23.8"
 spotless = "8.1.0"
 
+# Coverage
+kover = "0.8.3"
+
 # Testing
 kotest = "6.0.0.M1"
 junit = "5.11.4"
@@ -37,3 +40,4 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

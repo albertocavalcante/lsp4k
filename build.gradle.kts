@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.kover)
 }
 
 allprojects {
@@ -36,4 +37,57 @@ spotless {
 
 tasks.named("check") {
     dependsOn(tasks.named("detekt"))
+}
+
+// Apply Kover to all subprojects
+subprojects {
+    apply(plugin = "org.jetbrains.kotlinx.kover")
+}
+
+// Merge coverage from all subprojects
+dependencies {
+    subprojects.forEach { subproject ->
+        kover(subproject)
+    }
+}
+
+// Kover configuration for code coverage
+kover {
+    reports {
+        // Configure filters to exclude test classes and generated code
+        filters {
+            excludes {
+                classes(
+                    "*Test",
+                    "*Test$*",
+                    "*Tests",
+                    "*Tests$*",
+                    "*.test.*",
+                    "*.BuildConfig",
+                )
+            }
+        }
+
+        // Total (merged) coverage report configuration
+        total {
+            // HTML report for humans
+            html {
+                onCheck = false
+                htmlDir = layout.buildDirectory.dir("reports/kover/html")
+            }
+
+            // XML report for CI integration
+            xml {
+                onCheck = false
+                xmlFile = layout.buildDirectory.file("reports/kover/report.xml")
+            }
+
+            // Verification rules
+            verify {
+                rule("Minimum line coverage") {
+                    minBound(90)
+                }
+            }
+        }
+    }
 }
