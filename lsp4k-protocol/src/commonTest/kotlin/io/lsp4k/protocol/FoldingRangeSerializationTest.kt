@@ -50,18 +50,20 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRangeParams serialization`() {
-        val params = FoldingRangeParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-        )
+        val params =
+            FoldingRangeParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"uri\":\"file:///test.kt\""
     }
 
     @Test
     fun `FoldingRangeParams round-trip`() {
-        val params = FoldingRangeParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
-        )
+        val params =
+            FoldingRangeParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<FoldingRangeParams>(encoded)
         decoded shouldBe params
@@ -71,10 +73,11 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange minimal`() {
-        val range = FoldingRange(
-            startLine = 10,
-            endLine = 20,
-        )
+        val range =
+            FoldingRange(
+                startLine = 10,
+                endLine = 20,
+            )
         val encoded = json.encodeToString(range)
         val decoded = json.decodeFromString<FoldingRange>(encoded)
         decoded.startLine shouldBe 10
@@ -87,12 +90,13 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with character offsets`() {
-        val range = FoldingRange(
-            startLine = 5,
-            startCharacter = 10,
-            endLine = 15,
-            endCharacter = 5,
-        )
+        val range =
+            FoldingRange(
+                startLine = 5,
+                startCharacter = 10,
+                endLine = 15,
+                endCharacter = 5,
+            )
         val encoded = json.encodeToString(range)
         val decoded = json.decodeFromString<FoldingRange>(encoded)
         decoded.startLine shouldBe 5
@@ -103,11 +107,12 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with Comment kind`() {
-        val range = FoldingRange(
-            startLine = 1,
-            endLine = 10,
-            kind = FoldingRangeKind.Comment,
-        )
+        val range =
+            FoldingRange(
+                startLine = 1,
+                endLine = 10,
+                kind = FoldingRangeKind.Comment,
+            )
         val encoded = json.encodeToString(range)
         encoded shouldContain "\"kind\":\"comment\""
         val decoded = json.decodeFromString<FoldingRange>(encoded)
@@ -116,11 +121,12 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with Imports kind`() {
-        val range = FoldingRange(
-            startLine = 0,
-            endLine = 15,
-            kind = FoldingRangeKind.Imports,
-        )
+        val range =
+            FoldingRange(
+                startLine = 0,
+                endLine = 15,
+                kind = FoldingRangeKind.Imports,
+            )
         val encoded = json.encodeToString(range)
         encoded shouldContain "\"kind\":\"imports\""
         val decoded = json.decodeFromString<FoldingRange>(encoded)
@@ -129,11 +135,12 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with Region kind`() {
-        val range = FoldingRange(
-            startLine = 20,
-            endLine = 50,
-            kind = FoldingRangeKind.Region,
-        )
+        val range =
+            FoldingRange(
+                startLine = 20,
+                endLine = 50,
+                kind = FoldingRangeKind.Region,
+            )
         val encoded = json.encodeToString(range)
         encoded shouldContain "\"kind\":\"region\""
         val decoded = json.decodeFromString<FoldingRange>(encoded)
@@ -142,11 +149,12 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with collapsed text`() {
-        val range = FoldingRange(
-            startLine = 100,
-            endLine = 200,
-            collapsedText = "...",
-        )
+        val range =
+            FoldingRange(
+                startLine = 100,
+                endLine = 200,
+                collapsedText = "...",
+            )
         val encoded = json.encodeToString(range)
         encoded shouldContain "\"collapsedText\":\"...\""
         val decoded = json.decodeFromString<FoldingRange>(encoded)
@@ -155,14 +163,15 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange full`() {
-        val range = FoldingRange(
-            startLine = 50,
-            startCharacter = 0,
-            endLine = 100,
-            endCharacter = 1,
-            kind = FoldingRangeKind.Region,
-            collapsedText = "// region: Tests",
-        )
+        val range =
+            FoldingRange(
+                startLine = 50,
+                startCharacter = 0,
+                endLine = 100,
+                endCharacter = 1,
+                kind = FoldingRangeKind.Region,
+                collapsedText = "// region: Tests",
+            )
         val encoded = json.encodeToString(range)
         val decoded = json.decodeFromString<FoldingRange>(encoded)
         decoded shouldBe range
@@ -170,10 +179,11 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with zero-based lines`() {
-        val range = FoldingRange(
-            startLine = 0,
-            endLine = 0,
-        )
+        val range =
+            FoldingRange(
+                startLine = 0,
+                endLine = 0,
+            )
         val encoded = json.encodeToString(range)
         val decoded = json.decodeFromString<FoldingRange>(encoded)
         decoded.startLine shouldBe 0
@@ -182,11 +192,12 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange list serialization`() {
-        val ranges = listOf(
-            FoldingRange(startLine = 0, endLine = 5, kind = FoldingRangeKind.Imports),
-            FoldingRange(startLine = 7, endLine = 50, kind = FoldingRangeKind.Region),
-            FoldingRange(startLine = 10, endLine = 15, kind = FoldingRangeKind.Comment),
-        )
+        val ranges =
+            listOf(
+                FoldingRange(startLine = 0, endLine = 5, kind = FoldingRangeKind.Imports),
+                FoldingRange(startLine = 7, endLine = 50, kind = FoldingRangeKind.Region),
+                FoldingRange(startLine = 10, endLine = 15, kind = FoldingRangeKind.Comment),
+            )
         val encoded = json.encodeToString(ranges)
         val decoded = json.decodeFromString<List<FoldingRange>>(encoded)
         decoded.size shouldBe 3
@@ -206,10 +217,11 @@ class FoldingRangeSerializationTest {
 
     @Test
     fun `FoldingRange with large line numbers`() {
-        val range = FoldingRange(
-            startLine = 10000,
-            endLine = 20000,
-        )
+        val range =
+            FoldingRange(
+                startLine = 10000,
+                endLine = 20000,
+            )
         val encoded = json.encodeToString(range)
         val decoded = json.decodeFromString<FoldingRange>(encoded)
         decoded.startLine shouldBe 10000

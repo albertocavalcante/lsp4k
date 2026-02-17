@@ -25,7 +25,10 @@ public abstract class IntEnumSerializer<E>(
 ) : KSerializer<E> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.INT)
 
-    override fun serialize(encoder: Encoder, value: E): Unit = encoder.encodeInt(toValue(value))
+    override fun serialize(
+        encoder: Encoder,
+        value: E,
+    ): Unit = encoder.encodeInt(toValue(value))
 
     override fun deserialize(decoder: Decoder): E = fromValue(decoder.decodeInt())
 }
@@ -46,7 +49,10 @@ public object ProgressTokenSerializer : KSerializer<ProgressToken> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("ProgressToken", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: ProgressToken) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ProgressToken,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
@@ -72,7 +78,10 @@ public object NullableProgressTokenSerializer : KSerializer<ProgressToken?> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("ProgressToken?", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: ProgressToken?) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ProgressToken?,
+    ) {
         if (value == null) {
             encoder.encodeNull()
         } else {
@@ -80,13 +89,12 @@ public object NullableProgressTokenSerializer : KSerializer<ProgressToken?> {
         }
     }
 
-    override fun deserialize(decoder: Decoder): ProgressToken? {
-        return if (decoder.decodeNotNullMark()) {
+    override fun deserialize(decoder: Decoder): ProgressToken? =
+        if (decoder.decodeNotNullMark()) {
             ProgressTokenSerializer.deserialize(decoder)
         } else {
             decoder.decodeNull()
         }
-    }
 }
 
 /**
@@ -317,7 +325,10 @@ public object TextOrAnnotatedEditSerializer : KSerializer<TextOrAnnotatedEdit> {
     override val descriptor: SerialDescriptor =
         buildClassSerialDescriptor("TextOrAnnotatedEdit")
 
-    override fun serialize(encoder: Encoder, value: TextOrAnnotatedEdit) {
+    override fun serialize(
+        encoder: Encoder,
+        value: TextOrAnnotatedEdit,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeSerializableValue(TextEdit.serializer(), value.value)
@@ -349,7 +360,10 @@ public data class TextDocumentEdit(
      * The edits to be applied.
      * Per LSP spec, each edit can be either a [TextEdit] or an [AnnotatedTextEdit].
      */
-    val edits: List<@Serializable(with = TextOrAnnotatedEditSerializer::class) TextOrAnnotatedEdit>,
+    val edits: List<
+        @Serializable(with = TextOrAnnotatedEditSerializer::class)
+        TextOrAnnotatedEdit,
+    >,
 )
 
 /**
@@ -357,9 +371,14 @@ public data class TextDocumentEdit(
  */
 @Serializable
 public enum class PositionEncodingKind {
-    @SerialName("utf-32") UTF32,
-    @SerialName("utf-16") UTF16,
-    @SerialName("utf-8") UTF8,
+    @SerialName("utf-32")
+    UTF32,
+
+    @SerialName("utf-16")
+    UTF16,
+
+    @SerialName("utf-8")
+    UTF8,
 }
 
 /**
@@ -414,11 +433,10 @@ public object NullableStringOrMarkupContentSerializer : KSerializer<Either<Strin
         }
     }
 
-    override fun deserialize(decoder: Decoder): Either<String, MarkupContent>? {
-        return if (decoder.decodeNotNullMark()) {
+    override fun deserialize(decoder: Decoder): Either<String, MarkupContent>? =
+        if (decoder.decodeNotNullMark()) {
             StringOrMarkupContentSerializer.deserialize(decoder)
         } else {
             decoder.decodeNull()
         }
-    }
 }

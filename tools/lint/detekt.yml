@@ -12,6 +12,9 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    excludes:
+    - '**/test/**'
+    - '**/*Test/**'
   LongParameterList:
     active: true
     functionThreshold: 6
@@ -21,11 +24,15 @@ complexity:
   LargeClass:
     active: true
     threshold: 600
+    excludes:
+    - '**/test/**'
+    - '**/*Test/**'
   TooManyFunctions:
     active: true
     excludes:
     - '**/dsl/**'
     - '**/test/**'
+    - '**/*Test/**'
     - '**/visitor/**'
     thresholdInFiles: 20
     thresholdInClasses: 18

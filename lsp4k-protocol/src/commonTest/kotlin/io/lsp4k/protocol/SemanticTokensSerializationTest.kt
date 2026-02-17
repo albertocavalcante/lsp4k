@@ -24,10 +24,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensLegend minimal`() {
-        val legend = SemanticTokensLegend(
-            tokenTypes = emptyList(),
-            tokenModifiers = emptyList(),
-        )
+        val legend =
+            SemanticTokensLegend(
+                tokenTypes = emptyList(),
+                tokenModifiers = emptyList(),
+            )
         val encoded = json.encodeToString(legend)
         val decoded = json.decodeFromString<SemanticTokensLegend>(encoded)
         decoded.tokenTypes shouldBe emptyList()
@@ -36,10 +37,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensLegend with types and modifiers`() {
-        val legend = SemanticTokensLegend(
-            tokenTypes = listOf("namespace", "type", "class", "enum", "interface", "struct", "typeParameter", "function"),
-            tokenModifiers = listOf("declaration", "definition", "readonly", "static", "deprecated", "abstract"),
-        )
+        val legend =
+            SemanticTokensLegend(
+                tokenTypes = listOf("namespace", "type", "class", "enum", "interface", "struct", "typeParameter", "function"),
+                tokenModifiers = listOf("declaration", "definition", "readonly", "static", "deprecated", "abstract"),
+            )
         val encoded = json.encodeToString(legend)
         val decoded = json.decodeFromString<SemanticTokensLegend>(encoded)
         decoded.tokenTypes.size shouldBe 8
@@ -48,10 +50,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensLegend round-trip`() {
-        val legend = SemanticTokensLegend(
-            tokenTypes = listOf("variable", "property", "parameter", "function"),
-            tokenModifiers = listOf("modification", "documentation"),
-        )
+        val legend =
+            SemanticTokensLegend(
+                tokenTypes = listOf("variable", "property", "parameter", "function"),
+                tokenModifiers = listOf("modification", "documentation"),
+            )
         val encoded = json.encodeToString(legend)
         val decoded = json.decodeFromString<SemanticTokensLegend>(encoded)
         decoded shouldBe legend
@@ -61,12 +64,14 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensOptions minimal`() {
-        val options = SemanticTokensOptions(
-            legend = SemanticTokensLegend(
-                tokenTypes = listOf("type"),
-                tokenModifiers = emptyList(),
-            ),
-        )
+        val options =
+            SemanticTokensOptions(
+                legend =
+                    SemanticTokensLegend(
+                        tokenTypes = listOf("type"),
+                        tokenModifiers = emptyList(),
+                    ),
+            )
         val encoded = json.encodeToString(options)
         encoded shouldContain "\"legend\""
         encoded shouldContain "\"tokenTypes\""
@@ -74,13 +79,15 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensOptions with range`() {
-        val options = SemanticTokensOptions(
-            legend = SemanticTokensLegend(
-                tokenTypes = listOf("class"),
-                tokenModifiers = listOf("declaration"),
-            ),
-            range = true,
-        )
+        val options =
+            SemanticTokensOptions(
+                legend =
+                    SemanticTokensLegend(
+                        tokenTypes = listOf("class"),
+                        tokenModifiers = listOf("declaration"),
+                    ),
+                range = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)
         decoded.range shouldBe true
@@ -88,14 +95,16 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensOptions with full and delta`() {
-        val options = SemanticTokensOptions(
-            legend = SemanticTokensLegend(
-                tokenTypes = listOf("function", "variable"),
-                tokenModifiers = listOf("readonly"),
-            ),
-            range = true,
-            full = SemanticTokensFullOptions(delta = true),
-        )
+        val options =
+            SemanticTokensOptions(
+                legend =
+                    SemanticTokensLegend(
+                        tokenTypes = listOf("function", "variable"),
+                        tokenModifiers = listOf("readonly"),
+                    ),
+                range = true,
+                full = SemanticTokensFullOptions(delta = true),
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)
         decoded.full?.delta shouldBe true
@@ -103,14 +112,16 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensOptions round-trip`() {
-        val options = SemanticTokensOptions(
-            legend = SemanticTokensLegend(
-                tokenTypes = listOf("namespace", "type", "class"),
-                tokenModifiers = listOf("definition", "static"),
-            ),
-            range = true,
-            full = SemanticTokensFullOptions(delta = true),
-        )
+        val options =
+            SemanticTokensOptions(
+                legend =
+                    SemanticTokensLegend(
+                        tokenTypes = listOf("namespace", "type", "class"),
+                        tokenModifiers = listOf("definition", "static"),
+                    ),
+                range = true,
+                full = SemanticTokensFullOptions(delta = true),
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)
         decoded shouldBe options
@@ -120,18 +131,20 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensParams serialization`() {
-        val params = SemanticTokensParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-        )
+        val params =
+            SemanticTokensParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"uri\":\"file:///test.kt\""
     }
 
     @Test
     fun `SemanticTokensParams round-trip`() {
-        val params = SemanticTokensParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
-        )
+        val params =
+            SemanticTokensParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<SemanticTokensParams>(encoded)
         decoded shouldBe params
@@ -141,20 +154,22 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensDeltaParams serialization`() {
-        val params = SemanticTokensDeltaParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///delta.kt"),
-            previousResultId = "result-123",
-        )
+        val params =
+            SemanticTokensDeltaParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///delta.kt"),
+                previousResultId = "result-123",
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"previousResultId\":\"result-123\""
     }
 
     @Test
     fun `SemanticTokensDeltaParams round-trip`() {
-        val params = SemanticTokensDeltaParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///code.kt"),
-            previousResultId = "abc-def-ghi",
-        )
+        val params =
+            SemanticTokensDeltaParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///code.kt"),
+                previousResultId = "abc-def-ghi",
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<SemanticTokensDeltaParams>(encoded)
         decoded shouldBe params
@@ -164,13 +179,15 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensRangeParams serialization`() {
-        val params = SemanticTokensRangeParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///range.kt"),
-            range = Range(
-                start = Position(line = 10, character = 0),
-                end = Position(line = 50, character = 0),
-            ),
-        )
+        val params =
+            SemanticTokensRangeParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///range.kt"),
+                range =
+                    Range(
+                        start = Position(line = 10, character = 0),
+                        end = Position(line = 50, character = 0),
+                    ),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"range\""
         encoded shouldContain "\"start\""
@@ -179,13 +196,15 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensRangeParams round-trip`() {
-        val params = SemanticTokensRangeParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-            range = Range(
-                start = Position(line = 0, character = 0),
-                end = Position(line = 100, character = 50),
-            ),
-        )
+        val params =
+            SemanticTokensRangeParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+                range =
+                    Range(
+                        start = Position(line = 0, character = 0),
+                        end = Position(line = 100, character = 50),
+                    ),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<SemanticTokensRangeParams>(encoded)
         decoded shouldBe params
@@ -195,9 +214,10 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokens empty data`() {
-        val tokens = SemanticTokens(
-            data = emptyList(),
-        )
+        val tokens =
+            SemanticTokens(
+                data = emptyList(),
+            )
         val encoded = json.encodeToString(tokens)
         val decoded = json.decodeFromString<SemanticTokens>(encoded)
         decoded.data shouldBe emptyList()
@@ -207,9 +227,10 @@ class SemanticTokensSerializationTest {
     @Test
     fun `SemanticTokens with data`() {
         // Semantic tokens are encoded as: [deltaLine, deltaStartChar, length, tokenType, tokenModifiers]
-        val tokens = SemanticTokens(
-            data = listOf(0, 0, 3, 1, 0, 0, 4, 4, 2, 0, 1, 0, 5, 3, 1),
-        )
+        val tokens =
+            SemanticTokens(
+                data = listOf(0, 0, 3, 1, 0, 0, 4, 4, 2, 0, 1, 0, 5, 3, 1),
+            )
         val encoded = json.encodeToString(tokens)
         val decoded = json.decodeFromString<SemanticTokens>(encoded)
         decoded.data.size shouldBe 15
@@ -217,10 +238,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokens with result id`() {
-        val tokens = SemanticTokens(
-            resultId = "result-456",
-            data = listOf(0, 5, 10, 1, 0),
-        )
+        val tokens =
+            SemanticTokens(
+                resultId = "result-456",
+                data = listOf(0, 5, 10, 1, 0),
+            )
         val encoded = json.encodeToString(tokens)
         val decoded = json.decodeFromString<SemanticTokens>(encoded)
         decoded.resultId shouldBe "result-456"
@@ -228,10 +250,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokens round-trip`() {
-        val tokens = SemanticTokens(
-            resultId = "token-id-abc",
-            data = listOf(0, 0, 8, 0, 3, 1, 0, 12, 1, 0),
-        )
+        val tokens =
+            SemanticTokens(
+                resultId = "token-id-abc",
+                data = listOf(0, 0, 8, 0, 3, 1, 0, 12, 1, 0),
+            )
         val encoded = json.encodeToString(tokens)
         val decoded = json.decodeFromString<SemanticTokens>(encoded)
         decoded shouldBe tokens
@@ -241,10 +264,11 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensEdit delete only`() {
-        val edit = SemanticTokensEdit(
-            start = 10,
-            deleteCount = 5,
-        )
+        val edit =
+            SemanticTokensEdit(
+                start = 10,
+                deleteCount = 5,
+            )
         val encoded = json.encodeToString(edit)
         val decoded = json.decodeFromString<SemanticTokensEdit>(encoded)
         decoded.start shouldBe 10
@@ -254,11 +278,12 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensEdit insert only`() {
-        val edit = SemanticTokensEdit(
-            start = 5,
-            deleteCount = 0,
-            data = listOf(0, 0, 4, 1, 0),
-        )
+        val edit =
+            SemanticTokensEdit(
+                start = 5,
+                deleteCount = 0,
+                data = listOf(0, 0, 4, 1, 0),
+            )
         val encoded = json.encodeToString(edit)
         val decoded = json.decodeFromString<SemanticTokensEdit>(encoded)
         decoded.deleteCount shouldBe 0
@@ -267,11 +292,12 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensEdit replace`() {
-        val edit = SemanticTokensEdit(
-            start = 15,
-            deleteCount = 5,
-            data = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-        )
+        val edit =
+            SemanticTokensEdit(
+                start = 15,
+                deleteCount = 5,
+                data = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+            )
         val encoded = json.encodeToString(edit)
         val decoded = json.decodeFromString<SemanticTokensEdit>(encoded)
         decoded.start shouldBe 15
@@ -281,11 +307,12 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensEdit round-trip`() {
-        val edit = SemanticTokensEdit(
-            start = 0,
-            deleteCount = 10,
-            data = listOf(0, 0, 5, 2, 1),
-        )
+        val edit =
+            SemanticTokensEdit(
+                start = 0,
+                deleteCount = 10,
+                data = listOf(0, 0, 5, 2, 1),
+            )
         val encoded = json.encodeToString(edit)
         val decoded = json.decodeFromString<SemanticTokensEdit>(encoded)
         decoded shouldBe edit
@@ -295,9 +322,10 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensDelta empty edits`() {
-        val delta = SemanticTokensDelta(
-            edits = emptyList(),
-        )
+        val delta =
+            SemanticTokensDelta(
+                edits = emptyList(),
+            )
         val encoded = json.encodeToString(delta)
         val decoded = json.decodeFromString<SemanticTokensDelta>(encoded)
         decoded.edits shouldBe emptyList()
@@ -306,13 +334,15 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensDelta with edits`() {
-        val delta = SemanticTokensDelta(
-            resultId = "delta-result-1",
-            edits = listOf(
-                SemanticTokensEdit(start = 0, deleteCount = 5),
-                SemanticTokensEdit(start = 10, deleteCount = 0, data = listOf(1, 2, 3, 4, 5)),
-            ),
-        )
+        val delta =
+            SemanticTokensDelta(
+                resultId = "delta-result-1",
+                edits =
+                    listOf(
+                        SemanticTokensEdit(start = 0, deleteCount = 5),
+                        SemanticTokensEdit(start = 10, deleteCount = 0, data = listOf(1, 2, 3, 4, 5)),
+                    ),
+            )
         val encoded = json.encodeToString(delta)
         val decoded = json.decodeFromString<SemanticTokensDelta>(encoded)
         decoded.resultId shouldBe "delta-result-1"
@@ -321,12 +351,14 @@ class SemanticTokensSerializationTest {
 
     @Test
     fun `SemanticTokensDelta round-trip`() {
-        val delta = SemanticTokensDelta(
-            resultId = "delta-abc",
-            edits = listOf(
-                SemanticTokensEdit(start = 5, deleteCount = 10, data = listOf(0, 1, 2, 3, 4)),
-            ),
-        )
+        val delta =
+            SemanticTokensDelta(
+                resultId = "delta-abc",
+                edits =
+                    listOf(
+                        SemanticTokensEdit(start = 5, deleteCount = 10, data = listOf(0, 1, 2, 3, 4)),
+                    ),
+            )
         val encoded = json.encodeToString(delta)
         val decoded = json.decodeFromString<SemanticTokensDelta>(encoded)
         decoded shouldBe delta

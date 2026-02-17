@@ -168,15 +168,17 @@ public class Dispatcher(
      * Cancel a pending request.
      */
     public suspend fun cancelPendingRequest(id: RequestId) {
-        mutex.withLock {
-            pendingRequests.remove(id)
-        }?.cancel()
+        mutex
+            .withLock {
+                pendingRequests.remove(id)
+            }?.cancel()
     }
 
     private suspend fun handleRequest(request: RequestMessage): ResponseMessage {
-        val handler = mutex.withLock {
-            requestHandlers[request.method]
-        } ?: return ResponseMessage.error(request.id, ResponseError.methodNotFound(request.method))
+        val handler =
+            mutex.withLock {
+                requestHandlers[request.method]
+            } ?: return ResponseMessage.error(request.id, ResponseError.methodNotFound(request.method))
 
         return try {
             val result = handler.handle(request.params)
@@ -200,9 +202,10 @@ public class Dispatcher(
             handleCancelRequest(notification.params)
             return
         }
-        val handler = mutex.withLock {
-            notificationHandlers[notification.method]
-        } ?: return
+        val handler =
+            mutex.withLock {
+                notificationHandlers[notification.method]
+            } ?: return
         try {
             handler.handle(notification.params)
         } catch (e: CancellationException) {
@@ -216,13 +219,14 @@ public class Dispatcher(
         if (params == null) return
         try {
             val idElement = (params as? JsonObject)?.get("id") ?: return
-            val requestId = when {
-                idElement is JsonPrimitive && idElement.isString ->
-                    RequestId.of(idElement.content)
-                idElement is JsonPrimitive ->
-                    RequestId.of(idElement.long)
-                else -> return
-            }
+            val requestId =
+                when {
+                    idElement is JsonPrimitive && idElement.isString ->
+                        RequestId.of(idElement.content)
+                    idElement is JsonPrimitive ->
+                        RequestId.of(idElement.long)
+                    else -> return
+                }
             cancelPendingRequest(requestId)
         } catch (_: Exception) {
             // Ignore malformed cancel requests
@@ -231,9 +235,10 @@ public class Dispatcher(
 
     private suspend fun handleResponse(response: ResponseMessage) {
         val id = response.id ?: return
-        val deferred = mutex.withLock {
-            pendingRequests.remove(id)
-        } ?: return
+        val deferred =
+            mutex.withLock {
+                pendingRequests.remove(id)
+            } ?: return
 
         if (response.error != null) {
             deferred.completeExceptionally(

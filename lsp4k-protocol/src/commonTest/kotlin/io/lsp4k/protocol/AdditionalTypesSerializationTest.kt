@@ -25,13 +25,14 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchyItem minimal`() {
-        val item = TypeHierarchyItem(
-            name = "MyClass",
-            kind = SymbolKind.Class,
-            uri = "file:///test.kt",
-            range = Range(Position(10, 0), Position(50, 0)),
-            selectionRange = Range(Position(10, 6), Position(10, 13)),
-        )
+        val item =
+            TypeHierarchyItem(
+                name = "MyClass",
+                kind = SymbolKind.Class,
+                uri = "file:///test.kt",
+                range = Range(Position(10, 0), Position(50, 0)),
+                selectionRange = Range(Position(10, 6), Position(10, 13)),
+            )
         val encoded = json.encodeToString(item)
         encoded shouldContain "\"name\":\"MyClass\""
         encoded shouldContain "\"kind\":5"
@@ -39,16 +40,17 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchyItem full`() {
-        val item = TypeHierarchyItem(
-            name = "BaseClass",
-            kind = SymbolKind.Class,
-            tags = listOf(SymbolTag.Deprecated),
-            detail = "abstract class BaseClass",
-            uri = "file:///src/Base.kt",
-            range = Range(Position(5, 0), Position(100, 0)),
-            selectionRange = Range(Position(5, 15), Position(5, 24)),
-            data = JsonPrimitive("type-data"),
-        )
+        val item =
+            TypeHierarchyItem(
+                name = "BaseClass",
+                kind = SymbolKind.Class,
+                tags = listOf(SymbolTag.Deprecated),
+                detail = "abstract class BaseClass",
+                uri = "file:///src/Base.kt",
+                range = Range(Position(5, 0), Position(100, 0)),
+                selectionRange = Range(Position(5, 15), Position(5, 24)),
+                data = JsonPrimitive("type-data"),
+            )
         val encoded = json.encodeToString(item)
         val decoded = json.decodeFromString<TypeHierarchyItem>(encoded)
         decoded.tags shouldBe listOf(SymbolTag.Deprecated)
@@ -58,13 +60,14 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchyItem round-trip`() {
-        val item = TypeHierarchyItem(
-            name = "Interface",
-            kind = SymbolKind.Interface,
-            uri = "file:///api.kt",
-            range = Range(Position(0, 0), Position(20, 0)),
-            selectionRange = Range(Position(0, 10), Position(0, 19)),
-        )
+        val item =
+            TypeHierarchyItem(
+                name = "Interface",
+                kind = SymbolKind.Interface,
+                uri = "file:///api.kt",
+                range = Range(Position(0, 0), Position(20, 0)),
+                selectionRange = Range(Position(0, 10), Position(0, 19)),
+            )
         val encoded = json.encodeToString(item)
         val decoded = json.decodeFromString<TypeHierarchyItem>(encoded)
         decoded shouldBe item
@@ -74,20 +77,22 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchyPrepareParams serialization`() {
-        val params = TypeHierarchyPrepareParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///types.kt"),
-            position = Position(line = 15, character = 8),
-        )
+        val params =
+            TypeHierarchyPrepareParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///types.kt"),
+                position = Position(line = 15, character = 8),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"uri\":\"file:///types.kt\""
     }
 
     @Test
     fun `TypeHierarchyPrepareParams round-trip`() {
-        val params = TypeHierarchyPrepareParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///src/Model.kt"),
-            position = Position(line = 25, character = 12),
-        )
+        val params =
+            TypeHierarchyPrepareParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///src/Model.kt"),
+                position = Position(line = 25, character = 12),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<TypeHierarchyPrepareParams>(encoded)
         decoded shouldBe params
@@ -97,13 +102,14 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchySupertypesParams serialization`() {
-        val item = TypeHierarchyItem(
-            name = "Child",
-            kind = SymbolKind.Class,
-            uri = "file:///child.kt",
-            range = Range(Position(10, 0), Position(30, 0)),
-            selectionRange = Range(Position(10, 6), Position(10, 11)),
-        )
+        val item =
+            TypeHierarchyItem(
+                name = "Child",
+                kind = SymbolKind.Class,
+                uri = "file:///child.kt",
+                range = Range(Position(10, 0), Position(30, 0)),
+                selectionRange = Range(Position(10, 6), Position(10, 11)),
+            )
         val params = TypeHierarchySupertypesParams(item = item)
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"item\""
@@ -113,13 +119,14 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `TypeHierarchySubtypesParams serialization`() {
-        val item = TypeHierarchyItem(
-            name = "Parent",
-            kind = SymbolKind.Class,
-            uri = "file:///parent.kt",
-            range = Range(Position(5, 0), Position(50, 0)),
-            selectionRange = Range(Position(5, 6), Position(5, 12)),
-        )
+        val item =
+            TypeHierarchyItem(
+                name = "Parent",
+                kind = SymbolKind.Class,
+                uri = "file:///parent.kt",
+                range = Range(Position(5, 0), Position(50, 0)),
+                selectionRange = Range(Position(5, 6), Position(5, 12)),
+            )
         val params = TypeHierarchySubtypesParams(item = item)
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"item\""
@@ -129,23 +136,27 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `NotebookDocumentSyncOptions minimal`() {
-        val options = NotebookDocumentSyncOptions(
-            notebookSelector = listOf(
-                NotebookSelector(notebook = Either.Left("jupyter-notebook")),
-            ),
-        )
+        val options =
+            NotebookDocumentSyncOptions(
+                notebookSelector =
+                    listOf(
+                        NotebookSelector(notebook = Either.Left("jupyter-notebook")),
+                    ),
+            )
         val encoded = json.encodeToString(options)
         encoded shouldContain "\"notebookSelector\""
     }
 
     @Test
     fun `NotebookDocumentSyncOptions with save`() {
-        val options = NotebookDocumentSyncOptions(
-            notebookSelector = listOf(
-                NotebookSelector(notebook = Either.Left("*")),
-            ),
-            save = true,
-        )
+        val options =
+            NotebookDocumentSyncOptions(
+                notebookSelector =
+                    listOf(
+                        NotebookSelector(notebook = Either.Left("*")),
+                    ),
+                save = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<NotebookDocumentSyncOptions>(encoded)
         decoded.save shouldBe true
@@ -162,9 +173,10 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `NotebookSelector with notebook type`() {
-        val selector = NotebookSelector(
-            notebook = Either.Left("jupyter-notebook"),
-        )
+        val selector =
+            NotebookSelector(
+                notebook = Either.Left("jupyter-notebook"),
+            )
         val encoded = json.encodeToString(selector)
         val decoded = json.decodeFromString<NotebookSelector>(encoded)
         decoded.notebook shouldBe Either.Left("jupyter-notebook")
@@ -172,13 +184,15 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `NotebookSelector with cells`() {
-        val selector = NotebookSelector(
-            notebook = Either.Left("jupyter-notebook"),
-            cells = listOf(
-                NotebookCellSelector(language = "python"),
-                NotebookCellSelector(language = "markdown"),
-            ),
-        )
+        val selector =
+            NotebookSelector(
+                notebook = Either.Left("jupyter-notebook"),
+                cells =
+                    listOf(
+                        NotebookCellSelector(language = "python"),
+                        NotebookCellSelector(language = "markdown"),
+                    ),
+            )
         val encoded = json.encodeToString(selector)
         val decoded = json.decodeFromString<NotebookSelector>(encoded)
         decoded.cells?.size shouldBe 2
@@ -188,10 +202,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DiagnosticOptions minimal`() {
-        val options = DiagnosticOptions(
-            interFileDependencies = true,
-            workspaceDiagnostics = false,
-        )
+        val options =
+            DiagnosticOptions(
+                interFileDependencies = true,
+                workspaceDiagnostics = false,
+            )
         val encoded = json.encodeToString(options)
         encoded shouldContain "\"interFileDependencies\":true"
         encoded shouldContain "\"workspaceDiagnostics\":false"
@@ -199,11 +214,12 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DiagnosticOptions with identifier`() {
-        val options = DiagnosticOptions(
-            identifier = "my-diagnostic-provider",
-            interFileDependencies = false,
-            workspaceDiagnostics = true,
-        )
+        val options =
+            DiagnosticOptions(
+                identifier = "my-diagnostic-provider",
+                interFileDependencies = false,
+                workspaceDiagnostics = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<DiagnosticOptions>(encoded)
         decoded.identifier shouldBe "my-diagnostic-provider"
@@ -211,11 +227,12 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DiagnosticOptions round-trip`() {
-        val options = DiagnosticOptions(
-            identifier = "lsp4k",
-            interFileDependencies = true,
-            workspaceDiagnostics = true,
-        )
+        val options =
+            DiagnosticOptions(
+                identifier = "lsp4k",
+                interFileDependencies = true,
+                workspaceDiagnostics = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<DiagnosticOptions>(encoded)
         decoded shouldBe options
@@ -232,18 +249,20 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `FileOperationOptions with all fields`() {
-        val filter = FileOperationFilter(
-            pattern = FileOperationPattern(glob = "**/*.kt"),
-        )
+        val filter =
+            FileOperationFilter(
+                pattern = FileOperationPattern(glob = "**/*.kt"),
+            )
         val registration = FileOperationRegistrationOptions(filters = listOf(filter))
-        val options = FileOperationOptions(
-            didCreate = registration,
-            willCreate = registration,
-            didRename = registration,
-            willRename = registration,
-            didDelete = registration,
-            willDelete = registration,
-        )
+        val options =
+            FileOperationOptions(
+                didCreate = registration,
+                willCreate = registration,
+                didRename = registration,
+                willRename = registration,
+                didDelete = registration,
+                willDelete = registration,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<FileOperationOptions>(encoded)
         decoded.didCreate shouldBe registration
@@ -254,19 +273,21 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `FileOperationFilter minimal`() {
-        val filter = FileOperationFilter(
-            pattern = FileOperationPattern(glob = "*.kt"),
-        )
+        val filter =
+            FileOperationFilter(
+                pattern = FileOperationPattern(glob = "*.kt"),
+            )
         val encoded = json.encodeToString(filter)
         encoded shouldContain "\"glob\":\"*.kt\""
     }
 
     @Test
     fun `FileOperationFilter with scheme`() {
-        val filter = FileOperationFilter(
-            scheme = "file",
-            pattern = FileOperationPattern(glob = "**/*.java"),
-        )
+        val filter =
+            FileOperationFilter(
+                scheme = "file",
+                pattern = FileOperationPattern(glob = "**/*.java"),
+            )
         val encoded = json.encodeToString(filter)
         val decoded = json.decodeFromString<FileOperationFilter>(encoded)
         decoded.scheme shouldBe "file"
@@ -283,11 +304,12 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `FileOperationPattern with matches and options`() {
-        val pattern = FileOperationPattern(
-            glob = "**/build/**",
-            matches = FileOperationPatternKind.Folder,
-            options = FileOperationPatternOptions(ignoreCase = true),
-        )
+        val pattern =
+            FileOperationPattern(
+                glob = "**/build/**",
+                matches = FileOperationPatternKind.Folder,
+                options = FileOperationPatternOptions(ignoreCase = true),
+            )
         val encoded = json.encodeToString(pattern)
         val decoded = json.decodeFromString<FileOperationPattern>(encoded)
         decoded.matches shouldBe FileOperationPatternKind.Folder
@@ -298,11 +320,12 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `CodeActionOptions serialization`() {
-        val options = CodeActionOptions(
-            codeActionKinds = listOf(CodeActionKind.QuickFix, CodeActionKind.Refactor),
-            resolveProvider = true,
-            workDoneProgress = true,
-        )
+        val options =
+            CodeActionOptions(
+                codeActionKinds = listOf(CodeActionKind.QUICK_FIX, CodeActionKind.REFACTOR),
+                resolveProvider = true,
+                workDoneProgress = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<CodeActionOptions>(encoded)
         decoded.codeActionKinds?.size shouldBe 2
@@ -311,10 +334,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `RenameOptions serialization`() {
-        val options = RenameOptions(
-            prepareProvider = true,
-            workDoneProgress = true,
-        )
+        val options =
+            RenameOptions(
+                prepareProvider = true,
+                workDoneProgress = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<RenameOptions>(encoded)
         decoded.prepareProvider shouldBe true
@@ -322,10 +346,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DocumentSymbolOptions serialization`() {
-        val options = DocumentSymbolOptions(
-            label = "Document Symbols",
-            workDoneProgress = true,
-        )
+        val options =
+            DocumentSymbolOptions(
+                label = "Document Symbols",
+                workDoneProgress = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<DocumentSymbolOptions>(encoded)
         decoded.label shouldBe "Document Symbols"
@@ -333,10 +358,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `WorkspaceSymbolOptions serialization`() {
-        val options = WorkspaceSymbolOptions(
-            resolveProvider = true,
-            workDoneProgress = true,
-        )
+        val options =
+            WorkspaceSymbolOptions(
+                resolveProvider = true,
+                workDoneProgress = true,
+            )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<WorkspaceSymbolOptions>(encoded)
         decoded.resolveProvider shouldBe true
@@ -346,10 +372,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DocumentLinkClientCapabilities serialization`() {
-        val caps = DocumentLinkClientCapabilities(
-            dynamicRegistration = true,
-            tooltipSupport = true,
-        )
+        val caps =
+            DocumentLinkClientCapabilities(
+                dynamicRegistration = true,
+                tooltipSupport = true,
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<DocumentLinkClientCapabilities>(encoded)
         decoded.tooltipSupport shouldBe true
@@ -357,10 +384,11 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `DocumentRangeFormattingClientCapabilities serialization`() {
-        val caps = DocumentRangeFormattingClientCapabilities(
-            dynamicRegistration = true,
-            rangesSupport = true,
-        )
+        val caps =
+            DocumentRangeFormattingClientCapabilities(
+                dynamicRegistration = true,
+                rangesSupport = true,
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<DocumentRangeFormattingClientCapabilities>(encoded)
         decoded.rangesSupport shouldBe true
@@ -368,9 +396,10 @@ class AdditionalTypesSerializationTest {
 
     @Test
     fun `CallHierarchyClientCapabilities serialization`() {
-        val caps = CallHierarchyClientCapabilities(
-            dynamicRegistration = true,
-        )
+        val caps =
+            CallHierarchyClientCapabilities(
+                dynamicRegistration = true,
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<CallHierarchyClientCapabilities>(encoded)
         decoded.dynamicRegistration shouldBe true

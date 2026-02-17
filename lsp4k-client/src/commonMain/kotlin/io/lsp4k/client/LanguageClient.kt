@@ -115,8 +115,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.serializer
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.serializer
 
 /**
  * Builder for configuring a language client.
@@ -151,10 +151,11 @@ public class LanguageClientBuilder {
         method: String,
         crossinline extract: suspend (P) -> Unit,
     ) {
-        notificationHandlers[method] = NotificationHandler { params ->
-            val typed = params?.let { json.decodeFromJsonElement(serializer<P>(), it) }
-            if (typed != null) extract(typed)
-        }
+        notificationHandlers[method] =
+            NotificationHandler { params ->
+                val typed = params?.let { json.decodeFromJsonElement(serializer<P>(), it) }
+                if (typed != null) extract(typed)
+            }
     }
 
     private inline fun <reified P, reified R> handleRequest(
@@ -163,12 +164,14 @@ public class LanguageClientBuilder {
     ) {
         val paramSer = serializer<P>()
         val resultSer = serializer<R>()
-        requestHandlers[method] = RequestHandler { params ->
-            val typed = params?.let { json.decodeFromJsonElement(paramSer, it) }
-                ?: throw LspException.invalidParams("Missing params for $method")
-            val result = handler(typed)
-            result?.let { json.encodeToJsonElement(resultSer, it) }
-        }
+        requestHandlers[method] =
+            RequestHandler { params ->
+                val typed =
+                    params?.let { json.decodeFromJsonElement(paramSer, it) }
+                        ?: throw LspException.invalidParams("Missing params for $method")
+                val result = handler(typed)
+                result?.let { json.encodeToJsonElement(resultSer, it) }
+            }
     }
 
     /**
@@ -380,6 +383,7 @@ public class LanguageClientSession internal constructor(
 /**
  * Proxy for sending requests and notifications to the language server.
  */
+@Suppress("TooManyFunctions")
 public class ServerProxy internal constructor(
     private val connection: Connection,
 ) {
@@ -408,38 +412,32 @@ public class ServerProxy internal constructor(
     /**
      * Request completion at a given text document position.
      */
-    public suspend fun completion(params: CompletionParams): CompletionList? =
-        request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
+    public suspend fun completion(params: CompletionParams): CompletionList? = request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
 
     /**
      * Resolve additional information for a given completion item.
      */
-    public suspend fun completionResolve(item: CompletionItem): CompletionItem? =
-        request(LspMethods.COMPLETION_ITEM_RESOLVE, item)
+    public suspend fun completionResolve(item: CompletionItem): CompletionItem? = request(LspMethods.COMPLETION_ITEM_RESOLVE, item)
 
     /**
      * Request hover information at a given text document position.
      */
-    public suspend fun hover(params: HoverParams): Hover? =
-        request(LspMethods.TEXT_DOCUMENT_HOVER, params)
+    public suspend fun hover(params: HoverParams): Hover? = request(LspMethods.TEXT_DOCUMENT_HOVER, params)
 
     /**
      * Request signature help at a given text document position.
      */
-    public suspend fun signatureHelp(params: SignatureHelpParams): SignatureHelp? =
-        request(LspMethods.TEXT_DOCUMENT_SIGNATURE_HELP, params)
+    public suspend fun signatureHelp(params: SignatureHelpParams): SignatureHelp? = request(LspMethods.TEXT_DOCUMENT_SIGNATURE_HELP, params)
 
     /**
      * Request the declaration of a symbol at a given text document position.
      */
-    public suspend fun declaration(params: DeclarationParams): List<Location>? =
-        request(LspMethods.TEXT_DOCUMENT_DECLARATION, params)
+    public suspend fun declaration(params: DeclarationParams): List<Location>? = request(LspMethods.TEXT_DOCUMENT_DECLARATION, params)
 
     /**
      * Request the definition of a symbol at a given text document position.
      */
-    public suspend fun definition(params: DefinitionParams): List<Location>? =
-        request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
+    public suspend fun definition(params: DefinitionParams): List<Location>? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
 
     /**
      * Request the type definition of a symbol at a given text document position.
@@ -456,8 +454,7 @@ public class ServerProxy internal constructor(
     /**
      * Request references to a symbol at a given text document position.
      */
-    public suspend fun references(params: ReferenceParams): List<Location>? =
-        request(LspMethods.TEXT_DOCUMENT_REFERENCES, params)
+    public suspend fun references(params: ReferenceParams): List<Location>? = request(LspMethods.TEXT_DOCUMENT_REFERENCES, params)
 
     /**
      * Request document highlights at a given text document position.
@@ -474,26 +471,22 @@ public class ServerProxy internal constructor(
     /**
      * Request code actions for a given text document and range.
      */
-    public suspend fun codeAction(params: CodeActionParams): List<CodeAction>? =
-        request(LspMethods.TEXT_DOCUMENT_CODE_ACTION, params)
+    public suspend fun codeAction(params: CodeActionParams): List<CodeAction>? = request(LspMethods.TEXT_DOCUMENT_CODE_ACTION, params)
 
     /**
      * Resolve additional information for a given code action.
      */
-    public suspend fun codeActionResolve(codeAction: CodeAction): CodeAction? =
-        request(LspMethods.CODE_ACTION_RESOLVE, codeAction)
+    public suspend fun codeActionResolve(codeAction: CodeAction): CodeAction? = request(LspMethods.CODE_ACTION_RESOLVE, codeAction)
 
     /**
      * Request code lenses for a given text document.
      */
-    public suspend fun codeLens(params: CodeLensParams): List<CodeLens>? =
-        request(LspMethods.TEXT_DOCUMENT_CODE_LENS, params)
+    public suspend fun codeLens(params: CodeLensParams): List<CodeLens>? = request(LspMethods.TEXT_DOCUMENT_CODE_LENS, params)
 
     /**
      * Resolve additional information for a given code lens.
      */
-    public suspend fun codeLensResolve(codeLens: CodeLens): CodeLens? =
-        request(LspMethods.CODE_LENS_RESOLVE, codeLens)
+    public suspend fun codeLensResolve(codeLens: CodeLens): CodeLens? = request(LspMethods.CODE_LENS_RESOLVE, codeLens)
 
     /**
      * Request document links for a given text document.
@@ -504,8 +497,7 @@ public class ServerProxy internal constructor(
     /**
      * Resolve additional information for a given document link.
      */
-    public suspend fun documentLinkResolve(link: DocumentLink): DocumentLink? =
-        request(LspMethods.DOCUMENT_LINK_RESOLVE, link)
+    public suspend fun documentLinkResolve(link: DocumentLink): DocumentLink? = request(LspMethods.DOCUMENT_LINK_RESOLVE, link)
 
     /**
      * Request document colors for a given text document.
@@ -522,8 +514,7 @@ public class ServerProxy internal constructor(
     /**
      * Request formatting for a whole document.
      */
-    public suspend fun formatting(params: DocumentFormattingParams): List<TextEdit>? =
-        request(LspMethods.TEXT_DOCUMENT_FORMATTING, params)
+    public suspend fun formatting(params: DocumentFormattingParams): List<TextEdit>? = request(LspMethods.TEXT_DOCUMENT_FORMATTING, params)
 
     /**
      * Request formatting for a range in a document.
@@ -540,8 +531,7 @@ public class ServerProxy internal constructor(
     /**
      * Request a rename of a symbol.
      */
-    public suspend fun rename(params: RenameParams): WorkspaceEdit? =
-        request(LspMethods.TEXT_DOCUMENT_RENAME, params)
+    public suspend fun rename(params: RenameParams): WorkspaceEdit? = request(LspMethods.TEXT_DOCUMENT_RENAME, params)
 
     /**
      * Request to prepare a rename.
@@ -588,14 +578,12 @@ public class ServerProxy internal constructor(
     /**
      * Request inlay hints for a given text document range.
      */
-    public suspend fun inlayHint(params: InlayHintParams): List<InlayHint>? =
-        request(LspMethods.TEXT_DOCUMENT_INLAY_HINT, params)
+    public suspend fun inlayHint(params: InlayHintParams): List<InlayHint>? = request(LspMethods.TEXT_DOCUMENT_INLAY_HINT, params)
 
     /**
      * Resolve additional information for a given inlay hint.
      */
-    public suspend fun inlayHintResolve(hint: InlayHint): InlayHint? =
-        request(LspMethods.INLAY_HINT_RESOLVE, hint)
+    public suspend fun inlayHintResolve(hint: InlayHint): InlayHint? = request(LspMethods.INLAY_HINT_RESOLVE, hint)
 
     // ===== Call Hierarchy =====
 
@@ -649,15 +637,13 @@ public class ServerProxy internal constructor(
     /**
      * Request monikers for a given text document position.
      */
-    public suspend fun moniker(params: MonikerParams): List<Moniker>? =
-        request(LspMethods.TEXT_DOCUMENT_MONIKER, params)
+    public suspend fun moniker(params: MonikerParams): List<Moniker>? = request(LspMethods.TEXT_DOCUMENT_MONIKER, params)
 
     /**
      * Request inline values for a given text document.
      * @since 3.17.0
      */
-    public suspend fun inlineValue(params: InlineValueParams): List<InlineValue>? =
-        request(LspMethods.TEXT_DOCUMENT_INLINE_VALUE, params)
+    public suspend fun inlineValue(params: InlineValueParams): List<InlineValue>? = request(LspMethods.TEXT_DOCUMENT_INLINE_VALUE, params)
 
     /**
      * Request inline completions for a given text document position.
@@ -684,8 +670,7 @@ public class ServerProxy internal constructor(
     /**
      * Request workspace symbols matching a query.
      */
-    public suspend fun symbol(params: WorkspaceSymbolParams): List<WorkspaceSymbol>? =
-        request(LspMethods.WORKSPACE_SYMBOL, params)
+    public suspend fun symbol(params: WorkspaceSymbolParams): List<WorkspaceSymbol>? = request(LspMethods.WORKSPACE_SYMBOL, params)
 
     /**
      * Resolve additional information for a workspace symbol.
@@ -713,32 +698,27 @@ public class ServerProxy internal constructor(
     /**
      * Notify the server that a text document was opened.
      */
-    public suspend fun didOpen(params: DidOpenTextDocumentParams): Unit =
-        notify(LspMethods.TEXT_DOCUMENT_DID_OPEN, params)
+    public suspend fun didOpen(params: DidOpenTextDocumentParams): Unit = notify(LspMethods.TEXT_DOCUMENT_DID_OPEN, params)
 
     /**
      * Notify the server that a text document was closed.
      */
-    public suspend fun didClose(params: DidCloseTextDocumentParams): Unit =
-        notify(LspMethods.TEXT_DOCUMENT_DID_CLOSE, params)
+    public suspend fun didClose(params: DidCloseTextDocumentParams): Unit = notify(LspMethods.TEXT_DOCUMENT_DID_CLOSE, params)
 
     /**
      * Notify the server that a text document was changed.
      */
-    public suspend fun didChange(params: DidChangeTextDocumentParams): Unit =
-        notify(LspMethods.TEXT_DOCUMENT_DID_CHANGE, params)
+    public suspend fun didChange(params: DidChangeTextDocumentParams): Unit = notify(LspMethods.TEXT_DOCUMENT_DID_CHANGE, params)
 
     /**
      * Notify the server that a text document was saved.
      */
-    public suspend fun didSave(params: DidSaveTextDocumentParams): Unit =
-        notify(LspMethods.TEXT_DOCUMENT_DID_SAVE, params)
+    public suspend fun didSave(params: DidSaveTextDocumentParams): Unit = notify(LspMethods.TEXT_DOCUMENT_DID_SAVE, params)
 
     /**
      * Notify the server that a text document will be saved.
      */
-    public suspend fun willSave(params: WillSaveTextDocumentParams): Unit =
-        notify(LspMethods.TEXT_DOCUMENT_WILL_SAVE, params)
+    public suspend fun willSave(params: WillSaveTextDocumentParams): Unit = notify(LspMethods.TEXT_DOCUMENT_WILL_SAVE, params)
 
     /**
      * Notify the server that the configuration has changed.
@@ -763,8 +743,7 @@ public class ServerProxy internal constructor(
     /**
      * Notify the server that a notebook document was opened.
      */
-    public suspend fun notebookDidOpen(params: DidOpenNotebookDocumentParams): Unit =
-        notify(LspMethods.NOTEBOOK_DOCUMENT_DID_OPEN, params)
+    public suspend fun notebookDidOpen(params: DidOpenNotebookDocumentParams): Unit = notify(LspMethods.NOTEBOOK_DOCUMENT_DID_OPEN, params)
 
     /**
      * Notify the server that a notebook document was changed.
@@ -775,8 +754,7 @@ public class ServerProxy internal constructor(
     /**
      * Notify the server that a notebook document was saved.
      */
-    public suspend fun notebookDidSave(params: DidSaveNotebookDocumentParams): Unit =
-        notify(LspMethods.NOTEBOOK_DOCUMENT_DID_SAVE, params)
+    public suspend fun notebookDidSave(params: DidSaveNotebookDocumentParams): Unit = notify(LspMethods.NOTEBOOK_DOCUMENT_DID_SAVE, params)
 
     /**
      * Notify the server that a notebook document was closed.
@@ -789,14 +767,12 @@ public class ServerProxy internal constructor(
     /**
      * Set the trace level on the server.
      */
-    public suspend fun setTrace(params: SetTraceParams): Unit =
-        notify(LspMethods.SET_TRACE, params)
+    public suspend fun setTrace(params: SetTraceParams): Unit = notify(LspMethods.SET_TRACE, params)
 
     /**
      * Cancel a pending request.
      */
-    public suspend fun cancelRequest(params: CancelParams): Unit =
-        notify(LspMethods.CANCEL_REQUEST, params)
+    public suspend fun cancelRequest(params: CancelParams): Unit = notify(LspMethods.CANCEL_REQUEST, params)
 }
 
 /**

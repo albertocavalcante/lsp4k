@@ -100,6 +100,7 @@ public data class SymbolInformation(
 /**
  * A symbol kind.
  */
+@Suppress("MagicNumber")
 @Serializable(with = SymbolKindSerializer::class)
 public enum class SymbolKind(
     public val value: Int,
@@ -144,7 +145,9 @@ public enum class SymbolKind(
  * Serializer for SymbolKind that encodes/decodes as integer.
  */
 public object SymbolKindSerializer : IntEnumSerializer<SymbolKind>(
-    "SymbolKind", SymbolKind::fromValue, { it.value },
+    "SymbolKind",
+    SymbolKind::fromValue,
+    { it.value },
 )
 
 /**
@@ -172,5 +175,7 @@ public enum class SymbolTag(
  * Serializer for SymbolTag that encodes/decodes as integer.
  */
 public object SymbolTagSerializer : IntEnumSerializer<SymbolTag>(
-    "SymbolTag", SymbolTag::fromValue, { it.value },
+    "SymbolTag",
+    SymbolTag::fromValue,
+    { it.value },
 )

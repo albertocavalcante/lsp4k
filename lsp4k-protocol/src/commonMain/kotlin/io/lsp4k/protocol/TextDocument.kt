@@ -125,5 +125,7 @@ public enum class TextDocumentSaveReason(
  * Serializer for TextDocumentSaveReason that encodes/decodes as integer.
  */
 public object TextDocumentSaveReasonSerializer : IntEnumSerializer<TextDocumentSaveReason>(
-    "TextDocumentSaveReason", TextDocumentSaveReason::fromValue, { it.value },
+    "TextDocumentSaveReason",
+    TextDocumentSaveReason::fromValue,
+    { it.value },
 )

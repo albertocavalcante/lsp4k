@@ -67,10 +67,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageParams serialization`() {
-        val params = ShowMessageParams(
-            type = MessageType.Error,
-            message = "An error occurred",
-        )
+        val params =
+            ShowMessageParams(
+                type = MessageType.Error,
+                message = "An error occurred",
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"type\":1"
         encoded shouldContain "\"message\":\"An error occurred\""
@@ -78,10 +79,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageParams round-trip`() {
-        val params = ShowMessageParams(
-            type = MessageType.Warning,
-            message = "This is a warning",
-        )
+        val params =
+            ShowMessageParams(
+                type = MessageType.Warning,
+                message = "This is a warning",
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<ShowMessageParams>(encoded)
         decoded shouldBe params
@@ -89,10 +91,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageParams with unicode message`() {
-        val params = ShowMessageParams(
-            type = MessageType.Info,
-            message = "情報メッセージ 🎉",
-        )
+        val params =
+            ShowMessageParams(
+                type = MessageType.Info,
+                message = "情報メッセージ 🎉",
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<ShowMessageParams>(encoded)
         decoded.message shouldBe "情報メッセージ 🎉"
@@ -102,10 +105,11 @@ class WindowSerializationTest {
 
     @Test
     fun `LogMessageParams serialization`() {
-        val params = LogMessageParams(
-            type = MessageType.Log,
-            message = "Debug log entry",
-        )
+        val params =
+            LogMessageParams(
+                type = MessageType.Log,
+                message = "Debug log entry",
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"type\":4"
         encoded shouldContain "\"message\":\"Debug log entry\""
@@ -113,10 +117,11 @@ class WindowSerializationTest {
 
     @Test
     fun `LogMessageParams round-trip`() {
-        val params = LogMessageParams(
-            type = MessageType.Info,
-            message = "Information log",
-        )
+        val params =
+            LogMessageParams(
+                type = MessageType.Info,
+                message = "Information log",
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<LogMessageParams>(encoded)
         decoded shouldBe params
@@ -126,10 +131,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageRequestParams without actions`() {
-        val params = ShowMessageRequestParams(
-            type = MessageType.Warning,
-            message = "Do you want to continue?",
-        )
+        val params =
+            ShowMessageRequestParams(
+                type = MessageType.Warning,
+                message = "Do you want to continue?",
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"type\":2"
         encoded shouldContain "\"message\":\"Do you want to continue?\""
@@ -137,15 +143,17 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageRequestParams with actions`() {
-        val params = ShowMessageRequestParams(
-            type = MessageType.Error,
-            message = "Operation failed",
-            actions = listOf(
-                MessageActionItem(title = "Retry"),
-                MessageActionItem(title = "Cancel"),
-                MessageActionItem(title = "Open Log"),
-            ),
-        )
+        val params =
+            ShowMessageRequestParams(
+                type = MessageType.Error,
+                message = "Operation failed",
+                actions =
+                    listOf(
+                        MessageActionItem(title = "Retry"),
+                        MessageActionItem(title = "Cancel"),
+                        MessageActionItem(title = "Open Log"),
+                    ),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<ShowMessageRequestParams>(encoded)
         decoded.actions?.size shouldBe 3
@@ -156,14 +164,16 @@ class WindowSerializationTest {
 
     @Test
     fun `ShowMessageRequestParams round-trip`() {
-        val params = ShowMessageRequestParams(
-            type = MessageType.Info,
-            message = "Select an option",
-            actions = listOf(
-                MessageActionItem(title = "Yes"),
-                MessageActionItem(title = "No"),
-            ),
-        )
+        val params =
+            ShowMessageRequestParams(
+                type = MessageType.Info,
+                message = "Select an option",
+                actions =
+                    listOf(
+                        MessageActionItem(title = "Yes"),
+                        MessageActionItem(title = "No"),
+                    ),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<ShowMessageRequestParams>(encoded)
         decoded shouldBe params
@@ -190,9 +200,10 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressBegin minimal`() {
-        val progress = WorkDoneProgressBegin(
-            title = "Indexing",
-        )
+        val progress =
+            WorkDoneProgressBegin(
+                title = "Indexing",
+            )
         val encoded = json.encodeToString(progress)
         encoded shouldContain "\"title\":\"Indexing\""
         // kind has default value "begin" and may not be in output when encodeDefaults=false
@@ -203,12 +214,13 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressBegin full`() {
-        val progress = WorkDoneProgressBegin(
-            title = "Building project",
-            cancellable = true,
-            message = "Compiling sources...",
-            percentage = 0,
-        )
+        val progress =
+            WorkDoneProgressBegin(
+                title = "Building project",
+                cancellable = true,
+                message = "Compiling sources...",
+                percentage = 0,
+            )
         val encoded = json.encodeToString(progress)
         val decoded = json.decodeFromString<WorkDoneProgressBegin>(encoded)
         decoded.kind shouldBe "begin"
@@ -240,11 +252,12 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressReport full`() {
-        val progress = WorkDoneProgressReport(
-            cancellable = false,
-            message = "50% complete",
-            percentage = 50,
-        )
+        val progress =
+            WorkDoneProgressReport(
+                cancellable = false,
+                message = "50% complete",
+                percentage = 50,
+            )
         val encoded = json.encodeToString(progress)
         val decoded = json.decodeFromString<WorkDoneProgressReport>(encoded)
         decoded.kind shouldBe "report"
@@ -255,10 +268,11 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressReport round-trip`() {
-        val progress = WorkDoneProgressReport(
-            message = "Processing files...",
-            percentage = 75,
-        )
+        val progress =
+            WorkDoneProgressReport(
+                message = "Processing files...",
+                percentage = 75,
+            )
         val encoded = json.encodeToString(progress)
         val decoded = json.decodeFromString<WorkDoneProgressReport>(encoded)
         decoded shouldBe progress
@@ -277,9 +291,10 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressEnd with message`() {
-        val progress = WorkDoneProgressEnd(
-            message = "Build completed successfully",
-        )
+        val progress =
+            WorkDoneProgressEnd(
+                message = "Build completed successfully",
+            )
         val encoded = json.encodeToString(progress)
         val decoded = json.decodeFromString<WorkDoneProgressEnd>(encoded)
         decoded.kind shouldBe "end"
@@ -298,9 +313,10 @@ class WindowSerializationTest {
 
     @Test
     fun `WorkDoneProgressCreateParams with string token`() {
-        val params = WorkDoneProgressCreateParams(
-            token = Either.right("unique-token-123"),
-        )
+        val params =
+            WorkDoneProgressCreateParams(
+                token = Either.right("unique-token-123"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"token\":\"unique-token-123\""
     }
@@ -309,10 +325,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ProgressParams with WorkDoneProgressBegin`() {
-        val params = ProgressParams(
-            token = Either.right("build-progress"),
-            value = WorkDoneProgressBegin(title = "Building"),
-        )
+        val params =
+            ProgressParams(
+                token = Either.right("build-progress"),
+                value = WorkDoneProgressBegin(title = "Building"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"token\":\"build-progress\""
         encoded shouldContain "\"title\":\"Building\""
@@ -320,10 +337,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ProgressParams with WorkDoneProgressReport`() {
-        val params = ProgressParams(
-            token = Either.right("task-1"),
-            value = WorkDoneProgressReport(percentage = 25),
-        )
+        val params =
+            ProgressParams(
+                token = Either.right("task-1"),
+                value = WorkDoneProgressReport(percentage = 25),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"token\":\"task-1\""
         encoded shouldContain "\"percentage\":25"
@@ -331,10 +349,11 @@ class WindowSerializationTest {
 
     @Test
     fun `ProgressParams with WorkDoneProgressEnd`() {
-        val params = ProgressParams(
-            token = Either.right("task-2"),
-            value = WorkDoneProgressEnd(message = "Complete"),
-        )
+        val params =
+            ProgressParams(
+                token = Either.right("task-2"),
+                value = WorkDoneProgressEnd(message = "Complete"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"token\":\"task-2\""
         encoded shouldContain "\"message\":\"Complete\""

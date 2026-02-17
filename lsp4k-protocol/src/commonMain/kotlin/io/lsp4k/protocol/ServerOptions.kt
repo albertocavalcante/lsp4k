@@ -45,7 +45,10 @@ public data class NotebookDocumentFilter(
 public object NotebookSelectorNotebookSerializer : KSerializer<Either<String, NotebookDocumentFilter>> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("NotebookSelectorNotebook")
 
-    override fun serialize(encoder: Encoder, value: Either<String, NotebookDocumentFilter>) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<String, NotebookDocumentFilter>,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))

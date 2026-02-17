@@ -34,6 +34,7 @@ internal external object BufferModule {
 @JsModule("net")
 @JsNonModule
 internal external object Net {
+    @Suppress("UnusedParameter")
     fun createConnection(
         port: Int,
         host: String,

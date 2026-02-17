@@ -1,7 +1,6 @@
 package io.lsp4k.protocol
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 /**
  * Value-object describing what options formatting should use.

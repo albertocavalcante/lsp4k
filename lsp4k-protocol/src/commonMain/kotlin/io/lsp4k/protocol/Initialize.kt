@@ -22,11 +22,15 @@ import kotlinx.serialization.json.booleanOrNull
 public open class BooleanOrSerializer<T>(
     private val optionsSerializer: KSerializer<T>,
 ) : KSerializer<Either<Boolean, T>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor(
-        "BooleanOr<${optionsSerializer.descriptor.serialName}>",
-    )
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor(
+            "BooleanOr<${optionsSerializer.descriptor.serialName}>",
+        )
 
-    override fun serialize(encoder: Encoder, value: Either<Boolean, T>) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<Boolean, T>,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
@@ -54,15 +58,23 @@ public open class NullableBooleanOrSerializer<T>(
 ) : KSerializer<Either<Boolean, T>?> {
     override val descriptor: SerialDescriptor = inner.descriptor
 
-    override fun serialize(encoder: Encoder, value: Either<Boolean, T>?) {
-        if (value == null) encoder.encodeNull()
-        else inner.serialize(encoder, value)
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<Boolean, T>?,
+    ) {
+        if (value == null) {
+            encoder.encodeNull()
+        } else {
+            inner.serialize(encoder, value)
+        }
     }
 
-    override fun deserialize(decoder: Decoder): Either<Boolean, T>? {
-        return if (decoder.decodeNotNullMark()) inner.deserialize(decoder)
-        else decoder.decodeNull()
-    }
+    override fun deserialize(decoder: Decoder): Either<Boolean, T>? =
+        if (decoder.decodeNotNullMark()) {
+            inner.deserialize(decoder)
+        } else {
+            decoder.decodeNull()
+        }
 }
 
 /**
@@ -101,7 +113,9 @@ public enum class TextDocumentSyncKind(
  * Serializer for TextDocumentSyncKind that encodes/decodes as integer.
  */
 public object TextDocumentSyncKindSerializer : IntEnumSerializer<TextDocumentSyncKind>(
-    "TextDocumentSyncKind", TextDocumentSyncKind::fromValue, { it.value },
+    "TextDocumentSyncKind",
+    TextDocumentSyncKind::fromValue,
+    { it.value },
 )
 
 /**
@@ -1910,7 +1924,9 @@ public enum class PrepareSupportDefaultBehavior(
  * Serializer for PrepareSupportDefaultBehavior that encodes/decodes as integer.
  */
 public object PrepareSupportDefaultBehaviorSerializer : IntEnumSerializer<PrepareSupportDefaultBehavior>(
-    "PrepareSupportDefaultBehavior", PrepareSupportDefaultBehavior::fromValue, { it.value },
+    "PrepareSupportDefaultBehavior",
+    PrepareSupportDefaultBehavior::fromValue,
+    { it.value },
 )
 
 /**

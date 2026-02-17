@@ -20,10 +20,21 @@ import kotlinx.serialization.json.jsonPrimitive
  */
 @Serializable(with = DocumentChangeSerializer::class)
 public sealed interface DocumentChange {
-    public data class Edit(val edit: TextDocumentEdit) : DocumentChange
-    public data class Create(val create: CreateFile) : DocumentChange
-    public data class Rename(val rename: RenameFile) : DocumentChange
-    public data class Delete(val delete: DeleteFile) : DocumentChange
+    public data class Edit(
+        val edit: TextDocumentEdit,
+    ) : DocumentChange
+
+    public data class Create(
+        val create: CreateFile,
+    ) : DocumentChange
+
+    public data class Rename(
+        val rename: RenameFile,
+    ) : DocumentChange
+
+    public data class Delete(
+        val delete: DeleteFile,
+    ) : DocumentChange
 }
 
 /**
@@ -33,7 +44,10 @@ public sealed interface DocumentChange {
 public object DocumentChangeSerializer : KSerializer<DocumentChange> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("DocumentChange")
 
-    override fun serialize(encoder: Encoder, value: DocumentChange) {
+    override fun serialize(
+        encoder: Encoder,
+        value: DocumentChange,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is DocumentChange.Edit ->
@@ -50,21 +64,25 @@ public object DocumentChangeSerializer : KSerializer<DocumentChange> {
     override fun deserialize(decoder: Decoder): DocumentChange {
         val jsonDecoder = decoder as JsonDecoder
         val element = jsonDecoder.decodeJsonElement()
-        if (element !is JsonObject) throw IllegalArgumentException("DocumentChange must be a JSON object")
+        require(element is JsonObject) { "DocumentChange must be a JSON object" }
         val kind = element["kind"]?.jsonPrimitive?.content
         return when (kind) {
-            "create" -> DocumentChange.Create(
-                jsonDecoder.json.decodeFromJsonElement(CreateFile.serializer(), element)
-            )
-            "rename" -> DocumentChange.Rename(
-                jsonDecoder.json.decodeFromJsonElement(RenameFile.serializer(), element)
-            )
-            "delete" -> DocumentChange.Delete(
-                jsonDecoder.json.decodeFromJsonElement(DeleteFile.serializer(), element)
-            )
-            null -> DocumentChange.Edit(
-                jsonDecoder.json.decodeFromJsonElement(TextDocumentEdit.serializer(), element)
-            )
+            "create" ->
+                DocumentChange.Create(
+                    jsonDecoder.json.decodeFromJsonElement(CreateFile.serializer(), element),
+                )
+            "rename" ->
+                DocumentChange.Rename(
+                    jsonDecoder.json.decodeFromJsonElement(RenameFile.serializer(), element),
+                )
+            "delete" ->
+                DocumentChange.Delete(
+                    jsonDecoder.json.decodeFromJsonElement(DeleteFile.serializer(), element),
+                )
+            null ->
+                DocumentChange.Edit(
+                    jsonDecoder.json.decodeFromJsonElement(TextDocumentEdit.serializer(), element),
+                )
             else -> throw IllegalArgumentException("Unknown DocumentChange kind: $kind")
         }
     }
@@ -252,7 +270,9 @@ public enum class FileChangeType(
  * Serializer for FileChangeType that encodes/decodes as integer.
  */
 public object FileChangeTypeSerializer : IntEnumSerializer<FileChangeType>(
-    "FileChangeType", FileChangeType::fromValue, { it.value },
+    "FileChangeType",
+    FileChangeType::fromValue,
+    { it.value },
 )
 
 /**
@@ -293,15 +313,6 @@ public object WatchKind {
 
     /** Interested in delete events. */
     public const val DELETE: Int = 4
-
-    @Deprecated("Use CREATE", ReplaceWith("CREATE"))
-    public const val Create: Int = CREATE
-
-    @Deprecated("Use CHANGE", ReplaceWith("CHANGE"))
-    public const val Change: Int = CHANGE
-
-    @Deprecated("Use DELETE", ReplaceWith("DELETE"))
-    public const val Delete: Int = DELETE
 }
 
 @Serializable

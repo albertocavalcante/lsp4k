@@ -175,12 +175,14 @@ public data class SemanticTokensEdit(
  */
 @Serializable
 public enum class TokenFormat {
-    @SerialName("relative") Relative,
+    @SerialName("relative")
+    Relative,
 }
 
 /**
  * Predefined semantic token types as defined by the LSP specification.
  */
+@Suppress("ktlint:standard:property-naming")
 public object SemanticTokenTypes {
     public const val Namespace: String = "namespace"
     public const val Type: String = "type"
@@ -205,6 +207,7 @@ public object SemanticTokenTypes {
     public const val Regexp: String = "regexp"
     public const val Operator: String = "operator"
     public const val Decorator: String = "decorator"
+
     /**
      * @since 3.18.0
      */
@@ -214,6 +217,7 @@ public object SemanticTokenTypes {
 /**
  * Predefined semantic token modifiers as defined by the LSP specification.
  */
+@Suppress("ktlint:standard:property-naming")
 public object SemanticTokenModifiers {
     public const val Declaration: String = "declaration"
     public const val Definition: String = "definition"

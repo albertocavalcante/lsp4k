@@ -181,7 +181,7 @@ class DispatcherBehaviorTest {
             val dispatcher = Dispatcher()
 
             dispatcher.onRequest("test/throws") { _: JsonElement? ->
-                throw RuntimeException("Handler error")
+                throw IllegalStateException("Handler error")
             }
 
             val request =
@@ -201,7 +201,7 @@ class DispatcherBehaviorTest {
             val dispatcher = Dispatcher()
 
             dispatcher.onNotification("test/throws") { _: JsonElement? ->
-                throw RuntimeException("Handler error")
+                throw IllegalStateException("Handler error")
             }
 
             // Should not throw

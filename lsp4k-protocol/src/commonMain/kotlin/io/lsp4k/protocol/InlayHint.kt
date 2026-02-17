@@ -63,7 +63,9 @@ public enum class InlayHintKind(
  * Serializer for InlayHintKind that encodes/decodes as integer.
  */
 public object InlayHintKindSerializer : IntEnumSerializer<InlayHintKind>(
-    "InlayHintKind", InlayHintKind::fromValue, { it.value },
+    "InlayHintKind",
+    InlayHintKind::fromValue,
+    { it.value },
 )
 
 /**
@@ -110,10 +112,11 @@ public object InlayHintLabelSerializer : KSerializer<Either<String, List<InlayHi
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeSerializableValue(
-                ListSerializer(InlayHintLabelPart.serializer()),
-                value.value,
-            )
+            is Either.Right ->
+                jsonEncoder.encodeSerializableValue(
+                    ListSerializer(InlayHintLabelPart.serializer()),
+                    value.value,
+                )
         }
     }
 
@@ -130,7 +133,7 @@ public object InlayHintLabelSerializer : KSerializer<Either<String, List<InlayHi
                 ),
             )
         } else {
-            throw IllegalArgumentException("InlayHint.label must be a string or an array of InlayHintLabelPart")
+            error("InlayHint.label must be a string or an array of InlayHintLabelPart")
         }
     }
 }

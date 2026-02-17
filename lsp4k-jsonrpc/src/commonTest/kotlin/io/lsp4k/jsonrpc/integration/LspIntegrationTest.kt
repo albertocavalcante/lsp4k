@@ -9,7 +9,6 @@ import io.lsp4k.jsonrpc.LspCodec
 import io.lsp4k.jsonrpc.ResponseError
 import io.lsp4k.protocol.ClientCapabilities
 import io.lsp4k.protocol.CompletionItem
-import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.CompletionItemKind
 import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionOptions
@@ -19,6 +18,7 @@ import io.lsp4k.protocol.DiagnosticSeverity
 import io.lsp4k.protocol.DidChangeTextDocumentParams
 import io.lsp4k.protocol.DidCloseTextDocumentParams
 import io.lsp4k.protocol.DidOpenTextDocumentParams
+import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.Position

@@ -99,17 +99,19 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `WorkspaceEditClientCapabilities full`() {
-        val caps = WorkspaceEditClientCapabilities(
-            documentChanges = true,
-            resourceOperations = listOf(
-                ResourceOperationKind.Create,
-                ResourceOperationKind.Rename,
-                ResourceOperationKind.Delete,
-            ),
-            failureHandling = FailureHandlingKind.Transactional,
-            normalizesLineEndings = true,
-            changeAnnotationSupport = ChangeAnnotationSupport(groupsOnLabel = true),
-        )
+        val caps =
+            WorkspaceEditClientCapabilities(
+                documentChanges = true,
+                resourceOperations =
+                    listOf(
+                        ResourceOperationKind.Create,
+                        ResourceOperationKind.Rename,
+                        ResourceOperationKind.Delete,
+                    ),
+                failureHandling = FailureHandlingKind.Transactional,
+                normalizesLineEndings = true,
+                changeAnnotationSupport = ChangeAnnotationSupport(groupsOnLabel = true),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<WorkspaceEditClientCapabilities>(encoded)
         decoded.documentChanges shouldBe true
@@ -139,38 +141,43 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `WorkspaceClientCapabilities full`() {
-        val caps = WorkspaceClientCapabilities(
-            applyEdit = true,
-            workspaceEdit = WorkspaceEditClientCapabilities(documentChanges = true),
-            didChangeConfiguration = DidChangeConfigurationClientCapabilities(dynamicRegistration = true),
-            didChangeWatchedFiles = DidChangeWatchedFilesClientCapabilities(
-                dynamicRegistration = true,
-                relativePatternSupport = true,
-            ),
-            symbol = WorkspaceSymbolClientCapabilities(
-                dynamicRegistration = true,
-                symbolKind = SymbolKindCapability(
-                    valueSet = listOf(SymbolKind.File, SymbolKind.Class, SymbolKind.Function),
-                ),
-            ),
-            executeCommand = ExecuteCommandClientCapabilities(dynamicRegistration = true),
-            workspaceFolders = true,
-            configuration = true,
-            semanticTokens = SemanticTokensWorkspaceClientCapabilities(refreshSupport = true),
-            codeLens = CodeLensWorkspaceClientCapabilities(refreshSupport = true),
-            fileOperations = FileOperationClientCapabilities(
-                dynamicRegistration = true,
-                didCreate = true,
-                willCreate = true,
-                didRename = true,
-                willRename = true,
-                didDelete = true,
-                willDelete = true,
-            ),
-            inlineValue = InlineValueWorkspaceClientCapabilities(refreshSupport = true),
-            inlayHint = InlayHintWorkspaceClientCapabilities(refreshSupport = true),
-            diagnostics = DiagnosticWorkspaceClientCapabilities(refreshSupport = true),
-        )
+        val caps =
+            WorkspaceClientCapabilities(
+                applyEdit = true,
+                workspaceEdit = WorkspaceEditClientCapabilities(documentChanges = true),
+                didChangeConfiguration = DidChangeConfigurationClientCapabilities(dynamicRegistration = true),
+                didChangeWatchedFiles =
+                    DidChangeWatchedFilesClientCapabilities(
+                        dynamicRegistration = true,
+                        relativePatternSupport = true,
+                    ),
+                symbol =
+                    WorkspaceSymbolClientCapabilities(
+                        dynamicRegistration = true,
+                        symbolKind =
+                            SymbolKindCapability(
+                                valueSet = listOf(SymbolKind.File, SymbolKind.Class, SymbolKind.Function),
+                            ),
+                    ),
+                executeCommand = ExecuteCommandClientCapabilities(dynamicRegistration = true),
+                workspaceFolders = true,
+                configuration = true,
+                semanticTokens = SemanticTokensWorkspaceClientCapabilities(refreshSupport = true),
+                codeLens = CodeLensWorkspaceClientCapabilities(refreshSupport = true),
+                fileOperations =
+                    FileOperationClientCapabilities(
+                        dynamicRegistration = true,
+                        didCreate = true,
+                        willCreate = true,
+                        didRename = true,
+                        willRename = true,
+                        didDelete = true,
+                        willDelete = true,
+                    ),
+                inlineValue = InlineValueWorkspaceClientCapabilities(refreshSupport = true),
+                inlayHint = InlayHintWorkspaceClientCapabilities(refreshSupport = true),
+                diagnostics = DiagnosticWorkspaceClientCapabilities(refreshSupport = true),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<WorkspaceClientCapabilities>(encoded)
         decoded.applyEdit shouldBe true
@@ -190,14 +197,16 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with synchronization`() {
-        val caps = TextDocumentClientCapabilities(
-            synchronization = TextDocumentSyncClientCapabilities(
-                dynamicRegistration = true,
-                willSave = true,
-                willSaveWaitUntil = true,
-                didSave = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                synchronization =
+                    TextDocumentSyncClientCapabilities(
+                        dynamicRegistration = true,
+                        willSave = true,
+                        willSaveWaitUntil = true,
+                        didSave = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.synchronization?.dynamicRegistration shouldBe true
@@ -208,29 +217,33 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with completion`() {
-        val caps = TextDocumentClientCapabilities(
-            completion = CompletionClientCapabilities(
-                dynamicRegistration = true,
-                completionItem = CompletionItemCapability(
-                    snippetSupport = true,
-                    commitCharactersSupport = true,
-                    documentationFormat = listOf(MarkupKind.Markdown, MarkupKind.PlainText),
-                    deprecatedSupport = true,
-                    preselectSupport = true,
-                    tagSupport = CompletionItemTagSupport(valueSet = listOf(CompletionItemTag.Deprecated)),
-                    insertReplaceSupport = true,
-                    resolveSupport = CompletionItemResolveSupport(properties = listOf("documentation", "detail")),
-                    insertTextModeSupport = InsertTextModeSupport(valueSet = listOf(InsertTextMode.AsIs)),
-                    labelDetailsSupport = true,
-                ),
-                completionItemKind = CompletionItemKindCapability(
-                    valueSet = listOf(CompletionItemKind.Text, CompletionItemKind.Method),
-                ),
-                contextSupport = true,
-                insertTextMode = InsertTextMode.AdjustIndentation,
-                completionList = CompletionListCapabilities(itemDefaults = listOf("commitCharacters")),
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                completion =
+                    CompletionClientCapabilities(
+                        dynamicRegistration = true,
+                        completionItem =
+                            CompletionItemCapability(
+                                snippetSupport = true,
+                                commitCharactersSupport = true,
+                                documentationFormat = listOf(MarkupKind.Markdown, MarkupKind.PlainText),
+                                deprecatedSupport = true,
+                                preselectSupport = true,
+                                tagSupport = CompletionItemTagSupport(valueSet = listOf(CompletionItemTag.Deprecated)),
+                                insertReplaceSupport = true,
+                                resolveSupport = CompletionItemResolveSupport(properties = listOf("documentation", "detail")),
+                                insertTextModeSupport = InsertTextModeSupport(valueSet = listOf(InsertTextMode.AsIs)),
+                                labelDetailsSupport = true,
+                            ),
+                        completionItemKind =
+                            CompletionItemKindCapability(
+                                valueSet = listOf(CompletionItemKind.Text, CompletionItemKind.Method),
+                            ),
+                        contextSupport = true,
+                        insertTextMode = InsertTextMode.AdjustIndentation,
+                        completionList = CompletionListCapabilities(itemDefaults = listOf("commitCharacters")),
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.completion?.completionItem?.snippetSupport shouldBe true
@@ -239,12 +252,14 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with hover`() {
-        val caps = TextDocumentClientCapabilities(
-            hover = HoverClientCapabilities(
-                dynamicRegistration = true,
-                contentFormat = listOf(MarkupKind.Markdown, MarkupKind.PlainText),
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                hover =
+                    HoverClientCapabilities(
+                        dynamicRegistration = true,
+                        contentFormat = listOf(MarkupKind.Markdown, MarkupKind.PlainText),
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.hover?.dynamicRegistration shouldBe true
@@ -253,17 +268,20 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with signature help`() {
-        val caps = TextDocumentClientCapabilities(
-            signatureHelp = SignatureHelpClientCapabilities(
-                dynamicRegistration = true,
-                signatureInformation = SignatureInformationCapability(
-                    documentationFormat = listOf(MarkupKind.Markdown),
-                    parameterInformation = ParameterInformationCapability(labelOffsetSupport = true),
-                    activeParameterSupport = true,
-                ),
-                contextSupport = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                signatureHelp =
+                    SignatureHelpClientCapabilities(
+                        dynamicRegistration = true,
+                        signatureInformation =
+                            SignatureInformationCapability(
+                                documentationFormat = listOf(MarkupKind.Markdown),
+                                parameterInformation = ParameterInformationCapability(labelOffsetSupport = true),
+                                activeParameterSupport = true,
+                            ),
+                        contextSupport = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.signatureHelp?.contextSupport shouldBe true
@@ -272,12 +290,13 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with goto capabilities`() {
-        val caps = TextDocumentClientCapabilities(
-            declaration = GotoCapability(dynamicRegistration = true, linkSupport = true),
-            definition = GotoCapability(dynamicRegistration = true, linkSupport = true),
-            typeDefinition = GotoCapability(dynamicRegistration = true),
-            implementation = GotoCapability(dynamicRegistration = true, linkSupport = false),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                declaration = GotoCapability(dynamicRegistration = true, linkSupport = true),
+                definition = GotoCapability(dynamicRegistration = true, linkSupport = true),
+                typeDefinition = GotoCapability(dynamicRegistration = true),
+                implementation = GotoCapability(dynamicRegistration = true, linkSupport = false),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.declaration?.linkSupport shouldBe true
@@ -288,40 +307,50 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with document symbol`() {
-        val caps = TextDocumentClientCapabilities(
-            documentSymbol = DocumentSymbolClientCapabilities(
-                dynamicRegistration = true,
-                symbolKind = SymbolKindCapability(
-                    valueSet = SymbolKind.entries,
-                ),
-                hierarchicalDocumentSymbolSupport = true,
-                tagSupport = SymbolTagSupport(valueSet = listOf(SymbolTag.Deprecated)),
-                labelSupport = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                documentSymbol =
+                    DocumentSymbolClientCapabilities(
+                        dynamicRegistration = true,
+                        symbolKind =
+                            SymbolKindCapability(
+                                valueSet = SymbolKind.entries,
+                            ),
+                        hierarchicalDocumentSymbolSupport = true,
+                        tagSupport = SymbolTagSupport(valueSet = listOf(SymbolTag.Deprecated)),
+                        labelSupport = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.documentSymbol?.hierarchicalDocumentSymbolSupport shouldBe true
-        decoded.documentSymbol?.symbolKind?.valueSet?.size shouldBe 26
+        decoded.documentSymbol
+            ?.symbolKind
+            ?.valueSet
+            ?.size shouldBe 26
     }
 
     @Test
     fun `TextDocumentClientCapabilities with code action`() {
-        val caps = TextDocumentClientCapabilities(
-            codeAction = CodeActionClientCapabilities(
-                dynamicRegistration = true,
-                codeActionLiteralSupport = CodeActionLiteralSupport(
-                    codeActionKind = CodeActionKindCapability(
-                        valueSet = listOf(CodeActionKind.QuickFix, CodeActionKind.Refactor),
+        val caps =
+            TextDocumentClientCapabilities(
+                codeAction =
+                    CodeActionClientCapabilities(
+                        dynamicRegistration = true,
+                        codeActionLiteralSupport =
+                            CodeActionLiteralSupport(
+                                codeActionKind =
+                                    CodeActionKindCapability(
+                                        valueSet = listOf(CodeActionKind.QUICK_FIX, CodeActionKind.REFACTOR),
+                                    ),
+                            ),
+                        isPreferredSupport = true,
+                        disabledSupport = true,
+                        dataSupport = true,
+                        resolveSupport = CodeActionResolveSupport(properties = listOf("edit")),
+                        honorsChangeAnnotations = true,
                     ),
-                ),
-                isPreferredSupport = true,
-                disabledSupport = true,
-                dataSupport = true,
-                resolveSupport = CodeActionResolveSupport(properties = listOf("edit")),
-                honorsChangeAnnotations = true,
-            ),
-        )
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.codeAction?.isPreferredSupport shouldBe true
@@ -330,36 +359,45 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with publish diagnostics`() {
-        val caps = TextDocumentClientCapabilities(
-            publishDiagnostics = PublishDiagnosticsClientCapabilities(
-                relatedInformation = true,
-                tagSupport = DiagnosticTagSupport(
-                    valueSet = listOf(DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated),
-                ),
-                versionSupport = true,
-                codeDescriptionSupport = true,
-                dataSupport = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                publishDiagnostics =
+                    PublishDiagnosticsClientCapabilities(
+                        relatedInformation = true,
+                        tagSupport =
+                            DiagnosticTagSupport(
+                                valueSet = listOf(DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated),
+                            ),
+                        versionSupport = true,
+                        codeDescriptionSupport = true,
+                        dataSupport = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.publishDiagnostics?.relatedInformation shouldBe true
-        decoded.publishDiagnostics?.tagSupport?.valueSet?.size shouldBe 2
+        decoded.publishDiagnostics
+            ?.tagSupport
+            ?.valueSet
+            ?.size shouldBe 2
     }
 
     @Test
     fun `TextDocumentClientCapabilities with folding range`() {
-        val caps = TextDocumentClientCapabilities(
-            foldingRange = FoldingRangeClientCapabilities(
-                dynamicRegistration = true,
-                rangeLimit = 5000,
-                lineFoldingOnly = true,
-                foldingRangeKind = FoldingRangeKindCapability(
-                    valueSet = listOf(FoldingRangeKind.Comment, FoldingRangeKind.Imports, FoldingRangeKind.Region),
-                ),
-                foldingRange = FoldingRangeCapability(collapsedText = true),
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                foldingRange =
+                    FoldingRangeClientCapabilities(
+                        dynamicRegistration = true,
+                        rangeLimit = 5000,
+                        lineFoldingOnly = true,
+                        foldingRangeKind =
+                            FoldingRangeKindCapability(
+                                valueSet = listOf(FoldingRangeKind.Comment, FoldingRangeKind.Imports, FoldingRangeKind.Region),
+                            ),
+                        foldingRange = FoldingRangeCapability(collapsedText = true),
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.foldingRange?.rangeLimit shouldBe 5000
@@ -369,14 +407,16 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with rename`() {
-        val caps = TextDocumentClientCapabilities(
-            rename = RenameClientCapabilities(
-                dynamicRegistration = true,
-                prepareSupport = true,
-                prepareSupportDefaultBehavior = PrepareSupportDefaultBehavior.Identifier,
-                honorsChangeAnnotations = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                rename =
+                    RenameClientCapabilities(
+                        dynamicRegistration = true,
+                        prepareSupport = true,
+                        prepareSupportDefaultBehavior = PrepareSupportDefaultBehavior.Identifier,
+                        honorsChangeAnnotations = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.rename?.prepareSupport shouldBe true
@@ -385,37 +425,45 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with semantic tokens`() {
-        val caps = TextDocumentClientCapabilities(
-            semanticTokens = SemanticTokensClientCapabilities(
-                dynamicRegistration = true,
-                requests = SemanticTokensRequests(
-                    range = true,
-                    full = SemanticTokensFullRequestCapability(delta = true),
-                ),
-                tokenTypes = listOf("namespace", "type", "class", "enum", "function"),
-                tokenModifiers = listOf("declaration", "definition", "readonly"),
-                formats = listOf(TokenFormat.Relative),
-                overlappingTokenSupport = true,
-                multilineTokenSupport = true,
-                serverCancelSupport = true,
-                augmentsSyntaxTokens = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                semanticTokens =
+                    SemanticTokensClientCapabilities(
+                        dynamicRegistration = true,
+                        requests =
+                            SemanticTokensRequests(
+                                range = true,
+                                full = SemanticTokensFullRequestCapability(delta = true),
+                            ),
+                        tokenTypes = listOf("namespace", "type", "class", "enum", "function"),
+                        tokenModifiers = listOf("declaration", "definition", "readonly"),
+                        formats = listOf(TokenFormat.Relative),
+                        overlappingTokenSupport = true,
+                        multilineTokenSupport = true,
+                        serverCancelSupport = true,
+                        augmentsSyntaxTokens = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.semanticTokens?.requests?.range shouldBe true
-        decoded.semanticTokens?.requests?.full?.delta shouldBe true
+        decoded.semanticTokens
+            ?.requests
+            ?.full
+            ?.delta shouldBe true
         decoded.semanticTokens?.tokenTypes?.size shouldBe 5
     }
 
     @Test
     fun `TextDocumentClientCapabilities with inlay hints`() {
-        val caps = TextDocumentClientCapabilities(
-            inlayHint = InlayHintClientCapabilities(
-                dynamicRegistration = true,
-                resolveSupport = InlayHintResolveSupport(properties = listOf("tooltip", "label")),
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                inlayHint =
+                    InlayHintClientCapabilities(
+                        dynamicRegistration = true,
+                        resolveSupport = InlayHintResolveSupport(properties = listOf("tooltip", "label")),
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.inlayHint?.resolveSupport?.properties shouldBe listOf("tooltip", "label")
@@ -423,12 +471,14 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `TextDocumentClientCapabilities with diagnostic`() {
-        val caps = TextDocumentClientCapabilities(
-            diagnostic = DiagnosticClientCapabilities(
-                dynamicRegistration = true,
-                relatedDocumentSupport = true,
-            ),
-        )
+        val caps =
+            TextDocumentClientCapabilities(
+                diagnostic =
+                    DiagnosticClientCapabilities(
+                        dynamicRegistration = true,
+                        relatedDocumentSupport = true,
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
         decoded.diagnostic?.relatedDocumentSupport shouldBe true
@@ -445,13 +495,15 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `WindowClientCapabilities full`() {
-        val caps = WindowClientCapabilities(
-            workDoneProgress = true,
-            showMessage = ShowMessageRequestClientCapabilities(
-                messageActionItem = MessageActionItemCapabilities(additionalPropertiesSupport = true),
-            ),
-            showDocument = ShowDocumentClientCapabilities(support = true),
-        )
+        val caps =
+            WindowClientCapabilities(
+                workDoneProgress = true,
+                showMessage =
+                    ShowMessageRequestClientCapabilities(
+                        messageActionItem = MessageActionItemCapabilities(additionalPropertiesSupport = true),
+                    ),
+                showDocument = ShowDocumentClientCapabilities(support = true),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<WindowClientCapabilities>(encoded)
         decoded.workDoneProgress shouldBe true
@@ -470,22 +522,26 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `GeneralClientCapabilities full`() {
-        val caps = GeneralClientCapabilities(
-            staleRequestSupport = StaleRequestSupportCapability(
-                cancel = true,
-                retryOnContentModified = listOf("textDocument/completion", "textDocument/hover"),
-            ),
-            regularExpressions = RegularExpressionsClientCapabilities(
-                engine = "ECMAScript",
-                version = "ES2020",
-            ),
-            markdown = MarkdownClientCapabilities(
-                parser = "marked",
-                version = "1.0.0",
-                allowedTags = listOf("a", "code", "pre"),
-            ),
-            positionEncodings = listOf("utf-16", "utf-32"),
-        )
+        val caps =
+            GeneralClientCapabilities(
+                staleRequestSupport =
+                    StaleRequestSupportCapability(
+                        cancel = true,
+                        retryOnContentModified = listOf("textDocument/completion", "textDocument/hover"),
+                    ),
+                regularExpressions =
+                    RegularExpressionsClientCapabilities(
+                        engine = "ECMAScript",
+                        version = "ES2020",
+                    ),
+                markdown =
+                    MarkdownClientCapabilities(
+                        parser = "marked",
+                        version = "1.0.0",
+                        allowedTags = listOf("a", "code", "pre"),
+                    ),
+                positionEncodings = listOf("utf-16", "utf-32"),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<GeneralClientCapabilities>(encoded)
         decoded.staleRequestSupport?.cancel shouldBe true
@@ -505,19 +561,23 @@ class ClientCapabilitiesSerializationTest {
 
     @Test
     fun `ClientCapabilities full round-trip`() {
-        val caps = ClientCapabilities(
-            workspace = WorkspaceClientCapabilities(
-                applyEdit = true,
-                workspaceFolders = true,
-            ),
-            textDocument = TextDocumentClientCapabilities(
-                hover = HoverClientCapabilities(dynamicRegistration = true),
-            ),
-            window = WindowClientCapabilities(workDoneProgress = true),
-            general = GeneralClientCapabilities(
-                positionEncodings = listOf("utf-16"),
-            ),
-        )
+        val caps =
+            ClientCapabilities(
+                workspace =
+                    WorkspaceClientCapabilities(
+                        applyEdit = true,
+                        workspaceFolders = true,
+                    ),
+                textDocument =
+                    TextDocumentClientCapabilities(
+                        hover = HoverClientCapabilities(dynamicRegistration = true),
+                    ),
+                window = WindowClientCapabilities(workDoneProgress = true),
+                general =
+                    GeneralClientCapabilities(
+                        positionEncodings = listOf("utf-16"),
+                    ),
+            )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<ClientCapabilities>(encoded)
         decoded.workspace?.applyEdit shouldBe true

@@ -10,11 +10,11 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The kind of a completion entry.
  */
+@Suppress("MagicNumber")
 @Serializable(with = CompletionItemKindSerializer::class)
 public enum class CompletionItemKind(
     public val value: Int,
@@ -58,7 +58,9 @@ public enum class CompletionItemKind(
  * Serializer for CompletionItemKind that encodes/decodes as integer.
  */
 public object CompletionItemKindSerializer : IntEnumSerializer<CompletionItemKind>(
-    "CompletionItemKind", CompletionItemKind::fromValue, { it.value },
+    "CompletionItemKind",
+    CompletionItemKind::fromValue,
+    { it.value },
 )
 
 /**
@@ -86,7 +88,9 @@ public enum class CompletionItemTag(
  * Serializer for CompletionItemTag that encodes/decodes as integer.
  */
 public object CompletionItemTagSerializer : IntEnumSerializer<CompletionItemTag>(
-    "CompletionItemTag", CompletionItemTag::fromValue, { it.value },
+    "CompletionItemTag",
+    CompletionItemTag::fromValue,
+    { it.value },
 )
 
 /**
@@ -120,7 +124,9 @@ public enum class InsertTextFormat(
  * Serializer for InsertTextFormat that encodes/decodes as integer.
  */
 public object InsertTextFormatSerializer : IntEnumSerializer<InsertTextFormat>(
-    "InsertTextFormat", InsertTextFormat::fromValue, { it.value },
+    "InsertTextFormat",
+    InsertTextFormat::fromValue,
+    { it.value },
 )
 
 /**
@@ -153,7 +159,9 @@ public enum class InsertTextMode(
  * Serializer for InsertTextMode that encodes/decodes as integer.
  */
 public object InsertTextModeSerializer : IntEnumSerializer<InsertTextMode>(
-    "InsertTextMode", InsertTextMode::fromValue, { it.value },
+    "InsertTextMode",
+    InsertTextMode::fromValue,
+    { it.value },
 )
 
 /**
@@ -248,7 +256,10 @@ public typealias CompletionEditRange = Either<Range, EditRangeWithInsertReplace>
 public object CompletionEditRangeSerializer : KSerializer<CompletionEditRange> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CompletionEditRange")
 
-    override fun serialize(encoder: Encoder, value: CompletionEditRange) {
+    override fun serialize(
+        encoder: Encoder,
+        value: CompletionEditRange,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeSerializableValue(Range.serializer(), value.value)
@@ -490,7 +501,9 @@ public enum class CompletionTriggerKind(
  * Serializer for CompletionTriggerKind that encodes/decodes as integer.
  */
 public object CompletionTriggerKindSerializer : IntEnumSerializer<CompletionTriggerKind>(
-    "CompletionTriggerKind", CompletionTriggerKind::fromValue, { it.value },
+    "CompletionTriggerKind",
+    CompletionTriggerKind::fromValue,
+    { it.value },
 )
 
 /**

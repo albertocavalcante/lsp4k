@@ -99,10 +99,11 @@ class MonikerSerializationTest {
 
     @Test
     fun `MonikerParams serialization roundtrip`() {
-        val original = MonikerParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-            position = Position(10, 5),
-        )
+        val original =
+            MonikerParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+                position = Position(10, 5),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<MonikerParams>(encoded)
         decoded shouldBe original
@@ -110,10 +111,11 @@ class MonikerSerializationTest {
 
     @Test
     fun `MonikerParams with position at start of document`() {
-        val original = MonikerParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///start.kt"),
-            position = Position(0, 0),
-        )
+        val original =
+            MonikerParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///start.kt"),
+                position = Position(0, 0),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<MonikerParams>(encoded)
         decoded shouldBe original
@@ -123,11 +125,12 @@ class MonikerSerializationTest {
 
     @Test
     fun `Moniker with all required fields`() {
-        val original = Moniker(
-            scheme = "tsc",
-            identifier = "com.example.MyClass#myMethod",
-            unique = UniquenessLevel.Global,
-        )
+        val original =
+            Moniker(
+                scheme = "tsc",
+                identifier = "com.example.MyClass#myMethod",
+                unique = UniquenessLevel.Global,
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "kind"
         val decoded = json.decodeFromString<Moniker>(encoded)
@@ -137,12 +140,13 @@ class MonikerSerializationTest {
 
     @Test
     fun `Moniker with kind`() {
-        val original = Moniker(
-            scheme = "dotnet",
-            identifier = "MyNamespace.MyClass",
-            unique = UniquenessLevel.Scheme,
-            kind = MonikerKind.Export,
-        )
+        val original =
+            Moniker(
+                scheme = "dotnet",
+                identifier = "MyNamespace.MyClass",
+                unique = UniquenessLevel.Scheme,
+                kind = MonikerKind.Export,
+            )
         val encoded = json.encodeToString(original)
         encoded shouldContain "\"export\""
         val decoded = json.decodeFromString<Moniker>(encoded)
@@ -151,12 +155,13 @@ class MonikerSerializationTest {
 
     @Test
     fun `Moniker with Import kind and Document uniqueness`() {
-        val original = Moniker(
-            scheme = "npm",
-            identifier = "lodash.debounce",
-            unique = UniquenessLevel.Document,
-            kind = MonikerKind.Import,
-        )
+        val original =
+            Moniker(
+                scheme = "npm",
+                identifier = "lodash.debounce",
+                unique = UniquenessLevel.Document,
+                kind = MonikerKind.Import,
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Moniker>(encoded)
         decoded shouldBe original
@@ -164,12 +169,13 @@ class MonikerSerializationTest {
 
     @Test
     fun `Moniker with Local kind and Project uniqueness`() {
-        val original = Moniker(
-            scheme = "local",
-            identifier = "localFunction",
-            unique = UniquenessLevel.Project,
-            kind = MonikerKind.Local,
-        )
+        val original =
+            Moniker(
+                scheme = "local",
+                identifier = "localFunction",
+                unique = UniquenessLevel.Project,
+                kind = MonikerKind.Local,
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Moniker>(encoded)
         decoded.kind shouldBe MonikerKind.Local
@@ -178,11 +184,12 @@ class MonikerSerializationTest {
 
     @Test
     fun `Moniker with empty identifier`() {
-        val original = Moniker(
-            scheme = "test",
-            identifier = "",
-            unique = UniquenessLevel.Global,
-        )
+        val original =
+            Moniker(
+                scheme = "test",
+                identifier = "",
+                unique = UniquenessLevel.Global,
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Moniker>(encoded)
         decoded.identifier shouldBe ""

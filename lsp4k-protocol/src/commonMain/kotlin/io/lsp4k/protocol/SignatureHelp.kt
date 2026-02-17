@@ -95,7 +95,9 @@ public enum class SignatureHelpTriggerKind(
  * Serializer for SignatureHelpTriggerKind that encodes/decodes as integer.
  */
 public object SignatureHelpTriggerKindSerializer : IntEnumSerializer<SignatureHelpTriggerKind>(
-    "SignatureHelpTriggerKind", SignatureHelpTriggerKind::fromValue, { it.value },
+    "SignatureHelpTriggerKind",
+    SignatureHelpTriggerKind::fromValue,
+    { it.value },
 )
 
 /**
@@ -166,14 +168,15 @@ public object ParameterLabelSerializer : KSerializer<Either<String, Pair<Int, In
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeJsonElement(
-                JsonArray(
-                    listOf(
-                        JsonPrimitive(value.value.first),
-                        JsonPrimitive(value.value.second),
+            is Either.Right ->
+                jsonEncoder.encodeJsonElement(
+                    JsonArray(
+                        listOf(
+                            JsonPrimitive(value.value.first),
+                            JsonPrimitive(value.value.second),
+                        ),
                     ),
-                ),
-            )
+                )
         }
     }
 
@@ -187,9 +190,7 @@ public object ParameterLabelSerializer : KSerializer<Either<String, Pair<Int, In
             val second = (element[1] as JsonPrimitive).int
             Either.Right(Pair(first, second))
         } else {
-            throw IllegalArgumentException(
-                "ParameterInformation.label must be a string or a [uinteger, uinteger] tuple",
-            )
+            error("ParameterInformation.label must be a string or a [uinteger, uinteger] tuple")
         }
     }
 }

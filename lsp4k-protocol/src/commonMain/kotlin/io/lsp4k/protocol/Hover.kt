@@ -67,13 +67,19 @@ public data class MarkedString(
 @Serializable(with = HoverContentsSerializer::class)
 public sealed interface HoverContents {
     /** A single MarkupContent (the modern, preferred form). */
-    public data class Markup(val content: MarkupContent) : HoverContents
+    public data class Markup(
+        val content: MarkupContent,
+    ) : HoverContents
 
     /** A single MarkedString (deprecated). */
-    public data class SingleMarked(val value: Either<String, MarkedString>) : HoverContents
+    public data class SingleMarked(
+        val value: Either<String, MarkedString>,
+    ) : HoverContents
 
     /** An array of MarkedStrings (deprecated). */
-    public data class MultiMarked(val values: List<Either<String, MarkedString>>) : HoverContents
+    public data class MultiMarked(
+        val values: List<Either<String, MarkedString>>,
+    ) : HoverContents
 }
 
 /**
@@ -89,22 +95,27 @@ public sealed interface HoverContents {
 public object HoverContentsSerializer : KSerializer<HoverContents> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("HoverContents")
 
-    override fun serialize(encoder: Encoder, value: HoverContents) {
+    override fun serialize(
+        encoder: Encoder,
+        value: HoverContents,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is HoverContents.Markup ->
                 jsonEncoder.encodeSerializableValue(MarkupContent.serializer(), value.content)
-            is HoverContents.SingleMarked -> when (val v = value.value) {
-                is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(v.value))
-                is Either.Right -> jsonEncoder.encodeSerializableValue(MarkedString.serializer(), v.value)
-            }
-            is HoverContents.MultiMarked -> {
-                val array = value.values.map { item ->
-                    when (item) {
-                        is Either.Left -> JsonPrimitive(item.value)
-                        is Either.Right -> jsonEncoder.json.encodeToJsonElement(MarkedString.serializer(), item.value)
-                    }
+            is HoverContents.SingleMarked ->
+                when (val v = value.value) {
+                    is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(v.value))
+                    is Either.Right -> jsonEncoder.encodeSerializableValue(MarkedString.serializer(), v.value)
                 }
+            is HoverContents.MultiMarked -> {
+                val array =
+                    value.values.map { item ->
+                        when (item) {
+                            is Either.Left -> JsonPrimitive(item.value)
+                            is Either.Right -> jsonEncoder.json.encodeToJsonElement(MarkedString.serializer(), item.value)
+                        }
+                    }
                 jsonEncoder.encodeJsonElement(JsonArray(array))
             }
         }
@@ -115,15 +126,17 @@ public object HoverContentsSerializer : KSerializer<HoverContents> {
         val element = jsonDecoder.decodeJsonElement()
         return when {
             element is JsonArray -> {
-                val items = element.map { item ->
-                    when (item) {
-                        is JsonPrimitive -> Either.Left<String>(item.content)
-                        is JsonObject -> Either.Right<MarkedString>(
-                            jsonDecoder.json.decodeFromJsonElement(MarkedString.serializer(), item),
-                        )
-                        else -> throw IllegalArgumentException("MarkedString must be a string or object")
+                val items =
+                    element.map { item ->
+                        when (item) {
+                            is JsonPrimitive -> Either.Left<String>(item.content)
+                            is JsonObject ->
+                                Either.Right<MarkedString>(
+                                    jsonDecoder.json.decodeFromJsonElement(MarkedString.serializer(), item),
+                                )
+                            else -> throw IllegalArgumentException("MarkedString must be a string or object")
+                        }
                     }
-                }
                 HoverContents.MultiMarked(items)
             }
             element is JsonObject && element.containsKey("kind") -> {

@@ -4,10 +4,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable(with = NotebookCellKindSerializer::class)
-public enum class NotebookCellKind(public val value: Int) {
+public enum class NotebookCellKind(
+    public val value: Int,
+) {
     Markup(1),
     Code(2),
     ;
+
     public companion object {
         public fun fromValue(value: Int): NotebookCellKind =
             entries.firstOrNull { it.value == value }
@@ -16,7 +19,9 @@ public enum class NotebookCellKind(public val value: Int) {
 }
 
 public object NotebookCellKindSerializer : IntEnumSerializer<NotebookCellKind>(
-    "NotebookCellKind", NotebookCellKind::fromValue, { it.value },
+    "NotebookCellKind",
+    NotebookCellKind::fromValue,
+    { it.value },
 )
 
 @Serializable

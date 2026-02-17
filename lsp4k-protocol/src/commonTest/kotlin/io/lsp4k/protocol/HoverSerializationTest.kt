@@ -290,9 +290,10 @@ class HoverSerializationTest {
     fun `Hover with MarkedString object roundtrip`() {
         val hover =
             Hover(
-                contents = HoverContents.SingleMarked(
-                    Either.Right(MarkedString(language = "typescript", value = "const x = 1")),
-                ),
+                contents =
+                    HoverContents.SingleMarked(
+                        Either.Right(MarkedString(language = "typescript", value = "const x = 1")),
+                    ),
             )
         val encoded = json.encodeToString(hover)
         val decoded = json.decodeFromString<Hover>(encoded)
@@ -323,13 +324,14 @@ class HoverSerializationTest {
     fun `Hover with MarkedString array roundtrip`() {
         val hover =
             Hover(
-                contents = HoverContents.MultiMarked(
-                    listOf(
-                        Either.Left("First paragraph"),
-                        Either.Right(MarkedString(language = "python", value = "def foo(): pass")),
-                        Either.Left("Second paragraph"),
+                contents =
+                    HoverContents.MultiMarked(
+                        listOf(
+                            Either.Left("First paragraph"),
+                            Either.Right(MarkedString(language = "python", value = "def foo(): pass")),
+                            Either.Left("Second paragraph"),
+                        ),
                     ),
-                ),
             )
         val encoded = json.encodeToString(hover)
         val decoded = json.decodeFromString<Hover>(encoded)

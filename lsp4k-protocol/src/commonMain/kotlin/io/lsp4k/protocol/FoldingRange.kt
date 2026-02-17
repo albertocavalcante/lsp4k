@@ -64,7 +64,12 @@ public data class FoldingRange(
  */
 @Serializable
 public enum class FoldingRangeKind {
-    @SerialName("comment") Comment,
-    @SerialName("imports") Imports,
-    @SerialName("region") Region,
+    @SerialName("comment")
+    Comment,
+
+    @SerialName("imports")
+    Imports,
+
+    @SerialName("region")
+    Region,
 }

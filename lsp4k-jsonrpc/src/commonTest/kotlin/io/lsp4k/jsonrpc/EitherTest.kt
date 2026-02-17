@@ -1,14 +1,13 @@
 package io.lsp4k.jsonrpc
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.Either3
 import io.lsp4k.protocol.Either3Serializer
 import io.lsp4k.protocol.EitherSerializer
-import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertFailsWith

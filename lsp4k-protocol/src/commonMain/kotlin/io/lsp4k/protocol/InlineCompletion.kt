@@ -12,10 +12,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable(with = InlineCompletionTriggerKindSerializer::class)
-public enum class InlineCompletionTriggerKind(public val value: Int) {
+public enum class InlineCompletionTriggerKind(
+    public val value: Int,
+) {
     Invoked(0),
     Automatic(1),
     ;
+
     public companion object {
         public fun fromValue(value: Int): InlineCompletionTriggerKind =
             entries.firstOrNull { it.value == value }
@@ -24,7 +27,9 @@ public enum class InlineCompletionTriggerKind(public val value: Int) {
 }
 
 public object InlineCompletionTriggerKindSerializer : IntEnumSerializer<InlineCompletionTriggerKind>(
-    "InlineCompletionTriggerKind", InlineCompletionTriggerKind::fromValue, { it.value },
+    "InlineCompletionTriggerKind",
+    InlineCompletionTriggerKind::fromValue,
+    { it.value },
 )
 
 @Serializable
@@ -52,7 +57,10 @@ public data class InlineCompletionParams(
 public object InlineCompletionInsertTextSerializer : KSerializer<Either<String, StringValue>> {
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("InlineCompletionInsertText")
 
-    override fun serialize(encoder: Encoder, value: Either<String, StringValue>) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Either<String, StringValue>,
+    ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))

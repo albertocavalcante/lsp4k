@@ -91,10 +91,11 @@ class LifecycleSerializationTest {
 
     @Test
     fun `LogTraceParams with message and verbose`() {
-        val original = LogTraceParams(
-            message = "Processing request",
-            verbose = "Detailed trace info: request id=42, method=textDocument/completion",
-        )
+        val original =
+            LogTraceParams(
+                message = "Processing request",
+                verbose = "Detailed trace info: request id=42, method=textDocument/completion",
+            )
         val encoded = json.encodeToString(original)
         encoded shouldContain "verbose"
         val decoded = json.decodeFromString<LogTraceParams>(encoded)

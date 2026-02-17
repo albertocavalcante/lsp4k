@@ -8,7 +8,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.test.Test
@@ -28,10 +27,11 @@ class RegistrationSerializationTest {
 
     @Test
     fun `Registration with required fields only`() {
-        val original = Registration(
-            id = "reg-001",
-            method = "textDocument/completion",
-        )
+        val original =
+            Registration(
+                id = "reg-001",
+                method = "textDocument/completion",
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "registerOptions"
         val decoded = json.decodeFromString<Registration>(encoded)
@@ -41,14 +41,16 @@ class RegistrationSerializationTest {
 
     @Test
     fun `Registration with registerOptions`() {
-        val options = buildJsonObject {
-            put("triggerCharacters", Json.encodeToJsonElement(ListSerializer(String.serializer()), listOf(".", ":")))
-        }
-        val original = Registration(
-            id = "reg-002",
-            method = "textDocument/completion",
-            registerOptions = options,
-        )
+        val options =
+            buildJsonObject {
+                put("triggerCharacters", Json.encodeToJsonElement(ListSerializer(String.serializer()), listOf(".", ":")))
+            }
+        val original =
+            Registration(
+                id = "reg-002",
+                method = "textDocument/completion",
+                registerOptions = options,
+            )
         val encoded = json.encodeToString(original)
         encoded shouldContain "registerOptions"
         val decoded = json.decodeFromString<Registration>(encoded)
@@ -57,11 +59,12 @@ class RegistrationSerializationTest {
 
     @Test
     fun `Registration with empty registerOptions object`() {
-        val original = Registration(
-            id = "reg-003",
-            method = "textDocument/hover",
-            registerOptions = JsonObject(emptyMap()),
-        )
+        val original =
+            Registration(
+                id = "reg-003",
+                method = "textDocument/hover",
+                registerOptions = JsonObject(emptyMap()),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Registration>(encoded)
         decoded shouldBe original
@@ -71,11 +74,13 @@ class RegistrationSerializationTest {
 
     @Test
     fun `RegistrationParams with single registration`() {
-        val original = RegistrationParams(
-            registrations = listOf(
-                Registration(id = "1", method = "textDocument/didOpen"),
-            ),
-        )
+        val original =
+            RegistrationParams(
+                registrations =
+                    listOf(
+                        Registration(id = "1", method = "textDocument/didOpen"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<RegistrationParams>(encoded)
         decoded shouldBe original
@@ -83,13 +88,15 @@ class RegistrationSerializationTest {
 
     @Test
     fun `RegistrationParams with multiple registrations`() {
-        val original = RegistrationParams(
-            registrations = listOf(
-                Registration(id = "1", method = "textDocument/didOpen"),
-                Registration(id = "2", method = "textDocument/completion"),
-                Registration(id = "3", method = "textDocument/hover"),
-            ),
-        )
+        val original =
+            RegistrationParams(
+                registrations =
+                    listOf(
+                        Registration(id = "1", method = "textDocument/didOpen"),
+                        Registration(id = "2", method = "textDocument/completion"),
+                        Registration(id = "3", method = "textDocument/hover"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<RegistrationParams>(encoded)
         decoded shouldBe original
@@ -108,10 +115,11 @@ class RegistrationSerializationTest {
 
     @Test
     fun `Unregistration serialization roundtrip`() {
-        val original = Unregistration(
-            id = "unreg-001",
-            method = "textDocument/completion",
-        )
+        val original =
+            Unregistration(
+                id = "unreg-001",
+                method = "textDocument/completion",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<Unregistration>(encoded)
         decoded shouldBe original
@@ -121,11 +129,13 @@ class RegistrationSerializationTest {
 
     @Test
     fun `UnregistrationParams serialization roundtrip`() {
-        val original = UnregistrationParams(
-            unregistrations = listOf(
-                Unregistration(id = "1", method = "textDocument/didOpen"),
-            ),
-        )
+        val original =
+            UnregistrationParams(
+                unregistrations =
+                    listOf(
+                        Unregistration(id = "1", method = "textDocument/didOpen"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         // The LSP spec has a typo: the JSON field name is "unregisterations"
         encoded shouldContain "unregisterations"
@@ -135,12 +145,14 @@ class RegistrationSerializationTest {
 
     @Test
     fun `UnregistrationParams with multiple unregistrations`() {
-        val original = UnregistrationParams(
-            unregistrations = listOf(
-                Unregistration(id = "1", method = "textDocument/didOpen"),
-                Unregistration(id = "2", method = "textDocument/completion"),
-            ),
-        )
+        val original =
+            UnregistrationParams(
+                unregistrations =
+                    listOf(
+                        Unregistration(id = "1", method = "textDocument/didOpen"),
+                        Unregistration(id = "2", method = "textDocument/completion"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<UnregistrationParams>(encoded)
         decoded shouldBe original
@@ -159,10 +171,11 @@ class RegistrationSerializationTest {
 
     @Test
     fun `ConfigurationItem with all fields`() {
-        val original = ConfigurationItem(
-            scopeUri = "file:///workspace",
-            section = "editor.fontSize",
-        )
+        val original =
+            ConfigurationItem(
+                scopeUri = "file:///workspace",
+                section = "editor.fontSize",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<ConfigurationItem>(encoded)
         decoded shouldBe original
@@ -202,11 +215,13 @@ class RegistrationSerializationTest {
 
     @Test
     fun `ConfigurationParams with single item`() {
-        val original = ConfigurationParams(
-            items = listOf(
-                ConfigurationItem(section = "editor"),
-            ),
-        )
+        val original =
+            ConfigurationParams(
+                items =
+                    listOf(
+                        ConfigurationItem(section = "editor"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<ConfigurationParams>(encoded)
         decoded shouldBe original
@@ -214,13 +229,15 @@ class RegistrationSerializationTest {
 
     @Test
     fun `ConfigurationParams with multiple items`() {
-        val original = ConfigurationParams(
-            items = listOf(
-                ConfigurationItem(scopeUri = "file:///a", section = "editor"),
-                ConfigurationItem(scopeUri = "file:///b", section = "terminal"),
-                ConfigurationItem(section = "myPlugin.config"),
-            ),
-        )
+        val original =
+            ConfigurationParams(
+                items =
+                    listOf(
+                        ConfigurationItem(scopeUri = "file:///a", section = "editor"),
+                        ConfigurationItem(scopeUri = "file:///b", section = "terminal"),
+                        ConfigurationItem(section = "myPlugin.config"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<ConfigurationParams>(encoded)
         decoded shouldBe original

@@ -206,12 +206,16 @@ public data class ResponseError(
 
         /** JSON-RPC parse error (-32700). The JSON sent is not valid. */
         public const val PARSE_ERROR: Int = -32700
+
         /** JSON-RPC invalid request (-32600). The JSON sent is not a valid request object. */
         public const val INVALID_REQUEST: Int = -32600
+
         /** JSON-RPC method not found (-32601). The method does not exist or is not available. */
         public const val METHOD_NOT_FOUND: Int = -32601
+
         /** JSON-RPC invalid params (-32602). Invalid method parameters. */
         public const val INVALID_PARAMS: Int = -32602
+
         /** JSON-RPC internal error (-32603). An internal JSON-RPC error. */
         public const val INTERNAL_ERROR: Int = -32603
 
@@ -219,6 +223,7 @@ public data class ResponseError(
 
         /** LSP server not initialized (-32002). The server has not been initialized. */
         public const val SERVER_NOT_INITIALIZED: Int = -32002
+
         /** LSP unknown error code (-32001). Catch-all for errors not covered by other codes. */
         public const val UNKNOWN_ERROR_CODE: Int = -32001
 
@@ -226,10 +231,13 @@ public data class ResponseError(
 
         /** LSP request failed (-32803). A generic request failure when no more specific code applies. */
         public const val REQUEST_FAILED: Int = -32803
+
         /** LSP server cancelled (-32802). The server detected that the result would be stale. */
         public const val SERVER_CANCELLED: Int = -32802
+
         /** LSP content modified (-32801). The content the request operates on was modified. */
         public const val CONTENT_MODIFIED: Int = -32801
+
         /** LSP request cancelled (-32800). The client cancelled a request and the server has detected it. */
         public const val REQUEST_CANCELLED: Int = -32800
 
@@ -304,8 +312,8 @@ public object MessageSerializer : JsonContentPolymorphicSerializer<Message>(Mess
         require(jsonrpcVersion == JSONRPC_VERSION) { "Invalid jsonrpc version: $jsonrpcVersion (expected $JSONRPC_VERSION)" }
 
         // Validate that response doesn't have both result and error
-        if ("result" in jsonObject && "error" in jsonObject) {
-            throw IllegalArgumentException("Response cannot have both result and error")
+        require(!("result" in jsonObject && "error" in jsonObject)) {
+            "Response cannot have both result and error"
         }
 
         return when {

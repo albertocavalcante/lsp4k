@@ -56,9 +56,10 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticParams with required fields only`() {
-        val original = DocumentDiagnosticParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-        )
+        val original =
+            DocumentDiagnosticParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "identifier"
         encoded shouldNotContain "previousResultId"
@@ -68,11 +69,12 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticParams with all fields`() {
-        val original = DocumentDiagnosticParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
-            identifier = "diag-provider-1",
-            previousResultId = "result-abc-123",
-        )
+        val original =
+            DocumentDiagnosticParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///test.kt"),
+                identifier = "diag-provider-1",
+                previousResultId = "result-abc-123",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<DocumentDiagnosticParams>(encoded)
         decoded shouldBe original
@@ -80,11 +82,12 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticParams with null optionals`() {
-        val original = DocumentDiagnosticParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
-            identifier = null,
-            previousResultId = null,
-        )
+        val original =
+            DocumentDiagnosticParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///src/main.kt"),
+                identifier = null,
+                previousResultId = null,
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<DocumentDiagnosticParams>(encoded)
         decoded.identifier shouldBe null
@@ -95,14 +98,16 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `FullDocumentDiagnosticReport with diagnostics`() {
-        val original = FullDocumentDiagnosticReport(
-            items = listOf(
-                Diagnostic(
-                    range = Range(Position(10, 0), Position(10, 20)),
-                    message = "Unused variable",
-                ),
-            ),
-        )
+        val original =
+            FullDocumentDiagnosticReport(
+                items =
+                    listOf(
+                        Diagnostic(
+                            range = Range(Position(10, 0), Position(10, 20)),
+                            message = "Unused variable",
+                        ),
+                    ),
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         encoded shouldContain "\"full\""
         val decoded = jsonWithDefaults.decodeFromString<FullDocumentDiagnosticReport>(encoded)
@@ -112,15 +117,17 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `FullDocumentDiagnosticReport with resultId`() {
-        val original = FullDocumentDiagnosticReport(
-            resultId = "result-42",
-            items = listOf(
-                Diagnostic(
-                    range = Range(Position(0, 0), Position(0, 5)),
-                    message = "Error",
-                ),
-            ),
-        )
+        val original =
+            FullDocumentDiagnosticReport(
+                resultId = "result-42",
+                items =
+                    listOf(
+                        Diagnostic(
+                            range = Range(Position(0, 0), Position(0, 5)),
+                            message = "Error",
+                        ),
+                    ),
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<FullDocumentDiagnosticReport>(encoded)
         decoded.resultId shouldBe "result-42"
@@ -138,9 +145,10 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `UnchangedDocumentDiagnosticReport serialization roundtrip`() {
-        val original = UnchangedDocumentDiagnosticReport(
-            resultId = "result-abc",
-        )
+        val original =
+            UnchangedDocumentDiagnosticReport(
+                resultId = "result-abc",
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         encoded shouldContain "\"unchanged\""
         val decoded = jsonWithDefaults.decodeFromString<UnchangedDocumentDiagnosticReport>(encoded)
@@ -157,15 +165,17 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticReport Full variant serialization roundtrip`() {
-        val report = FullDocumentDiagnosticReport(
-            resultId = "full-result-1",
-            items = listOf(
-                Diagnostic(
-                    range = Range(Position(5, 0), Position(5, 10)),
-                    message = "Warning",
-                ),
-            ),
-        )
+        val report =
+            FullDocumentDiagnosticReport(
+                resultId = "full-result-1",
+                items =
+                    listOf(
+                        Diagnostic(
+                            range = Range(Position(5, 0), Position(5, 10)),
+                            message = "Warning",
+                        ),
+                    ),
+            )
         val original: DocumentDiagnosticReport = DocumentDiagnosticReport.Full(report)
         val encoded = jsonWithDefaults.encodeToString(original)
         encoded shouldContain "\"full\""
@@ -200,10 +210,11 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `PreviousResultId serialization roundtrip`() {
-        val original = PreviousResultId(
-            uri = "file:///test.kt",
-            value = "result-123",
-        )
+        val original =
+            PreviousResultId(
+                uri = "file:///test.kt",
+                value = "result-123",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<PreviousResultId>(encoded)
         decoded shouldBe original
@@ -211,10 +222,11 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `PreviousResultId with empty value`() {
-        val original = PreviousResultId(
-            uri = "file:///empty.kt",
-            value = "",
-        )
+        val original =
+            PreviousResultId(
+                uri = "file:///empty.kt",
+                value = "",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<PreviousResultId>(encoded)
         decoded.value shouldBe ""
@@ -224,9 +236,10 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticParams with empty previousResultIds`() {
-        val original = WorkspaceDiagnosticParams(
-            previousResultIds = emptyList(),
-        )
+        val original =
+            WorkspaceDiagnosticParams(
+                previousResultIds = emptyList(),
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "identifier"
         val decoded = json.decodeFromString<WorkspaceDiagnosticParams>(encoded)
@@ -236,13 +249,15 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticParams with identifier and previousResultIds`() {
-        val original = WorkspaceDiagnosticParams(
-            identifier = "diag-provider",
-            previousResultIds = listOf(
-                PreviousResultId(uri = "file:///a.kt", value = "r1"),
-                PreviousResultId(uri = "file:///b.kt", value = "r2"),
-            ),
-        )
+        val original =
+            WorkspaceDiagnosticParams(
+                identifier = "diag-provider",
+                previousResultIds =
+                    listOf(
+                        PreviousResultId(uri = "file:///a.kt", value = "r1"),
+                        PreviousResultId(uri = "file:///b.kt", value = "r2"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<WorkspaceDiagnosticParams>(encoded)
         decoded shouldBe original
@@ -251,12 +266,14 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticParams with null identifier`() {
-        val original = WorkspaceDiagnosticParams(
-            identifier = null,
-            previousResultIds = listOf(
-                PreviousResultId(uri = "file:///test.kt", value = "prev"),
-            ),
-        )
+        val original =
+            WorkspaceDiagnosticParams(
+                identifier = null,
+                previousResultIds =
+                    listOf(
+                        PreviousResultId(uri = "file:///test.kt", value = "prev"),
+                    ),
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "identifier"
         val decoded = json.decodeFromString<WorkspaceDiagnosticParams>(encoded)
@@ -267,20 +284,24 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticReport with full document report`() {
-        val fullReport = WorkspaceFullDocumentDiagnosticReport(
-            uri = "file:///test.kt",
-            items = listOf(
-                Diagnostic(
-                    range = Range(Position(1, 0), Position(1, 10)),
-                    message = "Error in workspace",
-                ),
-            ),
-        )
-        val original = WorkspaceDiagnosticReport(
-            items = listOf(
-                WorkspaceDocumentDiagnosticReport.Full(fullReport),
-            ),
-        )
+        val fullReport =
+            WorkspaceFullDocumentDiagnosticReport(
+                uri = "file:///test.kt",
+                items =
+                    listOf(
+                        Diagnostic(
+                            range = Range(Position(1, 0), Position(1, 10)),
+                            message = "Error in workspace",
+                        ),
+                    ),
+            )
+        val original =
+            WorkspaceDiagnosticReport(
+                items =
+                    listOf(
+                        WorkspaceDocumentDiagnosticReport.Full(fullReport),
+                    ),
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<WorkspaceDiagnosticReport>(encoded)
         decoded.items.size shouldBe 1
@@ -289,15 +310,18 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticReport with unchanged document report`() {
-        val unchangedReport = WorkspaceUnchangedDocumentDiagnosticReport(
-            uri = "file:///unchanged.kt",
-            resultId = "prev-result",
-        )
-        val original = WorkspaceDiagnosticReport(
-            items = listOf(
-                WorkspaceDocumentDiagnosticReport.Unchanged(unchangedReport),
-            ),
-        )
+        val unchangedReport =
+            WorkspaceUnchangedDocumentDiagnosticReport(
+                uri = "file:///unchanged.kt",
+                resultId = "prev-result",
+            )
+        val original =
+            WorkspaceDiagnosticReport(
+                items =
+                    listOf(
+                        WorkspaceDocumentDiagnosticReport.Unchanged(unchangedReport),
+                    ),
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<WorkspaceDiagnosticReport>(encoded)
         decoded.items.size shouldBe 1
@@ -306,23 +330,25 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceDiagnosticReport with mixed report types`() {
-        val original = WorkspaceDiagnosticReport(
-            items = listOf(
-                WorkspaceDocumentDiagnosticReport.Full(
-                    WorkspaceFullDocumentDiagnosticReport(
-                        uri = "file:///a.kt",
-                        items = emptyList(),
-                        resultId = "r1",
+        val original =
+            WorkspaceDiagnosticReport(
+                items =
+                    listOf(
+                        WorkspaceDocumentDiagnosticReport.Full(
+                            WorkspaceFullDocumentDiagnosticReport(
+                                uri = "file:///a.kt",
+                                items = emptyList(),
+                                resultId = "r1",
+                            ),
+                        ),
+                        WorkspaceDocumentDiagnosticReport.Unchanged(
+                            WorkspaceUnchangedDocumentDiagnosticReport(
+                                uri = "file:///b.kt",
+                                resultId = "r2",
+                            ),
+                        ),
                     ),
-                ),
-                WorkspaceDocumentDiagnosticReport.Unchanged(
-                    WorkspaceUnchangedDocumentDiagnosticReport(
-                        uri = "file:///b.kt",
-                        resultId = "r2",
-                    ),
-                ),
-            ),
-        )
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<WorkspaceDiagnosticReport>(encoded)
         decoded.items.size shouldBe 2
@@ -342,17 +368,19 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceFullDocumentDiagnosticReport serialization roundtrip`() {
-        val original = WorkspaceFullDocumentDiagnosticReport(
-            uri = "file:///workspace/test.kt",
-            items = listOf(
-                Diagnostic(
-                    range = Range(Position(0, 0), Position(0, 10)),
-                    message = "Syntax error",
-                ),
-            ),
-            resultId = "ws-result-1",
-            version = 5,
-        )
+        val original =
+            WorkspaceFullDocumentDiagnosticReport(
+                uri = "file:///workspace/test.kt",
+                items =
+                    listOf(
+                        Diagnostic(
+                            range = Range(Position(0, 0), Position(0, 10)),
+                            message = "Syntax error",
+                        ),
+                    ),
+                resultId = "ws-result-1",
+                version = 5,
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<WorkspaceFullDocumentDiagnosticReport>(encoded)
         decoded.uri shouldBe "file:///workspace/test.kt"
@@ -363,10 +391,11 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceFullDocumentDiagnosticReport with null version`() {
-        val original = WorkspaceFullDocumentDiagnosticReport(
-            uri = "file:///test.kt",
-            items = emptyList(),
-        )
+        val original =
+            WorkspaceFullDocumentDiagnosticReport(
+                uri = "file:///test.kt",
+                items = emptyList(),
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "version"
         val decoded = json.decodeFromString<WorkspaceFullDocumentDiagnosticReport>(encoded)
@@ -377,11 +406,12 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceUnchangedDocumentDiagnosticReport serialization roundtrip`() {
-        val original = WorkspaceUnchangedDocumentDiagnosticReport(
-            uri = "file:///unchanged.kt",
-            resultId = "prev-42",
-            version = 3,
-        )
+        val original =
+            WorkspaceUnchangedDocumentDiagnosticReport(
+                uri = "file:///unchanged.kt",
+                resultId = "prev-42",
+                version = 3,
+            )
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<WorkspaceUnchangedDocumentDiagnosticReport>(encoded)
         decoded.uri shouldBe "file:///unchanged.kt"
@@ -391,10 +421,11 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `WorkspaceUnchangedDocumentDiagnosticReport with null version`() {
-        val original = WorkspaceUnchangedDocumentDiagnosticReport(
-            uri = "file:///test.kt",
-            resultId = "r1",
-        )
+        val original =
+            WorkspaceUnchangedDocumentDiagnosticReport(
+                uri = "file:///test.kt",
+                resultId = "r1",
+            )
         val encoded = json.encodeToString(original)
         encoded shouldNotContain "version"
         val decoded = json.decodeFromString<WorkspaceUnchangedDocumentDiagnosticReport>(encoded)
@@ -405,11 +436,12 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentFilter with all fields`() {
-        val original = DocumentFilter(
-            language = "kotlin",
-            scheme = "file",
-            pattern = "*.kt",
-        )
+        val original =
+            DocumentFilter(
+                language = "kotlin",
+                scheme = "file",
+                pattern = "*.kt",
+            )
         val encoded = json.encodeToString(original)
         val decoded = json.decodeFromString<DocumentFilter>(encoded)
         decoded shouldBe original

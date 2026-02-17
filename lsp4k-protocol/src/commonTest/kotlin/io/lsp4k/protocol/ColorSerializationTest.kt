@@ -89,18 +89,20 @@ class ColorSerializationTest {
 
     @Test
     fun `DocumentColorParams serialization`() {
-        val params = DocumentColorParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///style.css"),
-        )
+        val params =
+            DocumentColorParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///style.css"),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"uri\":\"file:///style.css\""
     }
 
     @Test
     fun `DocumentColorParams round-trip`() {
-        val params = DocumentColorParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///colors.kt"),
-        )
+        val params =
+            DocumentColorParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///colors.kt"),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<DocumentColorParams>(encoded)
         decoded shouldBe params
@@ -110,10 +112,11 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorInformation serialization`() {
-        val info = ColorInformation(
-            range = Range(Position(10, 15), Position(10, 22)),
-            color = Color(red = 1.0, green = 0.0, blue = 0.0, alpha = 1.0),
-        )
+        val info =
+            ColorInformation(
+                range = Range(Position(10, 15), Position(10, 22)),
+                color = Color(red = 1.0, green = 0.0, blue = 0.0, alpha = 1.0),
+            )
         val encoded = json.encodeToString(info)
         encoded shouldContain "\"range\""
         encoded shouldContain "\"color\""
@@ -121,10 +124,11 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorInformation round-trip`() {
-        val info = ColorInformation(
-            range = Range(Position(5, 8), Position(5, 25)),
-            color = Color(red = 0.0, green = 0.5, blue = 1.0, alpha = 0.9),
-        )
+        val info =
+            ColorInformation(
+                range = Range(Position(5, 8), Position(5, 25)),
+                color = Color(red = 0.0, green = 0.5, blue = 1.0, alpha = 0.9),
+            )
         val encoded = json.encodeToString(info)
         val decoded = json.decodeFromString<ColorInformation>(encoded)
         decoded shouldBe info
@@ -132,20 +136,21 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorInformation list`() {
-        val colors = listOf(
-            ColorInformation(
-                range = Range(Position(10, 0), Position(10, 7)),
-                color = Color(1.0, 0.0, 0.0, 1.0),
-            ),
-            ColorInformation(
-                range = Range(Position(20, 0), Position(20, 7)),
-                color = Color(0.0, 1.0, 0.0, 1.0),
-            ),
-            ColorInformation(
-                range = Range(Position(30, 0), Position(30, 7)),
-                color = Color(0.0, 0.0, 1.0, 1.0),
-            ),
-        )
+        val colors =
+            listOf(
+                ColorInformation(
+                    range = Range(Position(10, 0), Position(10, 7)),
+                    color = Color(1.0, 0.0, 0.0, 1.0),
+                ),
+                ColorInformation(
+                    range = Range(Position(20, 0), Position(20, 7)),
+                    color = Color(0.0, 1.0, 0.0, 1.0),
+                ),
+                ColorInformation(
+                    range = Range(Position(30, 0), Position(30, 7)),
+                    color = Color(0.0, 0.0, 1.0, 1.0),
+                ),
+            )
         val encoded = json.encodeToString(colors)
         val decoded = json.decodeFromString<List<ColorInformation>>(encoded)
         decoded.size shouldBe 3
@@ -155,11 +160,12 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentationParams serialization`() {
-        val params = ColorPresentationParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///colors.kt"),
-            color = Color(red = 1.0, green = 0.5, blue = 0.0, alpha = 1.0),
-            range = Range(Position(15, 10), Position(15, 25)),
-        )
+        val params =
+            ColorPresentationParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///colors.kt"),
+                color = Color(red = 1.0, green = 0.5, blue = 0.0, alpha = 1.0),
+                range = Range(Position(15, 10), Position(15, 25)),
+            )
         val encoded = json.encodeToString(params)
         encoded shouldContain "\"textDocument\""
         encoded shouldContain "\"color\""
@@ -168,11 +174,12 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentationParams round-trip`() {
-        val params = ColorPresentationParams(
-            textDocument = TextDocumentIdentifier(uri = "file:///theme.css"),
-            color = Color(red = 0.2, green = 0.4, blue = 0.6, alpha = 1.0),
-            range = Range(Position(100, 5), Position(100, 20)),
-        )
+        val params =
+            ColorPresentationParams(
+                textDocument = TextDocumentIdentifier(uri = "file:///theme.css"),
+                color = Color(red = 0.2, green = 0.4, blue = 0.6, alpha = 1.0),
+                range = Range(Position(100, 5), Position(100, 20)),
+            )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<ColorPresentationParams>(encoded)
         decoded shouldBe params
@@ -189,13 +196,15 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentation with textEdit`() {
-        val presentation = ColorPresentation(
-            label = "rgb(255, 0, 0)",
-            textEdit = TextEdit(
-                range = Range(Position(10, 5), Position(10, 12)),
-                newText = "rgb(255, 0, 0)",
-            ),
-        )
+        val presentation =
+            ColorPresentation(
+                label = "rgb(255, 0, 0)",
+                textEdit =
+                    TextEdit(
+                        range = Range(Position(10, 5), Position(10, 12)),
+                        newText = "rgb(255, 0, 0)",
+                    ),
+            )
         val encoded = json.encodeToString(presentation)
         val decoded = json.decodeFromString<ColorPresentation>(encoded)
         decoded.textEdit?.newText shouldBe "rgb(255, 0, 0)"
@@ -203,15 +212,17 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentation with additionalTextEdits`() {
-        val presentation = ColorPresentation(
-            label = "#00FF00",
-            additionalTextEdits = listOf(
-                TextEdit(
-                    range = Range(Position(1, 0), Position(1, 0)),
-                    newText = "import Color\n",
-                ),
-            ),
-        )
+        val presentation =
+            ColorPresentation(
+                label = "#00FF00",
+                additionalTextEdits =
+                    listOf(
+                        TextEdit(
+                            range = Range(Position(1, 0), Position(1, 0)),
+                            newText = "import Color\n",
+                        ),
+                    ),
+            )
         val encoded = json.encodeToString(presentation)
         val decoded = json.decodeFromString<ColorPresentation>(encoded)
         decoded.additionalTextEdits?.size shouldBe 1
@@ -219,19 +230,22 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentation full`() {
-        val presentation = ColorPresentation(
-            label = "Color(0.0, 0.0, 1.0, 1.0)",
-            textEdit = TextEdit(
-                range = Range(Position(20, 8), Position(20, 15)),
-                newText = "Color(0.0, 0.0, 1.0, 1.0)",
-            ),
-            additionalTextEdits = listOf(
-                TextEdit(
-                    range = Range(Position(0, 0), Position(0, 0)),
-                    newText = "import io.lsp4k.protocol.Color\n",
-                ),
-            ),
-        )
+        val presentation =
+            ColorPresentation(
+                label = "Color(0.0, 0.0, 1.0, 1.0)",
+                textEdit =
+                    TextEdit(
+                        range = Range(Position(20, 8), Position(20, 15)),
+                        newText = "Color(0.0, 0.0, 1.0, 1.0)",
+                    ),
+                additionalTextEdits =
+                    listOf(
+                        TextEdit(
+                            range = Range(Position(0, 0), Position(0, 0)),
+                            newText = "import io.lsp4k.protocol.Color\n",
+                        ),
+                    ),
+            )
         val encoded = json.encodeToString(presentation)
         val decoded = json.decodeFromString<ColorPresentation>(encoded)
         decoded shouldBe presentation
@@ -239,12 +253,13 @@ class ColorSerializationTest {
 
     @Test
     fun `ColorPresentation list`() {
-        val presentations = listOf(
-            ColorPresentation(label = "#FF0000"),
-            ColorPresentation(label = "rgb(255, 0, 0)"),
-            ColorPresentation(label = "hsl(0, 100%, 50%)"),
-            ColorPresentation(label = "Color.RED"),
-        )
+        val presentations =
+            listOf(
+                ColorPresentation(label = "#FF0000"),
+                ColorPresentation(label = "rgb(255, 0, 0)"),
+                ColorPresentation(label = "hsl(0, 100%, 50%)"),
+                ColorPresentation(label = "Color.RED"),
+            )
         val encoded = json.encodeToString(presentations)
         val decoded = json.decodeFromString<List<ColorPresentation>>(encoded)
         decoded.size shouldBe 4

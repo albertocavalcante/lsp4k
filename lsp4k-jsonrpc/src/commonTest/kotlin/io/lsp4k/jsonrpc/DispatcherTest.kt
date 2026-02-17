@@ -97,7 +97,7 @@ class DispatcherTest {
         runTest {
             // By default, includeExceptionDetails is false for security (SEC-001)
             dispatcher.onRequest("test/error") { _: kotlinx.serialization.json.JsonElement? ->
-                throw RuntimeException("Something went wrong")
+                throw IllegalStateException("Something went wrong")
             }
 
             val request = RequestMessage(id = RequestId.of(1), method = "test/error")
@@ -287,7 +287,7 @@ class DispatcherTest {
     fun `notification handler exception is silently ignored`() =
         runTest {
             dispatcher.onNotification("test/error") { _: kotlinx.serialization.json.JsonElement? ->
-                throw RuntimeException("This should be caught")
+                throw IllegalStateException("This should be caught")
             }
 
             val notification = NotificationMessage(method = "test/error")
@@ -355,7 +355,7 @@ class DispatcherTest {
         runTest {
             // No error handler set
             dispatcher.onNotification("test/error-notify") { _: kotlinx.serialization.json.JsonElement? ->
-                throw RuntimeException("This should be caught and ignored")
+                throw IllegalStateException("This should be caught and ignored")
             }
 
             val notification = NotificationMessage(method = "test/error-notify")

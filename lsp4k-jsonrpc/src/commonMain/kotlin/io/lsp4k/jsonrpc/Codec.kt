@@ -50,11 +50,7 @@ public class LspCodec(
         if (value.isEmpty() || !value.all { it.isDigit() }) {
             return null
         }
-        val length = value.toIntOrNull() ?: return null
-        if (length > MAX_CONTENT_LENGTH) {
-            return null
-        }
-        return length
+        return value.toIntOrNull()?.takeIf { it <= MAX_CONTENT_LENGTH }
     }
 
     public companion object {
@@ -123,6 +119,7 @@ public class LspMessageDecoder(
         headersParsed = false
     }
 
+    @Suppress("MagicNumber")
     private fun ensureCapacity(minCapacity: Int) {
         if (minCapacity <= byteBuffer.size) return
         val newCapacity = maxOf(minCapacity, byteBuffer.size * 2, 1024)
@@ -148,36 +145,8 @@ public class LspMessageDecoder(
     }
 
     private fun tryDecodeOne(): Message? {
-        // If we haven't parsed headers yet, look for the header delimiter
-        if (!headersParsed) {
-            val delimiterBytes = LspCodec.HEADER_DELIMITER.encodeToByteArray()
-            val headerEndIndex = byteBuffer.indexOf(delimiterBytes, byteBufferSize)
-            if (headerEndIndex < 0) {
-                return null // Need more data
-            }
-
-            val headerSection = byteBuffer.copyOfRange(0, headerEndIndex).decodeToString()
-            val lines = headerSection.split(LspCodec.LINE_DELIMITER)
-
-            var foundContentLength = false
-            for (line in lines) {
-                val contentLength = codec.parseContentLength(line)
-                if (contentLength != null) {
-                    if (foundContentLength) {
-                        throw LspProtocolException("Duplicate Content-Length header")
-                    }
-                    expectedContentLength = contentLength
-                    foundContentLength = true
-                }
-            }
-
-            if (expectedContentLength == null) {
-                throw LspProtocolException("Missing Content-Length header")
-            }
-
-            // Remove headers from buffer
-            consumeFromFront(headerEndIndex + delimiterBytes.size)
-            headersParsed = true
+        if (!headersParsed && !tryParseHeaders()) {
+            return null
         }
 
         // Check if we have enough content (in bytes)
@@ -198,12 +167,44 @@ public class LspMessageDecoder(
         return codec.decodeFromJson(jsonContent)
     }
 
+    private fun tryParseHeaders(): Boolean {
+        val delimiterBytes = LspCodec.HEADER_DELIMITER.encodeToByteArray()
+        val headerEndIndex = byteBuffer.indexOf(delimiterBytes, byteBufferSize)
+        if (headerEndIndex < 0) return false
+
+        val headerSection = byteBuffer.copyOfRange(0, headerEndIndex).decodeToString()
+        val lines = headerSection.split(LspCodec.LINE_DELIMITER)
+
+        var foundContentLength = false
+        for (line in lines) {
+            val contentLength = codec.parseContentLength(line)
+            if (contentLength != null) {
+                if (foundContentLength) {
+                    throw LspProtocolException("Duplicate Content-Length header")
+                }
+                expectedContentLength = contentLength
+                foundContentLength = true
+            }
+        }
+
+        if (expectedContentLength == null) {
+            throw LspProtocolException("Missing Content-Length header")
+        }
+
+        consumeFromFront(headerEndIndex + delimiterBytes.size)
+        headersParsed = true
+        return true
+    }
+
     /**
      * Find the index of a byte array pattern within a byte array.
      * Only searches within the first [limit] bytes.
      * Returns -1 if not found.
      */
-    private fun ByteArray.indexOf(pattern: ByteArray, limit: Int): Int {
+    private fun ByteArray.indexOf(
+        pattern: ByteArray,
+        limit: Int,
+    ): Int {
         if (pattern.isEmpty()) return 0
         if (pattern.size > limit) return -1
 

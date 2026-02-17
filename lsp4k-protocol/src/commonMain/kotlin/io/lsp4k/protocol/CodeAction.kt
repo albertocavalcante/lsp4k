@@ -51,34 +51,6 @@ public object CodeActionKind {
      * Base kind for a fix all source action: 'source.fixAll'.
      */
     public const val SOURCE_FIX_ALL: String = "source.fixAll"
-
-    // Deprecated aliases for backwards compatibility
-    @Deprecated("Use EMPTY", ReplaceWith("EMPTY"))
-    public const val Empty: String = EMPTY
-
-    @Deprecated("Use QUICK_FIX", ReplaceWith("QUICK_FIX"))
-    public const val QuickFix: String = QUICK_FIX
-
-    @Deprecated("Use REFACTOR", ReplaceWith("REFACTOR"))
-    public const val Refactor: String = REFACTOR
-
-    @Deprecated("Use REFACTOR_EXTRACT", ReplaceWith("REFACTOR_EXTRACT"))
-    public const val RefactorExtract: String = REFACTOR_EXTRACT
-
-    @Deprecated("Use REFACTOR_INLINE", ReplaceWith("REFACTOR_INLINE"))
-    public const val RefactorInline: String = REFACTOR_INLINE
-
-    @Deprecated("Use REFACTOR_REWRITE", ReplaceWith("REFACTOR_REWRITE"))
-    public const val RefactorRewrite: String = REFACTOR_REWRITE
-
-    @Deprecated("Use SOURCE", ReplaceWith("SOURCE"))
-    public const val Source: String = SOURCE
-
-    @Deprecated("Use SOURCE_ORGANIZE_IMPORTS", ReplaceWith("SOURCE_ORGANIZE_IMPORTS"))
-    public const val SourceOrganizeImports: String = SOURCE_ORGANIZE_IMPORTS
-
-    @Deprecated("Use SOURCE_FIX_ALL", ReplaceWith("SOURCE_FIX_ALL"))
-    public const val SourceFixAll: String = SOURCE_FIX_ALL
 }
 
 /**
@@ -160,7 +132,9 @@ public enum class CodeActionTriggerKind(
  * Serializer for CodeActionTriggerKind that encodes/decodes as integer.
  */
 public object CodeActionTriggerKindSerializer : IntEnumSerializer<CodeActionTriggerKind>(
-    "CodeActionTriggerKind", CodeActionTriggerKind::fromValue, { it.value },
+    "CodeActionTriggerKind",
+    CodeActionTriggerKind::fromValue,
+    { it.value },
 )
 
 /**

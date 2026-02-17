@@ -52,7 +52,9 @@ public enum class DocumentHighlightKind(
  * Serializer for DocumentHighlightKind that encodes/decodes as integer.
  */
 public object DocumentHighlightKindSerializer : IntEnumSerializer<DocumentHighlightKind>(
-    "DocumentHighlightKind", DocumentHighlightKind::fromValue, { it.value },
+    "DocumentHighlightKind",
+    DocumentHighlightKind::fromValue,
+    { it.value },
 )
 
 /**

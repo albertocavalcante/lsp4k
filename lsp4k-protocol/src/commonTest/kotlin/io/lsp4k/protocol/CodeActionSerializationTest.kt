@@ -23,15 +23,15 @@ class CodeActionSerializationTest {
 
     @Test
     fun `CodeActionKind constants have correct values`() {
-        CodeActionKind.Empty shouldBe ""
-        CodeActionKind.QuickFix shouldBe "quickfix"
-        CodeActionKind.Refactor shouldBe "refactor"
-        CodeActionKind.RefactorExtract shouldBe "refactor.extract"
-        CodeActionKind.RefactorInline shouldBe "refactor.inline"
-        CodeActionKind.RefactorRewrite shouldBe "refactor.rewrite"
-        CodeActionKind.Source shouldBe "source"
-        CodeActionKind.SourceOrganizeImports shouldBe "source.organizeImports"
-        CodeActionKind.SourceFixAll shouldBe "source.fixAll"
+        CodeActionKind.EMPTY shouldBe ""
+        CodeActionKind.QUICK_FIX shouldBe "quickfix"
+        CodeActionKind.REFACTOR shouldBe "refactor"
+        CodeActionKind.REFACTOR_EXTRACT shouldBe "refactor.extract"
+        CodeActionKind.REFACTOR_INLINE shouldBe "refactor.inline"
+        CodeActionKind.REFACTOR_REWRITE shouldBe "refactor.rewrite"
+        CodeActionKind.SOURCE shouldBe "source"
+        CodeActionKind.SOURCE_ORGANIZE_IMPORTS shouldBe "source.organizeImports"
+        CodeActionKind.SOURCE_FIX_ALL shouldBe "source.fixAll"
     }
 
     // ==================== CodeActionTriggerKind Tests ====================
@@ -117,7 +117,7 @@ class CodeActionSerializationTest {
         val context =
             CodeActionContext(
                 diagnostics = emptyList(),
-                only = listOf(CodeActionKind.QuickFix, CodeActionKind.Refactor),
+                only = listOf(CodeActionKind.QUICK_FIX, CodeActionKind.REFACTOR),
             )
         val encoded = json.encodeToString(context)
         val decoded = json.decodeFromString<CodeActionContext>(encoded)
@@ -148,7 +148,7 @@ class CodeActionSerializationTest {
                             severity = DiagnosticSeverity.Error,
                         ),
                     ),
-                only = listOf(CodeActionKind.QuickFix),
+                only = listOf(CodeActionKind.QUICK_FIX),
                 triggerKind = CodeActionTriggerKind.Invoked,
             )
         val encoded = json.encodeToString(context)
@@ -214,7 +214,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Extract to variable",
-                kind = CodeActionKind.RefactorExtract,
+                kind = CodeActionKind.REFACTOR_EXTRACT,
             )
         val encoded = json.encodeToString(action)
         val decoded = json.decodeFromString<CodeAction>(encoded)
@@ -231,7 +231,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Remove unused variable",
-                kind = CodeActionKind.QuickFix,
+                kind = CodeActionKind.QUICK_FIX,
                 diagnostics = listOf(diagnostic),
             )
         val encoded = json.encodeToString(action)
@@ -244,7 +244,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Import 'List' from 'kotlin.collections'",
-                kind = CodeActionKind.QuickFix,
+                kind = CodeActionKind.QUICK_FIX,
                 isPreferred = true,
             )
         val encoded = json.encodeToString(action)
@@ -257,7 +257,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Extract to method",
-                kind = CodeActionKind.RefactorExtract,
+                kind = CodeActionKind.REFACTOR_EXTRACT,
                 disabled = CodeActionDisabled(reason = "Selection is not a valid expression"),
             )
         val encoded = json.encodeToString(action)
@@ -270,7 +270,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Add missing import",
-                kind = CodeActionKind.QuickFix,
+                kind = CodeActionKind.QUICK_FIX,
                 edit =
                     WorkspaceEdit(
                         changes =
@@ -299,7 +299,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Apply and show documentation",
-                kind = CodeActionKind.QuickFix,
+                kind = CodeActionKind.QUICK_FIX,
                 command =
                     Command(
                         title = "Show Documentation",
@@ -316,7 +316,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Lazy code action",
-                kind = CodeActionKind.Refactor,
+                kind = CodeActionKind.REFACTOR,
                 data = JsonPrimitive("resolve-data-123"),
             )
         val encoded = json.encodeToString(action)
@@ -329,7 +329,7 @@ class CodeActionSerializationTest {
         val action =
             CodeAction(
                 title = "Rename 'foo' to 'bar'",
-                kind = CodeActionKind.RefactorRewrite,
+                kind = CodeActionKind.REFACTOR_REWRITE,
                 diagnostics =
                     listOf(
                         Diagnostic(
@@ -390,14 +390,14 @@ class CodeActionSerializationTest {
         // Test that various kinds work
         val kinds =
             listOf(
-                CodeActionKind.QuickFix,
-                CodeActionKind.Refactor,
-                CodeActionKind.RefactorExtract,
-                CodeActionKind.RefactorInline,
-                CodeActionKind.RefactorRewrite,
-                CodeActionKind.Source,
-                CodeActionKind.SourceOrganizeImports,
-                CodeActionKind.SourceFixAll,
+                CodeActionKind.QUICK_FIX,
+                CodeActionKind.REFACTOR,
+                CodeActionKind.REFACTOR_EXTRACT,
+                CodeActionKind.REFACTOR_INLINE,
+                CodeActionKind.REFACTOR_REWRITE,
+                CodeActionKind.SOURCE,
+                CodeActionKind.SOURCE_ORGANIZE_IMPORTS,
+                CodeActionKind.SOURCE_FIX_ALL,
             )
 
         kinds.forEach { kind ->

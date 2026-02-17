@@ -42,7 +42,9 @@ public enum class MessageType(
  * Serializer for MessageType that encodes/decodes as integer.
  */
 public object MessageTypeSerializer : IntEnumSerializer<MessageType>(
-    "MessageType", MessageType::fromValue, { it.value },
+    "MessageType",
+    MessageType::fromValue,
+    { it.value },
 )
 
 /**

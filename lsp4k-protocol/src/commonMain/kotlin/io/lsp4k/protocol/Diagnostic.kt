@@ -37,7 +37,9 @@ public enum class DiagnosticSeverity(
  * Serializer for DiagnosticSeverity that encodes/decodes as integer.
  */
 public object DiagnosticSeveritySerializer : IntEnumSerializer<DiagnosticSeverity>(
-    "DiagnosticSeverity", DiagnosticSeverity::fromValue, { it.value },
+    "DiagnosticSeverity",
+    DiagnosticSeverity::fromValue,
+    { it.value },
 )
 
 /**
@@ -70,7 +72,9 @@ public enum class DiagnosticTag(
  * Serializer for DiagnosticTag that encodes/decodes as integer.
  */
 public object DiagnosticTagSerializer : IntEnumSerializer<DiagnosticTag>(
-    "DiagnosticTag", DiagnosticTag::fromValue, { it.value },
+    "DiagnosticTag",
+    DiagnosticTag::fromValue,
+    { it.value },
 )
 
 /**

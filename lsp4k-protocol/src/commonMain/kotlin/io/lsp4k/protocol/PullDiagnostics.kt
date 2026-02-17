@@ -7,12 +7,12 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.serializer
 import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.serializer
 
 /**
  * Parameters for the textDocument/diagnostic request.
@@ -166,12 +166,16 @@ public sealed interface DocumentDiagnosticReport {
     /**
      * Wrapper for a full document diagnostic report.
      */
-    public data class Full(public val report: FullDocumentDiagnosticReport) : DocumentDiagnosticReport
+    public data class Full(
+        public val report: FullDocumentDiagnosticReport,
+    ) : DocumentDiagnosticReport
 
     /**
      * Wrapper for an unchanged document diagnostic report.
      */
-    public data class Unchanged(public val report: UnchangedDocumentDiagnosticReport) : DocumentDiagnosticReport
+    public data class Unchanged(
+        public val report: UnchangedDocumentDiagnosticReport,
+    ) : DocumentDiagnosticReport
 }
 
 /**
@@ -223,19 +227,20 @@ public object RelatedDocumentsSerializer : KSerializer<Map<DocumentUri, Document
         value: Map<DocumentUri, DocumentDiagnosticReport>,
     ) {
         val jsonEncoder = encoder as JsonEncoder
-        val jsonObject = buildMap {
-            value.forEach { (uri, report) ->
-                put(
-                    uri,
-                    when (report) {
-                        is DocumentDiagnosticReport.Full ->
-                            jsonEncoder.json.encodeToJsonElement(FullDocumentDiagnosticReport.serializer(), report.report)
-                        is DocumentDiagnosticReport.Unchanged ->
-                            jsonEncoder.json.encodeToJsonElement(UnchangedDocumentDiagnosticReport.serializer(), report.report)
-                    },
-                )
+        val jsonObject =
+            buildMap {
+                value.forEach { (uri, report) ->
+                    put(
+                        uri,
+                        when (report) {
+                            is DocumentDiagnosticReport.Full ->
+                                jsonEncoder.json.encodeToJsonElement(FullDocumentDiagnosticReport.serializer(), report.report)
+                            is DocumentDiagnosticReport.Unchanged ->
+                                jsonEncoder.json.encodeToJsonElement(UnchangedDocumentDiagnosticReport.serializer(), report.report)
+                        },
+                    )
+                }
             }
-        }
         jsonEncoder.encodeSerializableValue(
             serializer<Map<String, JsonElement>>(),
             jsonObject,
@@ -379,12 +384,16 @@ public sealed interface WorkspaceDocumentDiagnosticReport {
     /**
      * Wrapper for a full workspace document diagnostic report.
      */
-    public data class Full(public val report: WorkspaceFullDocumentDiagnosticReport) : WorkspaceDocumentDiagnosticReport
+    public data class Full(
+        public val report: WorkspaceFullDocumentDiagnosticReport,
+    ) : WorkspaceDocumentDiagnosticReport
 
     /**
      * Wrapper for an unchanged workspace document diagnostic report.
      */
-    public data class Unchanged(public val report: WorkspaceUnchangedDocumentDiagnosticReport) : WorkspaceDocumentDiagnosticReport
+    public data class Unchanged(
+        public val report: WorkspaceUnchangedDocumentDiagnosticReport,
+    ) : WorkspaceDocumentDiagnosticReport
 }
 
 /**
