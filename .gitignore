@@ -34,3 +34,7 @@ lefthook-local.yml
 
 # Kotlin/JS
 kotlin-js-store/
+
+# Dagger
+.dagger/sdk/
+.dagger/node_modules/
