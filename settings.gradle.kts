@@ -15,14 +15,41 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 dependencyResolutionManagement {
     repositories {
+        if (providers.gradleProperty("lsp4k.useMavenLocal").orNull?.toBooleanStrict() == true) {
+            mavenLocal()
+        }
         mavenCentral()
+        maven {
+            name = "Jsonrpc4kGitHubPackages"
+            url = uri("https://maven.pkg.github.com/albertocavalcante/jsonrpc4k")
+            credentials {
+                username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR") ?: ""
+                password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN") ?: ""
+            }
+            content {
+                includeGroup("io.github.albertocavalcante")
+            }
+        }
     }
 }
 
-includeBuild("../jsonrpc4k") {
-    dependencySubstitution {
-        substitute(module("io.jsonrpc4k:jsonrpc4k-core")).using(project(":jsonrpc4k-core"))
-        substitute(module("io.jsonrpc4k:jsonrpc4k-transport")).using(project(":jsonrpc4k-transport"))
+val localJsonrpc4kBuild =
+    providers.gradleProperty("lsp4k.jsonrpc4kBuild").orNull?.let(::file)
+        ?: file("../jsonrpc4k")
+val useLocalJsonrpc4k =
+    providers.gradleProperty("lsp4k.useLocalJsonrpc4k").orNull?.toBooleanStrict()
+        ?: localJsonrpc4kBuild.isDirectory
+
+if (useLocalJsonrpc4k) {
+    check(localJsonrpc4kBuild.isDirectory) {
+        "Local jsonrpc4k build does not exist: ${localJsonrpc4kBuild.absolutePath}"
+    }
+
+    includeBuild(localJsonrpc4kBuild) {
+        dependencySubstitution {
+            substitute(module("io.github.albertocavalcante:jsonrpc4k-core")).using(project(":jsonrpc4k-core"))
+            substitute(module("io.github.albertocavalcante:jsonrpc4k-transport")).using(project(":jsonrpc4k-transport"))
+        }
     }
 }
 

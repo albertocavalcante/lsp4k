@@ -91,6 +91,13 @@ DEVELOPER_DIR=/path/to/Xcode.app/Contents/Developer ./gradlew check
 Use `-Plsp4k.enableAppleTargets=true` in CI when Apple native targets must be
 present; the build fails during configuration if Xcode is not available.
 
+`lsp4k-server` and `lsp4k-client` depend on `jsonrpc4k`. Local development uses
+a sibling `../jsonrpc4k` checkout automatically when present. Use
+`-Plsp4k.jsonrpc4kBuild=/path/to/jsonrpc4k` to point at another checkout, or
+`-Plsp4k.useLocalJsonrpc4k=false` to force resolution from published artifacts.
+For GitHub Packages, provide `gpr.user`/`gpr.key` Gradle properties or
+`GITHUB_ACTOR`/`GITHUB_TOKEN` environment variables.
+
 ## License
 
 Apache License 2.0
