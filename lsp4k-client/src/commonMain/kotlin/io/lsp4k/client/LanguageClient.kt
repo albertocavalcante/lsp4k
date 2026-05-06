@@ -135,6 +135,18 @@ public data class LanguageClientConfig(
     val requestHandlers: Map<String, RequestHandler>,
 )
 
+@PublishedApi
+internal fun <H> MutableMap<String, H>.putUniqueHandler(
+    kind: String,
+    method: String,
+    handler: H,
+) {
+    require(method !in this) {
+        "$kind handler already registered for method: $method"
+    }
+    this[method] = handler
+}
+
 /**
  * Builder for language client configuration.
  */
@@ -151,11 +163,14 @@ public class LanguageClientBuilder {
         method: String,
         crossinline extract: suspend (P) -> Unit,
     ) {
-        notificationHandlers[method] =
+        notificationHandlers.putUniqueHandler(
+            "Notification",
+            method,
             NotificationHandler { params ->
                 val typed = params?.let { json.decodeFromJsonElement(serializer<P>(), it) }
                 if (typed != null) extract(typed)
-            }
+            },
+        )
     }
 
     private inline fun <reified P, reified R> handleRequest(
@@ -164,14 +179,17 @@ public class LanguageClientBuilder {
     ) {
         val paramSer = serializer<P>()
         val resultSer = serializer<R>()
-        requestHandlers[method] =
+        requestHandlers.putUniqueHandler(
+            "Request",
+            method,
             RequestHandler { params ->
                 val typed =
                     params?.let { json.decodeFromJsonElement(paramSer, it) }
                         ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 val result = handler(typed)
                 result?.let { json.encodeToJsonElement(resultSer, it) }
-            }
+            },
+        )
     }
 
     /**
@@ -229,17 +247,22 @@ public class LanguageClientBuilder {
      * Handle telemetry/event notifications.
      */
     public fun onTelemetryEvent(handler: suspend (JsonElement) -> Unit) {
-        notificationHandlers[LspMethods.TELEMETRY_EVENT] =
+        notificationHandlers.putUniqueHandler(
+            "Notification",
+            LspMethods.TELEMETRY_EVENT,
             NotificationHandler { params ->
                 if (params != null) handler(params)
-            }
+            },
+        )
     }
 
     /**
      * Handle $/progress notifications.
      */
     public fun onProgress(handler: suspend (ProgressParams<JsonElement>) -> Unit) {
-        notificationHandlers[LspMethods.PROGRESS] =
+        notificationHandlers.putUniqueHandler(
+            "Notification",
+            LspMethods.PROGRESS,
             NotificationHandler { params ->
                 val progressParams =
                     params?.let {
@@ -249,7 +272,8 @@ public class LanguageClientBuilder {
                         )
                     }
                 if (progressParams != null) handler(progressParams)
-            }
+            },
+        )
     }
 
     /**
@@ -270,11 +294,14 @@ public class LanguageClientBuilder {
      * Handle workspace/workspaceFolders requests from the server.
      */
     public fun onWorkspaceFolders(handler: suspend () -> List<WorkspaceFolder>?) {
-        requestHandlers[LspMethods.WORKSPACE_WORKSPACE_FOLDERS] =
+        requestHandlers.putUniqueHandler(
+            "Request",
+            LspMethods.WORKSPACE_WORKSPACE_FOLDERS,
             RequestHandler { _ ->
                 val result = handler()
                 result?.let { json.encodeToJsonElement(ListSerializer(WorkspaceFolder.serializer()), it) }
-            }
+            },
+        )
     }
 
     /**
@@ -291,7 +318,7 @@ public class LanguageClientBuilder {
         method: String,
         handler: NotificationHandler,
     ) {
-        notificationHandlers[method] = handler
+        notificationHandlers.putUniqueHandler("Notification", method, handler)
     }
 
     /**
@@ -301,7 +328,7 @@ public class LanguageClientBuilder {
         method: String,
         handler: RequestHandler,
     ) {
-        requestHandlers[method] = handler
+        requestHandlers.putUniqueHandler("Request", method, handler)
     }
 
     internal fun build(): LanguageClientConfig =

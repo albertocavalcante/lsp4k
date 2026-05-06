@@ -179,6 +179,51 @@ public data class WorkspaceSymbolParams(
 )
 
 /**
+ * A workspace symbol location without a concrete range.
+ *
+ * Added by LSP 3.17 for symbols whose precise range is expensive or not yet
+ * available at query time.
+ */
+@Serializable
+public data class WorkspaceSymbolUriLocation(
+    val uri: DocumentUri,
+)
+
+/**
+ * A workspace symbol location can be a concrete [Location] or a URI-only location.
+ */
+public typealias WorkspaceSymbolLocation = Either<Location, WorkspaceSymbolUriLocation>
+
+/**
+ * Serializer for [WorkspaceSymbolLocation].
+ */
+public object WorkspaceSymbolLocationSerializer : KSerializer<WorkspaceSymbolLocation> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("WorkspaceSymbolLocation")
+
+    override fun serialize(
+        encoder: Encoder,
+        value: WorkspaceSymbolLocation,
+    ) {
+        val jsonEncoder = encoder as JsonEncoder
+        when (value) {
+            is Either.Left -> jsonEncoder.encodeSerializableValue(Location.serializer(), value.value)
+            is Either.Right -> jsonEncoder.encodeSerializableValue(WorkspaceSymbolUriLocation.serializer(), value.value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): WorkspaceSymbolLocation {
+        val jsonDecoder = decoder as JsonDecoder
+        val element = jsonDecoder.decodeJsonElement()
+        require(element is JsonObject) { "WorkspaceSymbol.location must be a JSON object" }
+        return if ("range" in element) {
+            Either.Left(jsonDecoder.json.decodeFromJsonElement(Location.serializer(), element))
+        } else {
+            Either.Right(jsonDecoder.json.decodeFromJsonElement(WorkspaceSymbolUriLocation.serializer(), element))
+        }
+    }
+}
+
+/**
  * A special workspace symbol that supports locations without a range.
  */
 @Serializable
@@ -202,13 +247,33 @@ public data class WorkspaceSymbol(
     /**
      * The location of this symbol.
      */
-    val location: Location,
+    @Serializable(with = WorkspaceSymbolLocationSerializer::class)
+    val location: WorkspaceSymbolLocation,
     /**
      * A data entry field that is preserved on a workspace symbol between a
      * workspace symbol request and a workspace symbol resolve request.
      */
     val data: JsonElement? = null,
-)
+) {
+    /**
+     * Creates a workspace symbol with a concrete source location.
+     */
+    public constructor(
+        name: String,
+        kind: SymbolKind,
+        tags: List<SymbolTag>? = null,
+        containerName: String? = null,
+        location: Location,
+        data: JsonElement? = null,
+    ) : this(
+        name = name,
+        kind = kind,
+        tags = tags,
+        containerName = containerName,
+        location = Either.Left(location),
+        data = data,
+    )
+}
 
 /**
  * Parameters for the workspace/didChangeConfiguration notification.

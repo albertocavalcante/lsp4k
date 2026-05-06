@@ -9,6 +9,7 @@ import io.lsp4k.protocol.CompletionOptions
 import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.TextDocumentSyncKind
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 /**
  * Tests for the language server builder DSL: LanguageServerBuilder,
@@ -365,6 +366,48 @@ class LanguageServerBuilderTest {
                 onNotification("custom/myNotification") { _ -> }
             }
         config.notificationHandlers shouldContainKey "custom/myNotification"
+    }
+
+    @Test
+    fun `custom request handler cannot replace lifecycle initialize`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                onRequest(LspMethods.INITIALIZE) { _ -> null }
+            }
+        }
+    }
+
+    @Test
+    fun `custom notification handler cannot replace lifecycle initialized`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                onNotification(LspMethods.INITIALIZED) { _ -> }
+            }
+        }
+    }
+
+    @Test
+    fun `duplicate request handlers are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    completion { _ -> null }
+                    completion { _ -> null }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `duplicate notification handlers are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    didOpen { _ -> }
+                    didOpen { _ -> }
+                }
+            }
+        }
     }
 
     @Test

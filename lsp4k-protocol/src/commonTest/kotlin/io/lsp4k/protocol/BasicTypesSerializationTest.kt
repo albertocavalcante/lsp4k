@@ -94,7 +94,7 @@ class BasicTypesSerializationTest {
     }
 
     @Test
-    fun `Range empty (start equals end)`() {
+    fun `Range empty when start equals end`() {
         val range =
             Range(
                 start = Position(5, 10),
@@ -335,7 +335,7 @@ class BasicTypesSerializationTest {
     }
 
     @Test
-    fun `TextEdit for deletion (empty newText)`() {
+    fun `TextEdit for deletion with empty newText`() {
         val edit =
             TextEdit(
                 range = Range(Position(5, 0), Position(5, 10)),
@@ -348,7 +348,7 @@ class BasicTypesSerializationTest {
     }
 
     @Test
-    fun `TextEdit for insertion (empty range)`() {
+    fun `TextEdit for insertion with empty range`() {
         val edit =
             TextEdit(
                 range = Range(Position(5, 10), Position(5, 10)),

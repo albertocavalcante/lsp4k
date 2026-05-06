@@ -170,6 +170,44 @@ public data class LanguageServerConfig(
     val notificationHandlers: Map<String, NotificationHandler>,
 )
 
+private val reservedServerRequestMethods: Set<String> =
+    setOf(
+        LspMethods.INITIALIZE,
+        LspMethods.SHUTDOWN,
+    )
+
+private val reservedServerNotificationMethods: Set<String> =
+    setOf(
+        LspMethods.INITIALIZED,
+        LspMethods.EXIT,
+        LspMethods.SET_TRACE,
+        LspMethods.CANCEL_REQUEST,
+    )
+
+private fun requireNotReservedServerRequest(method: String) {
+    require(method !in reservedServerRequestMethods) {
+        "Cannot register a custom request handler for reserved server method: $method"
+    }
+}
+
+private fun requireNotReservedServerNotification(method: String) {
+    require(method !in reservedServerNotificationMethods) {
+        "Cannot register a custom notification handler for reserved server method: $method"
+    }
+}
+
+@PublishedApi
+internal fun <H> MutableMap<String, H>.putUniqueHandler(
+    kind: String,
+    method: String,
+    handler: H,
+) {
+    require(method !in this) {
+        "$kind handler already registered for method: $method"
+    }
+    this[method] = handler
+}
+
 /**
  * Top-level builder for assembling a [LanguageServerConfig] via the [languageServer] DSL.
  */
@@ -246,7 +284,8 @@ public class LanguageServerBuilder {
         method: String,
         handler: RequestHandler,
     ) {
-        requestHandlers[method] = handler
+        requireNotReservedServerRequest(method)
+        requestHandlers.putUniqueHandler("Request", method, handler)
     }
 
     /**
@@ -256,7 +295,8 @@ public class LanguageServerBuilder {
         method: String,
         handler: NotificationHandler,
     ) {
-        notificationHandlers[method] = handler
+        requireNotReservedServerNotification(method)
+        notificationHandlers.putUniqueHandler("Notification", method, handler)
     }
 
     internal fun build(): LanguageServerConfig =
@@ -451,14 +491,17 @@ public abstract class HandlersBuilder internal constructor(
     ) {
         val paramSerializer = serializer<P>()
         val resultSerializer = serializer<R>()
-        requestHandlers[method] =
+        requestHandlers.putUniqueHandler(
+            "Request",
+            method,
             RequestHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
                         ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 val result = handler(typedParams)
                 result?.let { json.encodeToJsonElement(resultSerializer, it) }
-            }
+            },
+        )
     }
 
     /**
@@ -472,13 +515,16 @@ public abstract class HandlersBuilder internal constructor(
         crossinline handler: suspend (P) -> JsonElement?,
     ) {
         val paramSerializer = serializer<P>()
-        requestHandlers[method] =
+        requestHandlers.putUniqueHandler(
+            "Request",
+            method,
             RequestHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
                         ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 handler(typedParams)
-            }
+            },
+        )
     }
 
     /**
@@ -491,13 +537,16 @@ public abstract class HandlersBuilder internal constructor(
         crossinline handler: suspend (P) -> Unit,
     ) {
         val paramSerializer = serializer<P>()
-        notificationHandlers[method] =
+        notificationHandlers.putUniqueHandler(
+            "Notification",
+            method,
             NotificationHandler { params ->
                 val typedParams: P =
                     params?.let { json.decodeFromJsonElement(paramSerializer, it) }
                         ?: throw JsonRpcException.invalidParams("Missing params for $method")
                 handler(typedParams)
-            }
+            },
+        )
     }
 }
 

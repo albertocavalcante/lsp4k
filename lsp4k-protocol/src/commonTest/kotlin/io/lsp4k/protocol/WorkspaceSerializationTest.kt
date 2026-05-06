@@ -293,6 +293,7 @@ class WorkspaceSerializationTest {
         val decoded = json.decodeFromString<WorkspaceSymbol>(encoded)
         decoded.name shouldBe "MyClass"
         decoded.kind shouldBe SymbolKind.Class
+        decoded.location.left?.uri shouldBe "file:///test.kt"
     }
 
     @Test
@@ -315,6 +316,26 @@ class WorkspaceSerializationTest {
         decoded.tags shouldBe listOf(SymbolTag.Deprecated)
         decoded.containerName shouldBe "MyClass"
         decoded.data shouldBe JsonPrimitive("custom-data")
+    }
+
+    @Test
+    fun `WorkspaceSymbol supports uri-only location`() {
+        val jsonStr =
+            """
+            {
+                "name": "ExternalSymbol",
+                "kind": 12,
+                "location": {
+                    "uri": "file:///external.kt"
+                }
+            }
+            """.trimIndent()
+
+        val decoded = json.decodeFromString<WorkspaceSymbol>(jsonStr)
+
+        decoded.name shouldBe "ExternalSymbol"
+        decoded.location.right shouldBe WorkspaceSymbolUriLocation("file:///external.kt")
+        json.encodeToString(decoded) shouldContain """"uri":"file:///external.kt""""
     }
 
     // ==================== DidChangeConfigurationParams Tests ====================

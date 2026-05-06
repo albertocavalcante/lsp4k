@@ -126,7 +126,7 @@ class DiagnosticSerializationTest {
     // ==================== Diagnostic Tests ====================
 
     @Test
-    fun `Diagnostic minimal serialization (required fields only)`() {
+    fun `Diagnostic minimal serialization with required fields only`() {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),

@@ -131,8 +131,8 @@ public object DiagnosticCodeSerializer : KSerializer<DiagnosticCode> {
         val jsonDecoder = decoder as JsonDecoder
         val element = jsonDecoder.decodeJsonElement()
         return when {
+            element is JsonPrimitive && element.isString -> Either.Right(element.content)
             element is JsonPrimitive && element.intOrNull != null -> Either.Left(element.intOrNull!!)
-            element is JsonPrimitive -> Either.Right(element.content)
             else -> throw IllegalArgumentException("DiagnosticCode must be an integer or string")
         }
     }

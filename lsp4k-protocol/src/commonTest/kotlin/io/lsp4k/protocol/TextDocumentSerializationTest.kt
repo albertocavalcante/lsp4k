@@ -290,7 +290,7 @@ class TextDocumentSerializationTest {
     }
 
     @Test
-    fun `DidChangeTextDocumentParams with rangeLength (deprecated)`() {
+    fun `DidChangeTextDocumentParams with deprecated rangeLength`() {
         val params =
             DidChangeTextDocumentParams(
                 textDocument =
@@ -447,7 +447,7 @@ class TextDocumentSerializationTest {
     }
 
     @Test
-    fun `TextDocumentContentChangeEvent with zero-width range (insertion)`() {
+    fun `TextDocumentContentChangeEvent with zero-width insertion range`() {
         val event =
             TextDocumentContentChangeEvent(
                 range = Range(Position(5, 10), Position(5, 10)),
@@ -459,7 +459,7 @@ class TextDocumentSerializationTest {
     }
 
     @Test
-    fun `TextDocumentContentChangeEvent deletion (empty replacement)`() {
+    fun `TextDocumentContentChangeEvent deletion with empty replacement`() {
         val event =
             TextDocumentContentChangeEvent(
                 range = Range(Position(0, 0), Position(5, 0)),

@@ -479,21 +479,22 @@ class EitherSerializationTest {
 
     @Test
     fun `DiagnosticCode with numeric string looks numeric but is still string`() {
-        // A JSON string that looks like a number is still a string in JSON
-        // However, intOrNull can parse it, so the serializer treats it as an int
-        // This tests the actual behavior - numeric-looking strings are treated as ints
         val decoded = json.decodeFromString(DiagnosticCodeSerializer, "\"123\"")
-        // Note: The serializer uses intOrNull which parses "123" as 123
-        // This is the actual behavior, even if it might not be ideal
-        decoded.isLeft shouldBe true
-        decoded.left shouldBe 123
+        decoded.isRight shouldBe true
+        decoded.right shouldBe "123"
     }
 
     @Test
     fun `DiagnosticCode with non-numeric string`() {
-        // A string that cannot be parsed as a number
         val decoded = json.decodeFromString(DiagnosticCodeSerializer, "\"error-code\"")
         decoded.isRight shouldBe true
         decoded.right shouldBe "error-code"
+    }
+
+    @Test
+    fun `DiagnosticCode rejects non-string non-integer primitives`() {
+        assertFailsWith<IllegalArgumentException> {
+            json.decodeFromString(DiagnosticCodeSerializer, "true")
+        }
     }
 }

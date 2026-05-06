@@ -131,7 +131,7 @@ class CompletionSerializationTest {
     }
 
     @Test
-    fun `CompletionItemLabelDetails empty (no optional fields)`() {
+    fun `CompletionItemLabelDetails empty with no optional fields`() {
         val details = CompletionItemLabelDetails()
         val encoded = json.encodeToString(details)
         encoded shouldBe "{}"
@@ -140,7 +140,7 @@ class CompletionSerializationTest {
     // ==================== CompletionItem Tests ====================
 
     @Test
-    fun `CompletionItem minimal (label only)`() {
+    fun `CompletionItem minimal with label only`() {
         val item = CompletionItem(label = "myFunction")
         val encoded = json.encodeToString(item)
         encoded shouldBe """{"label":"myFunction"}"""

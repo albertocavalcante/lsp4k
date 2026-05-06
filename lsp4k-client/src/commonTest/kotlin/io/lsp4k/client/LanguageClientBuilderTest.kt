@@ -12,6 +12,7 @@ import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.MessageActionItem
 import io.lsp4k.protocol.WorkspaceFolder
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 /**
  * Tests for the language client builder DSL: LanguageClientBuilder,
@@ -193,6 +194,26 @@ class LanguageClientBuilderTest {
                 onRequest("custom/serverRequest", RequestHandler { _ -> null })
             }
         config.requestHandlers shouldContainKey "custom/serverRequest"
+    }
+
+    @Test
+    fun `duplicate notification handlers are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageClient {
+                onShowMessage { _, _ -> }
+                onNotification(LspMethods.WINDOW_SHOW_MESSAGE, NotificationHandler { _ -> })
+            }
+        }
+    }
+
+    @Test
+    fun `duplicate request handlers are rejected`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageClient {
+                onApplyEdit { _ -> ApplyWorkspaceEditResult(applied = true) }
+                onRequest(LspMethods.WORKSPACE_APPLY_EDIT, RequestHandler { _ -> null })
+            }
+        }
     }
 
     @Test

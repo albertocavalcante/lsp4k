@@ -239,7 +239,7 @@ class InitializeSerializationTest {
     }
 
     @Test
-    fun `InitializeParams with rootPath (deprecated)`() {
+    fun `InitializeParams with deprecated rootPath`() {
         val params =
             InitializeParams(
                 processId = 1000,

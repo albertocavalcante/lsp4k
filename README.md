@@ -9,16 +9,16 @@ Idiomatic Kotlin Multiplatform library for the [Language Server Protocol (LSP)](
 - **kotlinx-serialization** - Type-safe JSON serialization with `@Serializable` data classes
 - **Coroutines** - Async-first API with `suspend` functions and `Flow`
 - **DSL-based** - Intuitive builder DSL for server configuration
+- **JSON-RPC transport integration** - Uses `jsonrpc4k` for LSP message framing and transports
 
 ## Modules
 
 | Module | Description |
 |--------|-------------|
 | `lsp4k-protocol` | LSP type definitions (`Position`, `Range`, `Diagnostic`, etc.) |
-| `lsp4k-jsonrpc` | JSON-RPC 2.0 implementation with LSP framing |
-| `lsp4k-transport` | Transport abstractions (stdio, socket) |
 | `lsp4k-server` | Server-side abstractions and DSL |
 | `lsp4k-client` | Client-side abstractions (for testing, editors) |
+| `example` | Example language server application |
 
 ## Quick Start
 
@@ -76,9 +76,20 @@ dependencies {
 
 ## Building
 
-```bash
-./gradlew build
+```sh
+./gradlew check
 ```
+
+On macOS, Apple native targets are enabled when a full Xcode is selectable by
+`xcrun xcodebuild -version`. If Xcode is installed outside `/Applications`,
+select it with `xcode-select` or launch Gradle with `DEVELOPER_DIR`:
+
+```sh
+DEVELOPER_DIR=/path/to/Xcode.app/Contents/Developer ./gradlew check
+```
+
+Use `-Plsp4k.enableAppleTargets=true` in CI when Apple native targets must be
+present; the build fails during configuration if Xcode is not available.
 
 ## License
 

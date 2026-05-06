@@ -140,7 +140,7 @@ class HoverSerializationTest {
     // ==================== Hover Tests (MarkupContent / Markup form) ====================
 
     @Test
-    fun `Hover minimal (contents only)`() {
+    fun `Hover minimal with contents only`() {
         val hover =
             Hover(
                 contents =
@@ -271,7 +271,7 @@ class HoverSerializationTest {
     }
 
     @Test
-    fun `Hover with MarkedString object (language and value)`() {
+    fun `Hover with MarkedString object language and value`() {
         val jsonStr =
             """
             {
