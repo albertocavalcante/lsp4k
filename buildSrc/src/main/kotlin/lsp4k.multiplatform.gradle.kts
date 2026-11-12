@@ -1,3 +1,6 @@
+import org.gradle.api.attributes.java.TargetJvmVersion
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -32,12 +35,14 @@ kotlin {
     explicitApi()
 
     jvm {
+        attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 17)
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
 
-    jvmToolchain(21)
+    jvmToolchain(17)
 
     js(IR) {
         browser()
