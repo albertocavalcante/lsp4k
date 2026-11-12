@@ -32,6 +32,7 @@ import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.DeclarationParams
 import io.lsp4k.protocol.DefinitionParams
+import io.lsp4k.protocol.DefinitionResult
 import io.lsp4k.protocol.Diagnostic
 import io.lsp4k.protocol.DidChangeConfigurationParams
 import io.lsp4k.protocol.DidChangeNotebookDocumentParams
@@ -115,8 +116,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 
 /**
@@ -507,7 +511,33 @@ public class ServerProxy internal constructor(
     /**
      * Request the definition of a symbol at a given text document position.
      */
-    public suspend fun definition(params: DefinitionParams): List<Location>? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
+    public suspend fun definition(params: DefinitionParams): List<Location>? {
+        val result = request<DefinitionParams, JsonElement>(LspMethods.TEXT_DOCUMENT_DEFINITION, params) ?: return null
+        return when (result) {
+            is JsonObject -> listOf(json.decodeFromJsonElement(Location.serializer(), result))
+            is JsonArray -> decodeDefinitionLocations(result)
+            else -> throw SerializationException("Definition result must be a Location object or an array")
+        }
+    }
+
+    private fun decodeDefinitionLocations(result: JsonArray): List<Location> =
+        try {
+            json.decodeFromJsonElement(ListSerializer(Location.serializer()), result)
+        } catch (failure: SerializationException) {
+            val shape =
+                try {
+                    json.decodeFromJsonElement(DefinitionResult.serializer(), result)
+                } catch (_: SerializationException) {
+                    null
+                }
+            if (shape is DefinitionResult.Links) {
+                throw SerializationException("Definition returned location links; use definitionResult to preserve them", failure)
+            }
+            throw failure
+        }
+
+    /** Requests a definition while preserving single locations and location or link arrays. */
+    public suspend fun definitionResult(params: DefinitionParams): DefinitionResult? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
 
     /**
      * Request the type definition of a symbol at a given text document position.

@@ -32,6 +32,7 @@ import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.CreateFilesParams
 import io.lsp4k.protocol.DeclarationParams
 import io.lsp4k.protocol.DefinitionParams
+import io.lsp4k.protocol.DefinitionResult
 import io.lsp4k.protocol.DeleteFilesParams
 import io.lsp4k.protocol.DiagnosticOptions
 import io.lsp4k.protocol.DidChangeConfigurationParams
@@ -652,6 +653,11 @@ public class TextDocumentHandlersBuilder(
 
     /** Registers a handler for `textDocument/definition` requests (returns [LocationLink] list). */
     public fun definitionWithLinks(handler: suspend (DefinitionParams) -> List<LocationLink>?) {
+        registerRequest(LspMethods.TEXT_DOCUMENT_DEFINITION, handler)
+    }
+
+    /** Registers a definition handler that can return any LSP definition result shape. */
+    public fun definitionResult(handler: suspend (DefinitionParams) -> DefinitionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_DEFINITION, handler)
     }
 
