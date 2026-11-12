@@ -419,6 +419,42 @@ class LanguageServerBuilderTest {
     }
 
     @Test
+    fun `definition registrations cannot replace each other`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    definition { null }
+                    definitionResult { null }
+                }
+            }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    definitionResult { null }
+                    definition { null }
+                }
+            }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    definitionWithLinks { null }
+                    definitionResult { null }
+                }
+            }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    definitionResult { null }
+                    definitionWithLinks { null }
+                }
+            }
+        }
+    }
+
+    @Test
     fun `duplicate notification handlers are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageServer {
