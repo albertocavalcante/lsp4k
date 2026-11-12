@@ -1,5 +1,6 @@
 plugins {
     id("lsp4k.multiplatform")
+    id("lsp4k.publication")
 }
 
 kotlin {

@@ -24,6 +24,8 @@ jobs:
     name: Linux Check
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout lsp4k
@@ -55,6 +57,9 @@ jobs:
       - name: Check
         run: ./gradlew check -Plsp4k.jsonrpc4kBuild=jsonrpc4k -Plsp4k.enableAppleTargets=false
 
+      - name: Inspect local publication model
+        run: tools/ci/check-publication-model.sh
+
       - name: Upload Test Results
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
@@ -70,6 +75,8 @@ jobs:
     name: macOS Native Check
     runs-on: macos-15
     timeout-minutes: 20
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout lsp4k
@@ -112,6 +119,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: linux
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout lsp4k
