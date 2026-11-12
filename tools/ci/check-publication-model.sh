@@ -32,6 +32,19 @@ import zipfile
 root = Path(os.environ["LSP4K_FIXTURE_REPOSITORY"]) / "io/lsp4k"
 version = os.environ["LSP4K_FIXTURE_VERSION"]
 ns = {"m": "http://maven.apache.org/POM/4.0.0"}
+expected_api = {
+    "lsp4k-protocol": [("org.jetbrains.kotlinx", "kotlinx-serialization-json", "1.9.0")],
+    "lsp4k-client": [
+        ("io.lsp4k", "lsp4k-protocol", version),
+        ("io.github.albertocavalcante", "jsonrpc4k-transport", "0.1.0-SNAPSHOT"),
+        ("org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.10.2"),
+    ],
+    "lsp4k-server": [
+        ("io.lsp4k", "lsp4k-protocol", version),
+        ("io.github.albertocavalcante", "jsonrpc4k-transport", "0.1.0-SNAPSHOT"),
+        ("org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.10.2"),
+    ],
+}
 
 for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
     for artifact in (library, f"{library}-jvm"):
@@ -48,7 +61,8 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
         assert metadata["component"]["module"] == artifact
         assert metadata["component"]["version"] == version
         dependencies = [
-            (d.findtext("m:groupId", namespaces=ns), d.findtext("m:artifactId", namespaces=ns), d.findtext("m:version", namespaces=ns))
+            (d.findtext("m:groupId", namespaces=ns), d.findtext("m:artifactId", namespaces=ns),
+             d.findtext("m:version", namespaces=ns), d.findtext("m:scope", default="compile", namespaces=ns))
             for d in pom.findall("m:dependencies/m:dependency", ns)
         ]
         print(f"{artifact}:{version} POM dependencies: {dependencies}")
@@ -63,21 +77,16 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
                 assert classes, f"{artifact} contains no classes"
                 majors = [struct.unpack(">H", jar.read(name)[6:8])[0] for name in classes]
                 print(f"{artifact} maximum JVM class major: {max(majors)}")
-            if library != "lsp4k-protocol":
-                assert any(group == "io.lsp4k" and name.startswith("lsp4k-protocol") and dep_version == version
-                           for group, name, dep_version in dependencies), dependencies
-                assert any(group == "io.github.albertocavalcante" and name.startswith("jsonrpc4k-transport")
-                           and dep_version == "0.1.0-SNAPSHOT" for group, name, dep_version in dependencies), dependencies
-                api_variants = [v for v in metadata["variants"]
-                                if v["attributes"].get("org.gradle.usage") == "java-api"]
-                assert api_variants, f"{artifact} has no JVM API variant"
+            api_variants = [v for v in metadata["variants"]
+                            if v["attributes"].get("org.gradle.usage") == "java-api"]
+            assert api_variants, f"{artifact} has no JVM API variant"
+            for group, module, dep_version in expected_api[library]:
+                assert any(g == group and name.startswith(module) and v == dep_version and scope == "compile"
+                           for g, name, v, scope in dependencies), dependencies
                 for variant in api_variants:
                     api_dependencies = variant.get("dependencies", [])
                     print(f"{artifact} API dependencies: {api_dependencies}")
-                    assert any(d["group"] == "io.lsp4k" and d["module"].startswith("lsp4k-protocol")
-                               and d.get("version", {}).get("requires") == version for d in api_dependencies), api_dependencies
-                    assert any(d["group"] == "io.github.albertocavalcante"
-                               and d["module"].startswith("jsonrpc4k-transport")
-                               and d.get("version", {}).get("requires") == "0.1.0-SNAPSHOT"
+                    assert any(d["group"] == group and d["module"].startswith(module)
+                               and d.get("version", {}).get("requires") == dep_version
                                for d in api_dependencies), api_dependencies
 PY
