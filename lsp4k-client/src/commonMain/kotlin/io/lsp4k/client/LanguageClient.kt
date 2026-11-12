@@ -6,6 +6,7 @@ import io.jsonrpc4k.core.JsonRpcException
 import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.core.RequestHandler
 import io.jsonrpc4k.transport.Transport
+import io.lsp4k.client.transport.SessionLifecycle
 import io.lsp4k.protocol.ApplyWorkspaceEditParams
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.CallHierarchyIncomingCall
@@ -112,8 +113,7 @@ import io.lsp4k.protocol.WorkspaceSymbolParams
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.serializer
@@ -352,9 +352,10 @@ public class LanguageClientBuilder {
 public class LanguageClientSession internal constructor(
     private val config: LanguageClientConfig,
     private val connection: Connection,
-    private val scope: CoroutineScope,
+    private val lifecycle: SessionLifecycle,
 ) {
     private val json = JsonRpcCodec.defaultJson
+    private val shutdownStarted = MutableStateFlow(false)
 
     /**
      * Server proxy for sending requests to the server.
@@ -402,19 +403,43 @@ public class LanguageClientSession internal constructor(
     }
 
     /**
-     * Shutdown the connection.
+     * Requests shutdown and waits for the exit frame to be sent to the transport.
+     * This does not guarantee peer receipt. The caller may bound the wait with a timeout;
+     * cancellation aborts the session without closing the borrowed transport.
      */
     public suspend fun shutdown() {
-        connection.request<JsonElement?>(LspMethods.SHUTDOWN, null)
-        connection.notify(LspMethods.EXIT, null)
+        check(shutdownStarted.compareAndSet(false, true)) { "Shutdown already started" }
+        try {
+            connection.request<JsonElement?>(LspMethods.SHUTDOWN, null)
+            connection.notify(LspMethods.EXIT, null)
+            try {
+                connection.flushOutgoing()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                lifecycle.fail(failure.cause ?: failure)
+                throw failure
+            }
+        } finally {
+            lifecycle.close()
+        }
     }
 
     /**
-     * Close the client connection.
+     * Stops immediately, canceling pending work and discarding unsent frames.
+     * Use [shutdown] for orderly exit. The transport remains caller-owned.
      */
     public fun close() {
-        connection.close()
+        lifecycle.close()
     }
+
+    /**
+     * Waits for session jobs to stop. Returns the first read or write failure, or null on EOF,
+     * explicit close, graceful exit, or parent cancellation. The transport remains caller-owned
+     * and its suspending operations must cooperate with coroutine cancellation. If a borrowed
+     * transport blocks in a non-interruptible read, its owner may need to close it to unblock.
+     */
+    public suspend fun awaitTermination(): Throwable? = lifecycle.awaitTermination()
 }
 
 /**
@@ -818,25 +843,21 @@ public fun languageClient(block: LanguageClientBuilder.() -> Unit): LanguageClie
 
 /**
  * Start a language client session with the given configuration and transport.
+ * The supplied scope and transport remain caller-owned; closing a session does not close the transport.
  */
 public suspend fun LanguageClientConfig.start(
     transport: Transport,
     scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ): LanguageClientSession {
-    val connection = Connection(scope = scope)
-    val session = LanguageClientSession(this, connection, scope)
-    session.setup()
-
-    scope.launch {
-        transport.incoming.collect { data ->
-            connection.receive(data)
-        }
-    }
-
-    scope.launch {
-        connection.outgoing.collect { data ->
-            transport.send(data)
-        }
+    val lifecycle = SessionLifecycle(scope)
+    val session = LanguageClientSession(this, lifecycle.connection, lifecycle)
+    var started = false
+    try {
+        session.setup()
+        lifecycle.start(transport)
+        started = true
+    } finally {
+        if (!started) lifecycle.close()
     }
 
     return session

@@ -134,12 +134,10 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
+import io.lsp4k.server.transport.SessionLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.ListSerializer
@@ -1011,7 +1009,7 @@ public class WindowHandlersBuilder(
 public class LanguageServer internal constructor(
     private val config: LanguageServerConfig,
     private val connection: Connection,
-    private val scope: CoroutineScope,
+    private val lifecycle: SessionLifecycle,
 ) {
     @Volatile
     private var initialized = false
@@ -1073,7 +1071,16 @@ public class LanguageServer internal constructor(
         }
 
         connection.onNotification(LspMethods.EXIT) { _ ->
-            scope.cancel()
+            try {
+                connection.flushOutgoing()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                lifecycle.fail(failure.cause ?: failure)
+                throw failure
+            } finally {
+                lifecycle.close()
+            }
         }
 
         connection.onNotification(LspMethods.SET_TRACE) { params ->
@@ -1102,6 +1109,17 @@ public class LanguageServer internal constructor(
             }
         }
     }
+
+    /** Stops immediately, canceling pending work and discarding unsent frames; the transport remains caller-owned. */
+    public fun close(): Unit = lifecycle.close()
+
+    /**
+     * Waits for session jobs to stop. Returns the first read or write failure, or null on EOF,
+     * explicit close, graceful exit, or parent cancellation. The transport remains caller-owned
+     * and its suspending operations must cooperate with coroutine cancellation. If a borrowed
+     * transport blocks in a non-interruptible read, its owner may need to close it to unblock.
+     */
+    public suspend fun awaitTermination(): Throwable? = lifecycle.awaitTermination()
 
     private suspend fun handleInitialize(params: JsonElement?): JsonElement =
         initializationMutex.withLock {
@@ -1351,6 +1369,7 @@ public fun languageServer(block: LanguageServerBuilder.() -> Unit): LanguageServ
  *
  * The returned [LanguageServer] is fully wired: incoming transport data is
  * decoded and dispatched, and outgoing messages are forwarded to the transport.
+ * The supplied scope and transport remain caller-owned; closing a session does not close the transport.
  */
 public suspend fun LanguageServerConfig.start(
     transport: Transport,
@@ -1358,20 +1377,15 @@ public suspend fun LanguageServerConfig.start(
 ): LanguageServer {
     requestHandlers.keys.forEach(::requireNotReservedServerRequest)
     notificationHandlers.keys.forEach(::requireNotReservedServerNotification)
-    val connection = Connection(scope = scope)
-    val server = LanguageServer(this, connection, scope)
-    server.setup()
-
-    scope.launch {
-        transport.incoming.collect { data ->
-            connection.receive(data)
-        }
-    }
-
-    scope.launch {
-        connection.outgoing.collect { data ->
-            transport.send(data)
-        }
+    val lifecycle = SessionLifecycle(scope)
+    val server = LanguageServer(this, lifecycle.connection, lifecycle)
+    var started = false
+    try {
+        server.setup()
+        lifecycle.start(transport)
+        started = true
+    } finally {
+        if (!started) lifecycle.close()
     }
 
     return server
