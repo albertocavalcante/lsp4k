@@ -53,6 +53,10 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
         ]
         print(f"{artifact}:{version} POM dependencies: {dependencies}")
         print(f"{artifact} variants: {[(v['name'], v['attributes']) for v in metadata['variants']]}")
+        if artifact == library:
+            redirects = [v["available-at"] for v in metadata["variants"] if "available-at" in v]
+            assert any(target.get("group") == "io.lsp4k" and target.get("module") == f"{library}-jvm"
+                       and target.get("version") == version for target in redirects), redirects
         if artifact.endswith("-jvm"):
             with zipfile.ZipFile(f"{prefix}.jar") as jar:
                 classes = [name for name in jar.namelist() if name.endswith(".class")]
@@ -63,5 +67,17 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
                 assert any(group == "io.lsp4k" and name.startswith("lsp4k-protocol") and dep_version == version
                            for group, name, dep_version in dependencies), dependencies
                 assert any(group == "io.github.albertocavalcante" and name.startswith("jsonrpc4k-transport")
-                           for group, name, _ in dependencies), dependencies
+                           and dep_version == "0.1.0-SNAPSHOT" for group, name, dep_version in dependencies), dependencies
+                api_variants = [v for v in metadata["variants"]
+                                if v["attributes"].get("org.gradle.usage") == "java-api"]
+                assert api_variants, f"{artifact} has no JVM API variant"
+                for variant in api_variants:
+                    api_dependencies = variant.get("dependencies", [])
+                    print(f"{artifact} API dependencies: {api_dependencies}")
+                    assert any(d["group"] == "io.lsp4k" and d["module"].startswith("lsp4k-protocol")
+                               and d.get("version", {}).get("requires") == version for d in api_dependencies), api_dependencies
+                    assert any(d["group"] == "io.github.albertocavalcante"
+                               and d["module"].startswith("jsonrpc4k-transport")
+                               and d.get("version", {}).get("requires") == "0.1.0-SNAPSHOT"
+                               for d in api_dependencies), api_dependencies
 PY
