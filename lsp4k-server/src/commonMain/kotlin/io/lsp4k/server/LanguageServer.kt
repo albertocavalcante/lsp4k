@@ -27,6 +27,7 @@ import io.lsp4k.protocol.CompletionItem
 import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionOptions
 import io.lsp4k.protocol.CompletionParams
+import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.CreateFilesParams
 import io.lsp4k.protocol.DeclarationParams
@@ -616,6 +617,11 @@ public class TextDocumentHandlersBuilder(
 
     /** Registers a handler for `textDocument/completion` requests. */
     public fun completion(handler: suspend (CompletionParams) -> CompletionList?) {
+        registerRequest(LspMethods.TEXT_DOCUMENT_COMPLETION, handler)
+    }
+
+    /** Registers a completion handler that can return either LSP response shape. */
+    public fun completionResult(handler: suspend (CompletionParams) -> CompletionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_COMPLETION, handler)
     }
 

@@ -28,6 +28,7 @@ import io.lsp4k.protocol.ColorPresentationParams
 import io.lsp4k.protocol.CompletionItem
 import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionParams
+import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.DeclarationParams
 import io.lsp4k.protocol.DefinitionParams
@@ -473,7 +474,15 @@ public class ServerProxy internal constructor(
     /**
      * Request completion at a given text document position.
      */
-    public suspend fun completion(params: CompletionParams): CompletionList? = request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
+    public suspend fun completion(params: CompletionParams): CompletionList? =
+        when (val result = completionResult(params)) {
+            is CompletionResult.Items -> CompletionList(isIncomplete = false, items = result.items)
+            is CompletionResult.ListResult -> result.list
+            null -> null
+        }
+
+    /** Request completion while preserving the server's array or list response shape. */
+    public suspend fun completionResult(params: CompletionParams): CompletionResult? = request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
 
     /**
      * Resolve additional information for a given completion item.
