@@ -58,8 +58,12 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
         assert pom.findtext("m:scm/m:url", namespaces=ns) == "https://github.com/albertocavalcante/lsp4k"
         metadata = json.loads(Path(f"{prefix}.module").read_text())
         assert metadata["component"]["group"] == "io.lsp4k"
-        assert metadata["component"]["module"] == artifact, metadata["component"]
+        assert metadata["component"]["module"] == library, metadata["component"]
         assert metadata["component"]["version"] == version
+        if artifact.endswith("-jvm"):
+            owner = metadata["component"].get("url")
+            assert owner, metadata["component"]
+            assert (directory / owner).resolve() == (root / library / version / f"{library}-{version}.module").resolve(), owner
         dependencies = [
             (d.findtext("m:groupId", namespaces=ns), d.findtext("m:artifactId", namespaces=ns),
              d.findtext("m:version", namespaces=ns), d.findtext("m:scope", default="compile", namespaces=ns))
