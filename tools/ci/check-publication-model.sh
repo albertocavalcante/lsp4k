@@ -12,10 +12,8 @@ trap 'rm -rf "$LSP4K_FIXTURE_REPOSITORY"' EXIT
 
 ./jsonrpc4k/gradlew -p jsonrpc4k --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
 	--init-script "$PWD/tools/ci/publication-fixture.init.gradle.kts" \
-	:jsonrpc4k-core:publishKotlinMultiplatformPublicationToFixtureRepository \
-	:jsonrpc4k-core:publishJvmPublicationToFixtureRepository \
-	:jsonrpc4k-transport:publishKotlinMultiplatformPublicationToFixtureRepository \
-	:jsonrpc4k-transport:publishJvmPublicationToFixtureRepository
+	:jsonrpc4k-core:publishAllPublicationsToFixtureRepository \
+	:jsonrpc4k-transport:publishAllPublicationsToFixtureRepository
 
 ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
 	-PVERSION_NAME="$LSP4K_FIXTURE_VERSION" \
