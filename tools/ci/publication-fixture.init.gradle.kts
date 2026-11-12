@@ -1,9 +1,10 @@
 import org.gradle.api.publish.PublishingExtension
 
 settingsEvaluated {
-    dependencyResolutionManagement.repositories.exclusiveContent {
+    val fixtureRepositories = dependencyResolutionManagement.repositories
+    fixtureRepositories.exclusiveContent {
         forRepository {
-            maven { url = uri(requireNotNull(System.getenv("LSP4K_FIXTURE_REPOSITORY"))) }
+            fixtureRepositories.maven { url = uri(requireNotNull(System.getenv("LSP4K_FIXTURE_REPOSITORY"))) }
         }
         filter { includeGroup("io.github.albertocavalcante") }
     }
