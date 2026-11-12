@@ -240,7 +240,13 @@ public class LanguageServerBuilder {
         capabilities = ServerCapabilitiesBuilder().apply(block).build()
     }
 
-    /** Handles initialization and chooses the response using the client's full parameters. */
+    /**
+     * Handles initialization and chooses the response using the client's full parameters.
+     *
+     * Do not await a request to the connected client from this handler. The current
+     * JSON-RPC receive loop cannot process its response while initialization is running.
+     * Reverse requests are tracked in https://github.com/albertocavalcante/jsonrpc4k/issues/49.
+     */
     public fun onInitialize(handler: suspend (InitializeParams) -> InitializeResult) {
         initializeHandler = handler
     }
@@ -1097,28 +1103,29 @@ public class LanguageServer internal constructor(
         }
     }
 
-    private suspend fun handleInitialize(params: JsonElement?): JsonElement = initializationMutex.withLock {
-        if (initializationSucceeded || shutdownRequested) {
-            throw JsonRpcException(ResponseError.INVALID_REQUEST, "Server already initialized or shutting down")
+    private suspend fun handleInitialize(params: JsonElement?): JsonElement =
+        initializationMutex.withLock {
+            if (initializationSucceeded || shutdownRequested) {
+                throw JsonRpcException(ResponseError.INVALID_REQUEST, "Server already initialized or shutting down")
+            }
+            val json = JsonRpcCodec.defaultJson
+            val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
+
+            // Set initial trace level from initialize params
+            initParams?.trace?.let { traceLevel = it }
+
+            val result =
+                config.initializeHandler?.let { handler ->
+                    handler(initParams ?: throw JsonRpcException.invalidParams("Missing params for initialize"))
+                } ?: InitializeResult(
+                    capabilities = config.capabilities,
+                    serverInfo = config.serverInfo,
+                )
+
+            val encoded = json.encodeToJsonElement(InitializeResult.serializer(), result)
+            initializationSucceeded = true
+            encoded
         }
-        val json = JsonRpcCodec.defaultJson
-        val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
-
-        // Set initial trace level from initialize params
-        initParams?.trace?.let { traceLevel = it }
-
-        val result =
-            config.initializeHandler?.let { handler ->
-                handler(initParams ?: throw JsonRpcException.invalidParams("Missing params for initialize"))
-            } ?: InitializeResult(
-                capabilities = config.capabilities,
-                serverInfo = config.serverInfo,
-            )
-
-        val encoded = json.encodeToJsonElement(InitializeResult.serializer(), result)
-        initializationSucceeded = true
-        encoded
-    }
 }
 
 // =============================================================================

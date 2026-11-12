@@ -37,12 +37,13 @@ class PublicInitializationTest {
             val (clientTransport, serverTransport) = transports()
             var received: InitializeParams? = null
             val negotiated = InitializeResult(ServerCapabilities(hoverProvider = Either.left(true)))
-            val server = languageServer {
-                onInitialize { params ->
-                    received = params
-                    negotiated
-                }
-            }.start(serverTransport, backgroundScope)
+            val server =
+                languageServer {
+                    onInitialize { params ->
+                        received = params
+                        negotiated
+                    }
+                }.start(serverTransport, backgroundScope)
             val client = languageClient {}.start(clientTransport, backgroundScope)
             val params =
                 InitializeParams(
@@ -71,10 +72,11 @@ class PublicInitializationTest {
                     InitializeResult(ServerCapabilities())
                 }
             }.start(serverTransport, backgroundScope)
-            val client = languageClient {
-                capabilities(capabilities)
-                rootUri("file:///root")
-            }.start(clientTransport, backgroundScope)
+            val client =
+                languageClient {
+                    capabilities(capabilities)
+                    rootUri("file:///root")
+                }.start(clientTransport, backgroundScope)
 
             assertEquals(InitializeResult(ServerCapabilities()), client.initialize())
             assertEquals(capabilities, received?.capabilities)
