@@ -1111,12 +1111,13 @@ public class LanguageServer internal constructor(
     }
 
     /** Stops immediately, canceling pending work and discarding unsent frames; the transport remains caller-owned. */
-    public fun close() = lifecycle.close()
+    public fun close(): Unit = lifecycle.close()
 
     /**
      * Waits for session jobs to stop. Returns the first read or write failure, or null on EOF,
      * explicit close, graceful exit, or parent cancellation. The transport remains caller-owned
-     * and its suspending operations must cooperate with coroutine cancellation.
+     * and its suspending operations must cooperate with coroutine cancellation. If a borrowed
+     * transport blocks in a non-interruptible read, its owner may need to close it to unblock.
      */
     public suspend fun awaitTermination(): Throwable? = lifecycle.awaitTermination()
 
