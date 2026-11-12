@@ -1,0 +1,110 @@
+package io.lsp4k.server.integration
+
+import io.jsonrpc4k.transport.Transport
+import io.lsp4k.client.languageClient
+import io.lsp4k.client.start
+import io.lsp4k.protocol.ClientCapabilities
+import io.lsp4k.protocol.Either
+import io.lsp4k.protocol.InitializeParams
+import io.lsp4k.protocol.InitializeResult
+import io.lsp4k.protocol.ServerCapabilities
+import io.lsp4k.protocol.TraceValue
+import io.lsp4k.protocol.WorkspaceFolder
+import io.lsp4k.server.languageServer
+import io.lsp4k.server.start
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonPrimitive
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class PublicInitializationTest {
+    @Test
+    fun `explicit initialization reaches server and returns negotiated result`() =
+        runTest {
+            val (clientTransport, serverTransport) = transports()
+            var received: InitializeParams? = null
+            val negotiated = InitializeResult(ServerCapabilities(hoverProvider = Either.left(true)))
+            val server = languageServer {
+                onInitialize { params ->
+                    received = params
+                    negotiated
+                }
+            }.start(serverTransport, backgroundScope)
+            val client = languageClient {}.start(clientTransport, backgroundScope)
+            val params =
+                InitializeParams(
+                    processId = 42,
+                    rootUri = "file:///workspace",
+                    initializationOptions = JsonPrimitive("settings"),
+                    capabilities = ClientCapabilities(experimental = JsonPrimitive("client-feature")),
+                    trace = TraceValue.Verbose,
+                    workspaceFolders = listOf(WorkspaceFolder("file:///workspace", "workspace")),
+                )
+
+            assertEquals(negotiated, client.initialize(params))
+            assertEquals(params, received)
+            assertEquals(TraceValue.Verbose, server.traceLevel)
+        }
+
+    @Test
+    fun `default initialization uses configured immutable capabilities and server response`() =
+        runTest {
+            val (clientTransport, serverTransport) = transports()
+            val capabilities = ClientCapabilities(experimental = JsonPrimitive("feature"))
+            var received: InitializeParams? = null
+            languageServer {
+                onInitialize { params ->
+                    received = params
+                    InitializeResult(ServerCapabilities())
+                }
+            }.start(serverTransport, backgroundScope)
+            val client = languageClient {
+                capabilities(capabilities)
+                rootUri("file:///root")
+            }.start(clientTransport, backgroundScope)
+
+            assertEquals(InitializeResult(ServerCapabilities()), client.initialize())
+            assertEquals(capabilities, received?.capabilities)
+            assertEquals("file:///root", received?.rootUri)
+        }
+
+    @Test
+    fun `server without a handler retains configured response`() =
+        runTest {
+            val (clientTransport, serverTransport) = transports()
+            languageServer {
+                serverInfo("example", "1")
+                capabilities { hoverProvider = true }
+            }.start(serverTransport, backgroundScope)
+            val client = languageClient {}.start(clientTransport, backgroundScope)
+
+            val result = client.initialize()
+            assertEquals("example", result.serverInfo?.name)
+            assertEquals(Either.left(true), result.capabilities.hoverProvider)
+        }
+}
+
+private fun transports(): Pair<Transport, Transport> {
+    val toClient = Channel<ByteArray>(Channel.UNLIMITED)
+    val toServer = Channel<ByteArray>(Channel.UNLIMITED)
+    return TestTransport(toClient, toServer) to TestTransport(toServer, toClient)
+}
+
+private class TestTransport(
+    incomingChannel: Channel<ByteArray>,
+    private val outgoingChannel: Channel<ByteArray>,
+) : Transport {
+    override val incoming: Flow<ByteArray> = incomingChannel.receiveAsFlow()
+    override val isConnected: Boolean = true
+
+    override suspend fun send(data: ByteArray) {
+        outgoingChannel.send(data)
+    }
+
+    override suspend fun close() {
+        outgoingChannel.close()
+    }
+}

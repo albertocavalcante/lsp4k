@@ -162,12 +162,14 @@ public annotation class LspServerDsl
  * @property capabilities The set of LSP capabilities the server declares.
  * @property requestHandlers Handlers keyed by JSON-RPC method name for requests.
  * @property notificationHandlers Handlers keyed by JSON-RPC method name for notifications.
+ * @property initializeHandler Optional handler to negotiate initialization dynamically.
  */
 public data class LanguageServerConfig(
     val serverInfo: ServerInfo?,
     val capabilities: ServerCapabilities,
     val requestHandlers: Map<String, RequestHandler>,
     val notificationHandlers: Map<String, NotificationHandler>,
+    val initializeHandler: (suspend (InitializeParams) -> InitializeResult)? = null,
 )
 
 private val reservedServerRequestMethods: Set<String> =
@@ -215,6 +217,7 @@ internal fun <H> MutableMap<String, H>.putUniqueHandler(
 public class LanguageServerBuilder {
     private var serverInfo: ServerInfo? = null
     private var capabilities = ServerCapabilities()
+    private var initializeHandler: (suspend (InitializeParams) -> InitializeResult)? = null
     private val requestHandlers = mutableMapOf<String, RequestHandler>()
     private val notificationHandlers = mutableMapOf<String, NotificationHandler>()
 
@@ -233,6 +236,11 @@ public class LanguageServerBuilder {
      */
     public fun capabilities(block: ServerCapabilitiesBuilder.() -> Unit) {
         capabilities = ServerCapabilitiesBuilder().apply(block).build()
+    }
+
+    /** Handles initialization and chooses the response using the client's full parameters. */
+    public fun onInitialize(handler: suspend (InitializeParams) -> InitializeResult) {
+        initializeHandler = handler
     }
 
     /**
@@ -305,6 +313,7 @@ public class LanguageServerBuilder {
             capabilities = capabilities,
             requestHandlers = requestHandlers.toMap(),
             notificationHandlers = notificationHandlers.toMap(),
+            initializeHandler = initializeHandler,
         )
 }
 
@@ -1081,7 +1090,7 @@ public class LanguageServer internal constructor(
         }
     }
 
-    private fun handleInitialize(params: JsonElement?): JsonElement {
+    private suspend fun handleInitialize(params: JsonElement?): JsonElement {
         val json = JsonRpcCodec.defaultJson
         val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
 
@@ -1089,7 +1098,9 @@ public class LanguageServer internal constructor(
         initParams?.trace?.let { traceLevel = it }
 
         val result =
-            InitializeResult(
+            config.initializeHandler?.let { handler ->
+                handler(initParams ?: throw JsonRpcException.invalidParams("Missing params for initialize"))
+            } ?: InitializeResult(
                 capabilities = config.capabilities,
                 serverInfo = config.serverInfo,
             )

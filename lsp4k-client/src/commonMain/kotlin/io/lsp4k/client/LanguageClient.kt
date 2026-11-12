@@ -216,6 +216,11 @@ public class LanguageClientBuilder {
         capabilities = ClientCapabilities().apply(block)
     }
 
+    /** Sets the immutable client capabilities advertised during initialization. */
+    public fun capabilities(value: ClientCapabilities) {
+        capabilities = value
+    }
+
     /**
      * Handle window/showMessage notifications.
      */
@@ -377,6 +382,11 @@ public class LanguageClientSession internal constructor(
                 clientInfo = config.clientInfo,
             )
 
+        return initialize(params)
+    }
+
+    /** Initialize with explicit protocol parameters, including folders and initialization options. */
+    public suspend fun initialize(params: InitializeParams): InitializeResult {
         val result =
             connection.request<InitializeResult>(
                 LspMethods.INITIALIZE,
