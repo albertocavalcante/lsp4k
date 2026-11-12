@@ -58,7 +58,7 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
         assert pom.findtext("m:scm/m:url", namespaces=ns) == "https://github.com/albertocavalcante/lsp4k"
         metadata = json.loads(Path(f"{prefix}.module").read_text())
         assert metadata["component"]["group"] == "io.lsp4k"
-        assert metadata["component"]["module"] == artifact
+        assert metadata["component"]["module"] == artifact, metadata["component"]
         assert metadata["component"]["version"] == version
         dependencies = [
             (d.findtext("m:groupId", namespaces=ns), d.findtext("m:artifactId", namespaces=ns),
@@ -81,12 +81,12 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
                             if v["attributes"].get("org.gradle.usage") == "java-api"]
             assert api_variants, f"{artifact} has no JVM API variant"
             for group, module, dep_version in expected_api[library]:
-                assert any(g == group and name.startswith(module) and v == dep_version and scope == "compile"
+                assert any(g == group and name in (module, f"{module}-jvm") and v == dep_version and scope == "compile"
                            for g, name, v, scope in dependencies), dependencies
                 for variant in api_variants:
                     api_dependencies = variant.get("dependencies", [])
                     print(f"{artifact} API dependencies: {api_dependencies}")
-                    assert any(d["group"] == group and d["module"].startswith(module)
+                    assert any(d["group"] == group and d["module"] in (module, f"{module}-jvm")
                                and d.get("version", {}).get("requires") == dep_version
                                for d in api_dependencies), api_dependencies
 PY
