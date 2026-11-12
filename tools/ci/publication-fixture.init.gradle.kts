@@ -1,5 +1,14 @@
 import org.gradle.api.publish.PublishingExtension
 
+settingsEvaluated {
+    dependencyResolutionManagement.repositories.exclusiveContent {
+        forRepository {
+            maven { url = uri(requireNotNull(System.getenv("LSP4K_FIXTURE_REPOSITORY"))) }
+        }
+        filter { includeGroup("io.github.albertocavalcante") }
+    }
+}
+
 allprojects {
     plugins.withId("maven-publish") {
         extensions.configure<PublishingExtension> {

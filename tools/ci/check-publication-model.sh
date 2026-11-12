@@ -10,9 +10,16 @@ LSP4K_FIXTURE_REPOSITORY=$(mktemp -d "$RUNNER_TEMP/lsp4k-publication.XXXXXXXX")
 export LSP4K_FIXTURE_REPOSITORY
 trap 'rm -rf "$LSP4K_FIXTURE_REPOSITORY"' EXIT
 
+./jsonrpc4k/gradlew -p jsonrpc4k --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
+	--init-script "$PWD/tools/ci/publication-fixture.init.gradle.kts" \
+	:jsonrpc4k-core:publishKotlinMultiplatformPublicationToFixtureRepository \
+	:jsonrpc4k-core:publishJvmPublicationToFixtureRepository \
+	:jsonrpc4k-transport:publishKotlinMultiplatformPublicationToFixtureRepository \
+	:jsonrpc4k-transport:publishJvmPublicationToFixtureRepository
+
 ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
 	-PVERSION_NAME="$LSP4K_FIXTURE_VERSION" \
-	-Plsp4k.jsonrpc4kBuild=jsonrpc4k -Plsp4k.enableAppleTargets=false \
+	-Plsp4k.useLocalJsonrpc4k=false -Plsp4k.enableAppleTargets=false \
 	--init-script tools/ci/publication-fixture.init.gradle.kts \
 	:lsp4k-protocol:publishKotlinMultiplatformPublicationToFixtureRepository \
 	:lsp4k-protocol:publishJvmPublicationToFixtureRepository \
