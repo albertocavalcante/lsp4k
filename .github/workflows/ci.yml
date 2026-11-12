@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: 9b3d923decca248c8467d7b074a1a0ae2cb773ed
+          ref: 5971744a7e00d7834f2b9eeb0f20738fca0d3b65
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: 9b3d923decca248c8467d7b074a1a0ae2cb773ed
+          ref: 5971744a7e00d7834f2b9eeb0f20738fca0d3b65
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -133,7 +133,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: 9b3d923decca248c8467d7b074a1a0ae2cb773ed
+          ref: 5971744a7e00d7834f2b9eeb0f20738fca0d3b65
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
