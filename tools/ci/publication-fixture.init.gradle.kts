@@ -15,7 +15,11 @@ allprojects {
     if (System.getenv("LSP4K_VERIFY_JAVA17") == "true") {
         tasks.withType<Test>().configureEach {
             doFirst {
-                val javaVersion = javaLauncher.get().metadata.languageVersion.asInt()
+                val javaVersion =
+                    javaLauncher
+                        .get()
+                        .metadata.languageVersion
+                        .asInt()
                 check(javaVersion == 17) { "JVM tests must run on Java 17, got $javaVersion" }
                 println("JVM tests use Java $javaVersion")
             }
