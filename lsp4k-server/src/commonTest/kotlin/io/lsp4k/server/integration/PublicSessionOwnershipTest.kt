@@ -15,6 +15,7 @@ import io.lsp4k.server.languageServer
 import io.lsp4k.server.start
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -110,6 +111,29 @@ class PublicSessionOwnershipTest {
                 assertTrue(withTimeout(1.seconds) { pending.await() }.isFailure)
                 val result = withTimeout(1.seconds) { client.awaitTermination() }
                 assertTrue(generateSequence(result) { it.cause }.take(8).any { it === failure })
+                assertTrue(parent.isActive)
+                assertFalse(transport.closed)
+            } finally {
+                parent.cancel()
+            }
+        }
+
+    @Test
+    fun `fatal transport failure is reported after session cleanup`() =
+        runTest {
+            val parent = SupervisorJob()
+            val reported = CompletableDeferred<Throwable>()
+            val handler = CoroutineExceptionHandler { _, failure -> reported.complete(failure) }
+            val scope = CoroutineScope(parent + StandardTestDispatcher(testScheduler) + handler)
+            val failure = Error("fatal transport failure")
+            val transport = ObservedTransport(failure)
+            try {
+                val client = languageClient {}.start(transport, scope)
+                val pending = async { runCatching { client.initialize() } }
+                assertTrue(withTimeout(1.seconds) { pending.await() }.isFailure)
+                val terminal = withTimeout(1.seconds) { client.awaitTermination() }
+                assertTrue(generateSequence(terminal) { it.cause }.take(8).any { it === failure })
+                assertTrue(generateSequence(withTimeout(1.seconds) { reported.await() }) { it.cause }.take(8).any { it === failure })
                 assertTrue(parent.isActive)
                 assertFalse(transport.closed)
             } finally {

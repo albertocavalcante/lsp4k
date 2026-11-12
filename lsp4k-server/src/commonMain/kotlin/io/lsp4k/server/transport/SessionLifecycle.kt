@@ -41,6 +41,8 @@ internal class SessionLifecycle(parent: CoroutineScope) {
                 if (currentCoroutineContext().isActive) finish(cancelled) else throw cancelled
             } catch (failure: Throwable) {
                 finish(failure)
+                // Keep fatal failures visible to the coroutine exception handler after cleanup.
+                if (failure !is Exception) throw failure
             }
         }
         scope.launch {
@@ -51,6 +53,8 @@ internal class SessionLifecycle(parent: CoroutineScope) {
                 if (currentCoroutineContext().isActive) finish(cancelled) else throw cancelled
             } catch (failure: Throwable) {
                 finish(failure)
+                // Keep fatal failures visible to the coroutine exception handler after cleanup.
+                if (failure !is Exception) throw failure
             }
         }
     }
