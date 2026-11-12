@@ -91,6 +91,21 @@ class PublicDefinitionTest {
         }
 
     @Test
+    fun `legacy definition accepts locations with unknown link-family fields`() =
+        runTest {
+            val peer = DefinitionPeer()
+            val client = languageClient {}.start(peer, backgroundScope)
+            val partial = locationJson.dropLast(1) + ""","targetUri":"file:///extra"}"""
+            val complete = locationJson.dropLast(1) + "," + linkJson.drop(1)
+            for (extended in listOf(partial, complete)) {
+                peer.result = "[$extended]"
+                assertEquals(listOf(location), client.server.definition(params))
+                assertFailsWith<SerializationException> { client.server.definitionResult(params) }
+            }
+            client.close()
+        }
+
+    @Test
     fun `public initialization capability selects location or link arrays`() =
         runTest {
             for (supportsLinks in listOf(false, true)) {
