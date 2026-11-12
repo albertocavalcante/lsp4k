@@ -14,7 +14,9 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Owns session jobs; the supplied scope and transport remain caller-owned. */
-internal class SessionLifecycle(parent: CoroutineScope) {
+internal class SessionLifecycle(
+    parent: CoroutineScope,
+) {
     private data class End(
         val cause: Throwable?,
     )
