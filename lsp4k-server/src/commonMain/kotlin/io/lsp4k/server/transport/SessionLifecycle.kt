@@ -34,28 +34,24 @@ internal class SessionLifecycle(parent: CoroutineScope) {
 
     fun start(transport: Transport) {
         scope.launch {
-            try {
-                transport.incoming.collect { connection.receive(it) }
-                finish(null)
-            } catch (cancelled: CancellationException) {
-                if (currentCoroutineContext().isActive) finish(cancelled) else throw cancelled
-            } catch (failure: Throwable) {
-                finish(failure)
-                // Keep fatal failures visible to the coroutine exception handler after cleanup.
-                if (failure !is Exception) throw failure
-            }
+            runPump { transport.incoming.collect { connection.receive(it) } }
         }
         scope.launch {
-            try {
-                connection.outgoing.collect { transport.send(it) }
-                finish(null)
-            } catch (cancelled: CancellationException) {
-                if (currentCoroutineContext().isActive) finish(cancelled) else throw cancelled
-            } catch (failure: Throwable) {
-                finish(failure)
-                // Keep fatal failures visible to the coroutine exception handler after cleanup.
-                if (failure !is Exception) throw failure
-            }
+            runPump { connection.outgoing.collect { transport.send(it) } }
+        }
+    }
+
+    private suspend fun runPump(block: suspend () -> Unit) {
+        try {
+            block()
+            finish(null)
+        } catch (cancelled: CancellationException) {
+            if (currentCoroutineContext().isActive) finish(cancelled) else throw cancelled
+        } catch (failure: Exception) {
+            finish(failure)
+        } catch (fatal: Throwable) {
+            finish(fatal)
+            throw fatal
         }
     }
 
