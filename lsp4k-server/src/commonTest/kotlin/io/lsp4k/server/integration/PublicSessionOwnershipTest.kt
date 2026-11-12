@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
@@ -262,12 +263,12 @@ class PublicSessionOwnershipTest {
     fun `failed exit write remains observable during shutdown`() =
         runTest {
             val parent = SupervisorJob()
-            val scope = CoroutineScope(parent + StandardTestDispatcher(testScheduler))
+            val scope = CoroutineScope(parent + UnconfinedTestDispatcher(testScheduler))
             val failure = IllegalStateException("exit write failed")
             val transport = ShutdownTransport(failure)
             try {
                 val client = languageClient {}.start(transport, scope)
-                val shutdown = async { runCatching { client.shutdown() } }
+                val shutdown = async(UnconfinedTestDispatcher(testScheduler)) { runCatching { client.shutdown() } }
                 withTimeout(1.seconds) { transport.exitStarted.await() }
                 transport.releaseExit.complete(Unit)
                 assertTrue(withTimeout(1.seconds) { shutdown.await() }.isFailure)
@@ -330,7 +331,7 @@ class PublicSessionOwnershipTest {
     fun `failed shutdown response write remains observable during server exit`() =
         runTest {
             val parent = SupervisorJob()
-            val scope = CoroutineScope(parent + StandardTestDispatcher(testScheduler))
+            val scope = CoroutineScope(parent + UnconfinedTestDispatcher(testScheduler))
             val failure = IllegalStateException("response write failed")
             val transport = BlockingResponseTransport(failure)
             try {
@@ -339,6 +340,7 @@ class PublicSessionOwnershipTest {
                 val exit = JsonRpcCodec.Default.encode(NotificationMessage("exit"))
                 transport.inbound.send(shutdown + exit)
                 withTimeout(1.seconds) { transport.sendStarted.await() }
+                runCurrent()
                 transport.releaseSend.complete(Unit)
                 val result = withTimeout(1.seconds) { server.awaitTermination() }
                 assertTrue(generateSequence(result) { it.cause }.take(8).any { it === failure })
@@ -350,7 +352,9 @@ class PublicSessionOwnershipTest {
         }
 }
 
-private class ObservedTransport(private val failure: Throwable? = null) : Transport {
+private class ObservedTransport(
+    private val failure: Throwable? = null,
+) : Transport {
     val inbound = Channel<ByteArray>(Channel.UNLIMITED)
     val started = CompletableDeferred<Unit>()
     val stopped = CompletableDeferred<Unit>()
@@ -414,7 +418,9 @@ private class ShutdownTransport(
     }
 }
 
-private class BlockingResponseTransport(private val failure: Throwable? = null) : Transport {
+private class BlockingResponseTransport(
+    private val failure: Throwable? = null,
+) : Transport {
     val inbound = Channel<ByteArray>(Channel.UNLIMITED)
     val sendStarted = CompletableDeferred<Unit>()
     val releaseSend = CompletableDeferred<Unit>()

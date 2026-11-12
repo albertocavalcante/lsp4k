@@ -6,6 +6,7 @@ import io.jsonrpc4k.core.JsonRpcException
 import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.core.RequestHandler
 import io.jsonrpc4k.transport.Transport
+import io.lsp4k.client.transport.SessionLifecycle
 import io.lsp4k.protocol.ApplyWorkspaceEditParams
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.CallHierarchyIncomingCall
@@ -415,7 +416,7 @@ public class LanguageClientSession internal constructor(
                 connection.flushOutgoing()
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
-            } catch (failure: Throwable) {
+            } catch (failure: Exception) {
                 lifecycle.fail(failure.cause ?: failure)
                 throw failure
             }
@@ -849,12 +850,13 @@ public suspend fun LanguageClientConfig.start(
 ): LanguageClientSession {
     val lifecycle = SessionLifecycle(scope)
     val session = LanguageClientSession(this, lifecycle.connection, lifecycle)
+    var started = false
     try {
         session.setup()
         lifecycle.start(transport)
-    } catch (failure: Throwable) {
-        lifecycle.fail(failure)
-        throw failure
+        started = true
+    } finally {
+        if (!started) lifecycle.close()
     }
 
     return session

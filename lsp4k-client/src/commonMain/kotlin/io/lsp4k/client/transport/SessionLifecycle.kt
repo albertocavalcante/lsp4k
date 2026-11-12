@@ -1,4 +1,4 @@
-package io.lsp4k.server
+package io.lsp4k.client.transport
 
 import io.jsonrpc4k.core.Connection
 import io.jsonrpc4k.transport.Transport
@@ -15,7 +15,9 @@ import kotlin.coroutines.cancellation.CancellationException
 
 /** Owns session jobs; the supplied scope and transport remain caller-owned. */
 internal class SessionLifecycle(parent: CoroutineScope) {
-    private data class End(val cause: Throwable?)
+    private data class End(
+        val cause: Throwable?,
+    )
 
     private val job = SupervisorJob(parent.coroutineContext[Job])
     private val scope = CoroutineScope(parent.coroutineContext + job)

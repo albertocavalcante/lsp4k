@@ -134,6 +134,7 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
+import io.lsp4k.server.transport.SessionLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -1074,7 +1075,7 @@ public class LanguageServer internal constructor(
                 connection.flushOutgoing()
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
-            } catch (failure: Throwable) {
+            } catch (failure: Exception) {
                 lifecycle.fail(failure.cause ?: failure)
                 throw failure
             } finally {
@@ -1377,12 +1378,13 @@ public suspend fun LanguageServerConfig.start(
     notificationHandlers.keys.forEach(::requireNotReservedServerNotification)
     val lifecycle = SessionLifecycle(scope)
     val server = LanguageServer(this, lifecycle.connection, lifecycle)
+    var started = false
     try {
         server.setup()
         lifecycle.start(transport)
-    } catch (failure: Throwable) {
-        lifecycle.fail(failure)
-        throw failure
+        started = true
+    } finally {
+        if (!started) lifecycle.close()
     }
 
     return server
