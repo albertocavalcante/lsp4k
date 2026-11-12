@@ -140,6 +140,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -162,12 +164,14 @@ public annotation class LspServerDsl
  * @property capabilities The set of LSP capabilities the server declares.
  * @property requestHandlers Handlers keyed by JSON-RPC method name for requests.
  * @property notificationHandlers Handlers keyed by JSON-RPC method name for notifications.
+ * @property initializeHandler Optional handler to negotiate initialization dynamically.
  */
 public data class LanguageServerConfig(
     val serverInfo: ServerInfo?,
     val capabilities: ServerCapabilities,
     val requestHandlers: Map<String, RequestHandler>,
     val notificationHandlers: Map<String, NotificationHandler>,
+    val initializeHandler: (suspend (InitializeParams) -> InitializeResult)? = null,
 )
 
 private val reservedServerRequestMethods: Set<String> =
@@ -215,6 +219,7 @@ internal fun <H> MutableMap<String, H>.putUniqueHandler(
 public class LanguageServerBuilder {
     private var serverInfo: ServerInfo? = null
     private var capabilities = ServerCapabilities()
+    private var initializeHandler: (suspend (InitializeParams) -> InitializeResult)? = null
     private val requestHandlers = mutableMapOf<String, RequestHandler>()
     private val notificationHandlers = mutableMapOf<String, NotificationHandler>()
 
@@ -233,6 +238,17 @@ public class LanguageServerBuilder {
      */
     public fun capabilities(block: ServerCapabilitiesBuilder.() -> Unit) {
         capabilities = ServerCapabilitiesBuilder().apply(block).build()
+    }
+
+    /**
+     * Handles initialization and chooses the response using the client's full parameters.
+     *
+     * Do not await a request to the connected client from this handler. The current
+     * JSON-RPC receive loop cannot process its response while initialization is running.
+     * Reverse requests are tracked in https://github.com/albertocavalcante/jsonrpc4k/issues/49.
+     */
+    public fun onInitialize(handler: suspend (InitializeParams) -> InitializeResult) {
+        initializeHandler = handler
     }
 
     /**
@@ -305,6 +321,7 @@ public class LanguageServerBuilder {
             capabilities = capabilities,
             requestHandlers = requestHandlers.toMap(),
             notificationHandlers = notificationHandlers.toMap(),
+            initializeHandler = initializeHandler,
         )
 }
 
@@ -999,6 +1016,9 @@ public class LanguageServer internal constructor(
     @Volatile
     private var initialized = false
 
+    private val initializationMutex = Mutex()
+    private var initializationSucceeded = false
+
     @Volatile
     private var shutdownRequested = false
 
@@ -1042,11 +1062,13 @@ public class LanguageServer internal constructor(
         }
 
         connection.onNotification(LspMethods.INITIALIZED) { _ ->
-            initialized = true
+            initializationMutex.withLock {
+                if (initializationSucceeded && !shutdownRequested) initialized = true
+            }
         }
 
         connection.onRequest(LspMethods.SHUTDOWN) { _ ->
-            shutdownRequested = true
+            initializationMutex.withLock { shutdownRequested = true }
             null
         }
 
@@ -1081,21 +1103,29 @@ public class LanguageServer internal constructor(
         }
     }
 
-    private fun handleInitialize(params: JsonElement?): JsonElement {
-        val json = JsonRpcCodec.defaultJson
-        val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
+    private suspend fun handleInitialize(params: JsonElement?): JsonElement =
+        initializationMutex.withLock {
+            if (initializationSucceeded || shutdownRequested) {
+                throw JsonRpcException(ResponseError.INVALID_REQUEST, "Server already initialized or shutting down")
+            }
+            val json = JsonRpcCodec.defaultJson
+            val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
 
-        // Set initial trace level from initialize params
-        initParams?.trace?.let { traceLevel = it }
+            // An omitted trace level defaults to off, including on a retry.
+            traceLevel = initParams?.trace ?: TraceValue.Off
 
-        val result =
-            InitializeResult(
-                capabilities = config.capabilities,
-                serverInfo = config.serverInfo,
-            )
+            val result =
+                config.initializeHandler?.let { handler ->
+                    handler(initParams ?: throw JsonRpcException.invalidParams("Missing params for initialize"))
+                } ?: InitializeResult(
+                    capabilities = config.capabilities,
+                    serverInfo = config.serverInfo,
+                )
 
-        return json.encodeToJsonElement(InitializeResult.serializer(), result)
-    }
+            val encoded = json.encodeToJsonElement(InitializeResult.serializer(), result)
+            initializationSucceeded = true
+            encoded
+        }
 }
 
 // =============================================================================
@@ -1326,6 +1356,8 @@ public suspend fun LanguageServerConfig.start(
     transport: Transport,
     scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ): LanguageServer {
+    requestHandlers.keys.forEach(::requireNotReservedServerRequest)
+    notificationHandlers.keys.forEach(::requireNotReservedServerNotification)
     val connection = Connection(scope = scope)
     val server = LanguageServer(this, connection, scope)
     server.setup()

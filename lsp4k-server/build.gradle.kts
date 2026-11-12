@@ -17,6 +17,7 @@ kotlin {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotest.assertions.core)
                 implementation(libs.kotlinx.coroutines.test)
+                implementation(projects.lsp4kClient)
             }
         }
 
