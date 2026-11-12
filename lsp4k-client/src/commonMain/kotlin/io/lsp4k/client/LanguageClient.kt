@@ -515,25 +515,26 @@ public class ServerProxy internal constructor(
         val result = request<DefinitionParams, JsonElement>(LspMethods.TEXT_DOCUMENT_DEFINITION, params) ?: return null
         return when (result) {
             is JsonObject -> listOf(json.decodeFromJsonElement(Location.serializer(), result))
-            is JsonArray -> {
-                try {
-                    json.decodeFromJsonElement(ListSerializer(Location.serializer()), result)
-                } catch (failure: SerializationException) {
-                    val shape =
-                        try {
-                            json.decodeFromJsonElement(DefinitionResult.serializer(), result)
-                        } catch (_: SerializationException) {
-                            null
-                        }
-                    if (shape is DefinitionResult.Links) {
-                        throw SerializationException("Definition returned location links; use definitionResult to preserve them", failure)
-                    }
-                    throw failure
-                }
-            }
+            is JsonArray -> decodeDefinitionLocations(result)
             else -> throw SerializationException("Definition result must be a Location object or an array")
         }
     }
+
+    private fun decodeDefinitionLocations(result: JsonArray): List<Location> =
+        try {
+            json.decodeFromJsonElement(ListSerializer(Location.serializer()), result)
+        } catch (failure: SerializationException) {
+            val shape =
+                try {
+                    json.decodeFromJsonElement(DefinitionResult.serializer(), result)
+                } catch (_: SerializationException) {
+                    null
+                }
+            if (shape is DefinitionResult.Links) {
+                throw SerializationException("Definition returned location links; use definitionResult to preserve them", failure)
+            }
+            throw failure
+        }
 
     /** Requests a definition while preserving single locations and location or link arrays. */
     public suspend fun definitionResult(params: DefinitionParams): DefinitionResult? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
