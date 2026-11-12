@@ -399,6 +399,26 @@ class LanguageServerBuilderTest {
     }
 
     @Test
+    fun `completion registrations cannot replace each other`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    completion { null }
+                    completionResult { null }
+                }
+            }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                textDocument {
+                    completionResult { null }
+                    completion { null }
+                }
+            }
+        }
+    }
+
+    @Test
     fun `duplicate notification handlers are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageServer {

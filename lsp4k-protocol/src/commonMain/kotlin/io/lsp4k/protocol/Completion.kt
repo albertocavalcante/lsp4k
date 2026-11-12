@@ -2,10 +2,12 @@ package io.lsp4k.protocol
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
@@ -406,6 +408,45 @@ public data class CompletionList(
      */
     val itemDefaults: CompletionItemDefaults? = null,
 )
+
+/** A completion response preserving whether the server sent an array or a list object. */
+@Serializable(with = CompletionResultSerializer::class)
+public sealed interface CompletionResult {
+    /** A complete array of completion items. */
+    public data class Items(
+        public val items: List<CompletionItem>,
+    ) : CompletionResult
+
+    /** A completion list, including its completeness and item defaults. */
+    public data class ListResult(
+        public val list: CompletionList,
+    ) : CompletionResult
+}
+
+/** Serializes completion responses using their LSP JSON shape. */
+public object CompletionResultSerializer : KSerializer<CompletionResult> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("CompletionResult")
+
+    override fun serialize(
+        encoder: Encoder,
+        value: CompletionResult,
+    ) {
+        val json = encoder as JsonEncoder
+        when (value) {
+            is CompletionResult.Items -> json.encodeSerializableValue(ListSerializer(CompletionItem.serializer()), value.items)
+            is CompletionResult.ListResult -> json.encodeSerializableValue(CompletionList.serializer(), value.list)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): CompletionResult {
+        val json = decoder as JsonDecoder
+        return when (val element = json.decodeJsonElement()) {
+            is JsonArray -> CompletionResult.Items(json.json.decodeFromJsonElement(ListSerializer(CompletionItem.serializer()), element))
+            is JsonObject -> CompletionResult.ListResult(json.json.decodeFromJsonElement(CompletionList.serializer(), element))
+            else -> throw IllegalArgumentException("Completion result must be an array or a completion list object")
+        }
+    }
+}
 
 /**
  * Default values for completion items.
