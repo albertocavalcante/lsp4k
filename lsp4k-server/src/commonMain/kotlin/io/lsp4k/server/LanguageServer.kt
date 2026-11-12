@@ -1356,6 +1356,8 @@ public suspend fun LanguageServerConfig.start(
     transport: Transport,
     scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
 ): LanguageServer {
+    requestHandlers.keys.forEach(::requireNotReservedServerRequest)
+    notificationHandlers.keys.forEach(::requireNotReservedServerNotification)
     val connection = Connection(scope = scope)
     val server = LanguageServer(this, connection, scope)
     server.setup()

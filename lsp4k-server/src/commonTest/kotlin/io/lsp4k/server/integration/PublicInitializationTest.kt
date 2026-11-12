@@ -2,7 +2,9 @@ package io.lsp4k.server.integration
 
 import io.jsonrpc4k.core.JsonRpcCodec
 import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.core.NotificationMessage
+import io.jsonrpc4k.core.RequestHandler
 import io.jsonrpc4k.core.RequestId
 import io.jsonrpc4k.core.RequestMessage
 import io.jsonrpc4k.core.ResponseError
@@ -31,6 +33,22 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class PublicInitializationTest {
+    @Test
+    fun `start rejects reserved handlers supplied in config`() =
+        runTest {
+            val config = languageServer {}
+            listOf("initialize", "shutdown").forEach { method ->
+                assertFailsWith<IllegalArgumentException> {
+                    config.copy(requestHandlers = mapOf(method to RequestHandler { null })).start(UnusedTransport, backgroundScope)
+                }
+            }
+            listOf("initialized", "exit", "$/setTrace", "$/cancelRequest").forEach { method ->
+                assertFailsWith<IllegalArgumentException> {
+                    config.copy(notificationHandlers = mapOf(method to NotificationHandler {})).start(UnusedTransport, backgroundScope)
+                }
+            }
+        }
+
     @Test
     fun `explicit initialization reaches server and returns negotiated result`() =
         runTest {
@@ -142,6 +160,13 @@ class PublicInitializationTest {
             clientTransport.send(JsonRpcCodec.Default.encode(RequestMessage(RequestId.of(99), "shutdown")))
             assertEquals(ResponseError.INVALID_REQUEST, assertFailsWith<JsonRpcException> { client.initialize() }.code)
         }
+}
+
+private object UnusedTransport : Transport {
+    override val incoming: Flow<ByteArray> get() = error("transport must not be used")
+    override val isConnected: Boolean get() = error("transport must not be used")
+    override suspend fun send(data: ByteArray): Unit = error("transport must not be used")
+    override suspend fun close(): Unit = error("transport must not be used")
 }
 
 private fun transports(): Pair<Transport, Transport> {
