@@ -393,12 +393,11 @@ public class LanguageClientSession internal constructor(
                 json.encodeToJsonElement(InitializeParams.serializer(), params),
             )
 
-        // Send initialized notification
-        connection.notify(LspMethods.INITIALIZED, null)
-
-        return result?.let {
+        val decoded = result?.let {
             json.decodeFromJsonElement(InitializeResult.serializer(), it)
         } ?: error("Initialize returned null")
+        connection.notify(LspMethods.INITIALIZED, null)
+        return decoded
     }
 
     /**

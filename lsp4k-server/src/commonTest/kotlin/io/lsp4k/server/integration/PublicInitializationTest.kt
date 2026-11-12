@@ -1,13 +1,22 @@
 package io.lsp4k.server.integration
 
+import io.jsonrpc4k.core.JsonRpcCodec
+import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.NotificationMessage
+import io.jsonrpc4k.core.RequestId
+import io.jsonrpc4k.core.RequestMessage
+import io.jsonrpc4k.core.ResponseError
 import io.jsonrpc4k.transport.Transport
 import io.lsp4k.client.languageClient
 import io.lsp4k.client.start
 import io.lsp4k.protocol.ClientCapabilities
 import io.lsp4k.protocol.Either
+import io.lsp4k.protocol.HoverParams
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
+import io.lsp4k.protocol.Position
 import io.lsp4k.protocol.ServerCapabilities
+import io.lsp4k.protocol.TextDocumentIdentifier
 import io.lsp4k.protocol.TraceValue
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.server.languageServer
@@ -19,6 +28,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class PublicInitializationTest {
     @Test
@@ -84,6 +94,51 @@ class PublicInitializationTest {
             val result = client.initialize()
             assertEquals("example", result.serverInfo?.name)
             assertEquals(Either.left(true), result.capabilities.hoverProvider)
+        }
+
+    @Test
+    fun `failed initialization cannot unlock requests and can be retried once`() =
+        runTest {
+            val (clientTransport, serverTransport) = transports()
+            var attempts = 0
+            languageServer {
+                onInitialize {
+                    attempts++
+                    if (attempts == 1) error("startup failed")
+                    InitializeResult(ServerCapabilities())
+                }
+                textDocument { hover { null } }
+            }.start(serverTransport, backgroundScope)
+            val client = languageClient {}.start(clientTransport, backgroundScope)
+            val hover = HoverParams(TextDocumentIdentifier("file:///test"), Position(0, 0))
+
+            clientTransport.send(JsonRpcCodec.Default.encode(NotificationMessage("initialized")))
+            assertEquals(
+                ResponseError.SERVER_NOT_INITIALIZED,
+                assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
+            )
+            assertFailsWith<JsonRpcException> { client.initialize() }
+            clientTransport.send(JsonRpcCodec.Default.encode(NotificationMessage("initialized")))
+            assertEquals(
+                ResponseError.SERVER_NOT_INITIALIZED,
+                assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
+            )
+            client.initialize()
+            assertEquals(null, client.server.hover(hover))
+            assertEquals(ResponseError.INVALID_REQUEST, assertFailsWith<JsonRpcException> { client.initialize() }.code)
+            assertEquals(2, attempts)
+        }
+
+    @Test
+    fun `initialize after shutdown is rejected`() =
+        runTest {
+            val (clientTransport, serverTransport) = transports()
+            languageServer {}.start(serverTransport, backgroundScope)
+            val client = languageClient {}.start(clientTransport, backgroundScope)
+            client.initialize()
+            // Send shutdown without exit so the server stays available for the next request.
+            clientTransport.send(JsonRpcCodec.Default.encode(RequestMessage(RequestId.of(99), "shutdown")))
+            assertEquals(ResponseError.INVALID_REQUEST, assertFailsWith<JsonRpcException> { client.initialize() }.code)
         }
 }
 

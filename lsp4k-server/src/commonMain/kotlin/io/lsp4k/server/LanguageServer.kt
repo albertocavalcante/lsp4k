@@ -140,6 +140,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -1008,6 +1010,9 @@ public class LanguageServer internal constructor(
     @Volatile
     private var initialized = false
 
+    private val initializationMutex = Mutex()
+    private var initializationSucceeded = false
+
     @Volatile
     private var shutdownRequested = false
 
@@ -1051,11 +1056,13 @@ public class LanguageServer internal constructor(
         }
 
         connection.onNotification(LspMethods.INITIALIZED) { _ ->
-            initialized = true
+            initializationMutex.withLock {
+                if (initializationSucceeded && !shutdownRequested) initialized = true
+            }
         }
 
         connection.onRequest(LspMethods.SHUTDOWN) { _ ->
-            shutdownRequested = true
+            initializationMutex.withLock { shutdownRequested = true }
             null
         }
 
@@ -1090,7 +1097,10 @@ public class LanguageServer internal constructor(
         }
     }
 
-    private suspend fun handleInitialize(params: JsonElement?): JsonElement {
+    private suspend fun handleInitialize(params: JsonElement?): JsonElement = initializationMutex.withLock {
+        if (initializationSucceeded || shutdownRequested) {
+            throw JsonRpcException(ResponseError.INVALID_REQUEST, "Server already initialized or shutting down")
+        }
         val json = JsonRpcCodec.defaultJson
         val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
 
@@ -1105,7 +1115,9 @@ public class LanguageServer internal constructor(
                 serverInfo = config.serverInfo,
             )
 
-        return json.encodeToJsonElement(InitializeResult.serializer(), result)
+        val encoded = json.encodeToJsonElement(InitializeResult.serializer(), result)
+        initializationSucceeded = true
+        encoded
     }
 }
 
