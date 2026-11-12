@@ -26,7 +26,8 @@ trap 'rm -rf "$LSP4K_FIXTURE_REPOSITORY"' EXIT
 	:lsp4k-server:publishKotlinMultiplatformPublicationToFixtureRepository \
 	:lsp4k-server:publishJvmPublicationToFixtureRepository
 
-python3 -I - <<'PY'
+status=0
+python3 -I - <<'PY' || status=1
 import json
 import os
 from pathlib import Path
@@ -76,6 +77,13 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
         ]
         print(f"{artifact}:{version} POM dependencies: {dependencies}")
         print(f"{artifact} variants: {[(v['name'], v['attributes']) for v in metadata['variants']]}")
+        if os.environ.get("LSP4K_VERIFY_JAVA17") == "true":
+            variants = [v for v in metadata["variants"]
+                        if v["attributes"].get("org.gradle.category") == "library"
+                        and v["attributes"].get("org.jetbrains.kotlin.platform.type") == "jvm"
+                        and v["attributes"].get("org.gradle.usage") in ("java-api", "java-runtime")]
+            assert {v["attributes"]["org.gradle.usage"] for v in variants} == {"java-api", "java-runtime"}, variants
+            assert all(v["attributes"].get("org.gradle.jvm.version") == 17 for v in variants), variants
         if artifact == library:
             redirects = [v["available-at"] for v in metadata["variants"] if "available-at" in v]
             assert any(target.get("group") == "io.lsp4k" and target.get("module") == f"{library}-jvm"
@@ -86,6 +94,8 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
                 assert classes, f"{artifact} contains no classes"
                 majors = [struct.unpack(">H", jar.read(name)[6:8])[0] for name in classes]
                 print(f"{artifact} maximum JVM class major: {max(majors)}")
+                if os.environ.get("LSP4K_VERIFY_JAVA17") == "true":
+                    assert max(majors) == 61, (artifact, max(majors))
             api_variants = [v for v in metadata["variants"]
                             if v["attributes"].get("org.gradle.usage") == "java-api"]
             assert api_variants, f"{artifact} has no JVM API variant"
@@ -99,3 +109,20 @@ for library in ("lsp4k-protocol", "lsp4k-client", "lsp4k-server"):
                                and d.get("version", {}).get("requires") == dep_version
                                for d in api_dependencies), api_dependencies
 PY
+
+if [[ ${LSP4K_VERIFY_JAVA17:-false} == true ]]; then
+	: "${JAVA_HOME_17_X64:?JDK 17 is required for the consumer}"
+	for form in root jvm; do
+		consumer_dir="$LSP4K_FIXTURE_REPOSITORY/consumer-$form"
+		mkdir -p "$consumer_dir"
+		cp -R tools/ci/java17-consumer/. "$consumer_dir/"
+		LSP4K_FIXTURE_FORM="$form" JAVA_HOME="$JAVA_HOME_17_X64" PATH="$JAVA_HOME_17_X64/bin:$PATH" \
+			./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m -p "$consumer_dir" \
+			run verifyJava16Rejected || status=1
+	done
+	./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
+		-Plsp4k.jsonrpc4kBuild=jsonrpc4k -Plsp4k.enableAppleTargets=false \
+		--init-script tools/ci/publication-fixture.init.gradle.kts \
+		:lsp4k-protocol:jvmTest :lsp4k-client:jvmTest :lsp4k-server:jvmTest || status=1
+fi
+exit "$status"
