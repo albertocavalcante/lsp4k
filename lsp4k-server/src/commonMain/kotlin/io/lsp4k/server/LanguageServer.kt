@@ -1111,8 +1111,8 @@ public class LanguageServer internal constructor(
             val json = JsonRpcCodec.defaultJson
             val initParams = params?.let { json.decodeFromJsonElement(InitializeParams.serializer(), it) }
 
-            // Set initial trace level from initialize params
-            initParams?.trace?.let { traceLevel = it }
+            // An omitted trace level defaults to off, including on a retry.
+            traceLevel = initParams?.trace ?: TraceValue.Off
 
             val result =
                 config.initializeHandler?.let { handler ->

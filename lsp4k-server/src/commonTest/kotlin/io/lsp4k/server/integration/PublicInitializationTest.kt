@@ -121,14 +121,15 @@ class PublicInitializationTest {
         runTest {
             val (clientTransport, serverTransport) = transports()
             var attempts = 0
-            languageServer {
-                onInitialize {
-                    attempts++
-                    if (attempts == 1) error("startup failed")
-                    InitializeResult(ServerCapabilities())
-                }
-                textDocument { hover { null } }
-            }.start(serverTransport, backgroundScope)
+            val server =
+                languageServer {
+                    onInitialize {
+                        attempts++
+                        if (attempts == 1) error("startup failed")
+                        InitializeResult(ServerCapabilities())
+                    }
+                    textDocument { hover { null } }
+                }.start(serverTransport, backgroundScope)
             val client = languageClient {}.start(clientTransport, backgroundScope)
             val hover = HoverParams(TextDocumentIdentifier("file:///test"), Position(0, 0))
 
@@ -137,13 +138,24 @@ class PublicInitializationTest {
                 ResponseError.SERVER_NOT_INITIALIZED,
                 assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
             )
-            assertFailsWith<JsonRpcException> { client.initialize() }
+            assertFailsWith<JsonRpcException> {
+                client.initialize(
+                    InitializeParams(
+                        processId = null,
+                        rootUri = null,
+                        capabilities = ClientCapabilities(),
+                        trace = TraceValue.Verbose,
+                    ),
+                )
+            }
+            assertEquals(TraceValue.Verbose, server.traceLevel)
             clientTransport.send(JsonRpcCodec.Default.encode(NotificationMessage("initialized")))
             assertEquals(
                 ResponseError.SERVER_NOT_INITIALIZED,
                 assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
             )
             client.initialize()
+            assertEquals(TraceValue.Off, server.traceLevel)
             assertEquals(null, client.server.hover(hover))
             assertEquals(ResponseError.INVALID_REQUEST, assertFailsWith<JsonRpcException> { client.initialize() }.code)
             assertEquals(2, attempts)
