@@ -2,14 +2,8 @@ package io.lsp4k.protocol
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonElement
 
 /**
  * Options specific to a notebook plus its cells to be synced to the server.
@@ -36,36 +30,27 @@ public data class NotebookDocumentFilter(
     /** A Uri scheme, like `file` or `untitled`. */
     val scheme: String? = null,
     /** A glob pattern. */
-    val pattern: String? = null,
-)
+    @Serializable(with = GlobPatternSerializer::class)
+    val pattern: GlobPattern? = null,
+) {
+    init {
+        require(notebookType != null || scheme != null || pattern != null) {
+            "NotebookDocumentFilter requires at least one of notebookType, scheme or pattern"
+        }
+    }
+}
 
 /**
  * Serializer for notebook which can be string | NotebookDocumentFilter.
  */
-public object NotebookSelectorNotebookSerializer : KSerializer<Either<String, NotebookDocumentFilter>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("NotebookSelectorNotebook")
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<String, NotebookDocumentFilter>,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        when (value) {
-            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeSerializableValue(NotebookDocumentFilter.serializer(), value.value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<String, NotebookDocumentFilter> {
-        val jsonDecoder = decoder as JsonDecoder
-        val element = jsonDecoder.decodeJsonElement()
-        return when (element) {
-            is JsonPrimitive -> Either.Left(element.content)
-            is JsonObject -> Either.Right(jsonDecoder.json.decodeFromJsonElement(NotebookDocumentFilter.serializer(), element))
-            else -> throw IllegalArgumentException("notebook must be a string or NotebookDocumentFilter object")
-        }
-    }
-}
+public object NotebookSelectorNotebookSerializer :
+    KSerializer<Either<String, NotebookDocumentFilter>> by strictUnion(
+        "NotebookSelectorNotebook",
+        String.serializer(),
+        NotebookDocumentFilter.serializer(),
+        JsonElement::isStringLiteral,
+        JsonElement::isObject,
+    )
 
 /**
  * A notebook selector.
@@ -82,7 +67,13 @@ public data class NotebookSelector(
      * The cells of the matching notebook to be synced.
      */
     val cells: List<NotebookCellSelector>? = null,
-)
+) {
+    init {
+        require(notebook != null || cells != null) {
+            "NotebookSelector requires at least one of notebook or cells"
+        }
+    }
+}
 
 /**
  * A notebook cell selector.
