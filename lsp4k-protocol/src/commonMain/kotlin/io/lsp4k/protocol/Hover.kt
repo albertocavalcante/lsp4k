@@ -3,6 +3,7 @@ package io.lsp4k.protocol
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -129,12 +130,15 @@ public object HoverContentsSerializer : KSerializer<HoverContents> {
                 val items =
                     element.map { item ->
                         when (item) {
-                            is JsonPrimitive -> Either.Left<String>(item.content)
+                            is JsonPrimitive -> {
+                                if (!item.isString) throw SerializationException("MarkedString must be a string or object")
+                                Either.Left<String>(item.content)
+                            }
                             is JsonObject ->
                                 Either.Right<MarkedString>(
                                     jsonDecoder.json.decodeFromJsonElement(MarkedString.serializer(), item),
                                 )
-                            else -> throw IllegalArgumentException("MarkedString must be a string or object")
+                            else -> throw SerializationException("MarkedString must be a string or object")
                         }
                     }
                 HoverContents.MultiMarked(items)
@@ -149,10 +153,10 @@ public object HoverContentsSerializer : KSerializer<HoverContents> {
                     Either.Right(jsonDecoder.json.decodeFromJsonElement(MarkedString.serializer(), element)),
                 )
             }
-            element is JsonPrimitive -> {
+            element is JsonPrimitive && element.isString -> {
                 HoverContents.SingleMarked(Either.Left(element.content))
             }
-            else -> throw IllegalArgumentException("Hover contents must be a MarkedString, MarkedString array, or MarkupContent")
+            else -> throw SerializationException("Hover contents must be a MarkedString, MarkedString array, or MarkupContent")
         }
     }
 }
