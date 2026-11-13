@@ -93,25 +93,29 @@ class MiscellaneousTypesSerializationTest {
     // ==================== PrepareRenameResult Tests ====================
 
     @Test
-    fun `PrepareRenameResult serialization`() {
-        val result =
-            PrepareRenameResult(
-                range = Range(Position(10, 4), Position(10, 15)),
-                placeholder = "oldName",
+    fun `PrepareRenameResult placeholder serialization`() {
+        val result: PrepareRenameResult =
+            PrepareRenameResult.OfPlaceholder(
+                PrepareRenamePlaceholder(
+                    range = Range(Position(10, 4), Position(10, 15)),
+                    placeholder = "oldName",
+                ),
             )
-        val encoded = json.encodeToString(result)
+        val encoded = json.encodeToString(PrepareRenameResult.serializer(), result)
         encoded shouldContain "\"placeholder\":\"oldName\""
     }
 
     @Test
     fun `PrepareRenameResult round-trip`() {
-        val result =
-            PrepareRenameResult(
-                range = Range(Position(50, 8), Position(50, 20)),
-                placeholder = "functionToRename",
+        val result: PrepareRenameResult =
+            PrepareRenameResult.OfPlaceholder(
+                PrepareRenamePlaceholder(
+                    range = Range(Position(50, 8), Position(50, 20)),
+                    placeholder = "functionToRename",
+                ),
             )
-        val encoded = json.encodeToString(result)
-        val decoded = json.decodeFromString<PrepareRenameResult>(encoded)
+        val encoded = json.encodeToString(PrepareRenameResult.serializer(), result)
+        val decoded = json.decodeFromString(PrepareRenameResult.serializer(), encoded)
         decoded shouldBe result
     }
 

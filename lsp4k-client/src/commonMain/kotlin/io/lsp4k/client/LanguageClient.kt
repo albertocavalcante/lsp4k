@@ -25,12 +25,13 @@ import io.lsp4k.protocol.CodeLensParams
 import io.lsp4k.protocol.ColorInformation
 import io.lsp4k.protocol.ColorPresentation
 import io.lsp4k.protocol.ColorPresentationParams
+import io.lsp4k.protocol.CommandOrCodeAction
 import io.lsp4k.protocol.CompletionItem
-import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionParams
 import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.DeclarationParams
+import io.lsp4k.protocol.DeclarationResult
 import io.lsp4k.protocol.DefinitionParams
 import io.lsp4k.protocol.DefinitionResult
 import io.lsp4k.protocol.Diagnostic
@@ -56,20 +57,22 @@ import io.lsp4k.protocol.DocumentLinkParams
 import io.lsp4k.protocol.DocumentOnTypeFormattingParams
 import io.lsp4k.protocol.DocumentRangeFormattingParams
 import io.lsp4k.protocol.DocumentRangesFormattingParams
-import io.lsp4k.protocol.DocumentSymbol
 import io.lsp4k.protocol.DocumentSymbolParams
+import io.lsp4k.protocol.DocumentSymbolResult
 import io.lsp4k.protocol.ExecuteCommandParams
 import io.lsp4k.protocol.FoldingRange
 import io.lsp4k.protocol.FoldingRangeParams
 import io.lsp4k.protocol.Hover
 import io.lsp4k.protocol.HoverParams
 import io.lsp4k.protocol.ImplementationParams
+import io.lsp4k.protocol.ImplementationResult
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
+import io.lsp4k.protocol.InitializedParams
 import io.lsp4k.protocol.InlayHint
 import io.lsp4k.protocol.InlayHintParams
-import io.lsp4k.protocol.InlineCompletionList
 import io.lsp4k.protocol.InlineCompletionParams
+import io.lsp4k.protocol.InlineCompletionResult
 import io.lsp4k.protocol.InlineValue
 import io.lsp4k.protocol.InlineValueParams
 import io.lsp4k.protocol.LinkedEditingRangeParams
@@ -90,8 +93,8 @@ import io.lsp4k.protocol.RenameParams
 import io.lsp4k.protocol.SelectionRange
 import io.lsp4k.protocol.SelectionRangeParams
 import io.lsp4k.protocol.SemanticTokens
-import io.lsp4k.protocol.SemanticTokensDelta
 import io.lsp4k.protocol.SemanticTokensDeltaParams
+import io.lsp4k.protocol.SemanticTokensDeltaResult
 import io.lsp4k.protocol.SemanticTokensParams
 import io.lsp4k.protocol.SemanticTokensRangeParams
 import io.lsp4k.protocol.SetTraceParams
@@ -101,6 +104,7 @@ import io.lsp4k.protocol.SignatureHelp
 import io.lsp4k.protocol.SignatureHelpParams
 import io.lsp4k.protocol.TextEdit
 import io.lsp4k.protocol.TypeDefinitionParams
+import io.lsp4k.protocol.TypeDefinitionResult
 import io.lsp4k.protocol.TypeHierarchyItem
 import io.lsp4k.protocol.TypeHierarchyPrepareParams
 import io.lsp4k.protocol.TypeHierarchySubtypesParams
@@ -112,15 +116,13 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
+import io.lsp4k.protocol.WorkspaceSymbolResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializer
 
 /**
@@ -403,7 +405,7 @@ public class LanguageClientSession internal constructor(
             result?.let {
                 json.decodeFromJsonElement(InitializeResult.serializer(), it)
             } ?: error("Initialize returned null")
-        connection.notify(LspMethods.INITIALIZED, null)
+        connection.notify(LspMethods.INITIALIZED, json.encodeToJsonElement(InitializedParams.serializer(), InitializedParams))
         return decoded
     }
 
@@ -476,17 +478,9 @@ public class ServerProxy internal constructor(
     // ===== Text Document Requests =====
 
     /**
-     * Request completion at a given text document position.
+     * Request completion at a given text document position, preserving the server's array or list shape.
      */
-    public suspend fun completion(params: CompletionParams): CompletionList? =
-        when (val result = completionResult(params)) {
-            is CompletionResult.Items -> CompletionList(isIncomplete = false, items = result.items)
-            is CompletionResult.ListResult -> result.list
-            null -> null
-        }
-
-    /** Request completion while preserving the server's array or list response shape. */
-    public suspend fun completionResult(params: CompletionParams): CompletionResult? = request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
+    public suspend fun completion(params: CompletionParams): CompletionResult? = request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
 
     /**
      * Resolve additional information for a given completion item.
@@ -506,49 +500,24 @@ public class ServerProxy internal constructor(
     /**
      * Request the declaration of a symbol at a given text document position.
      */
-    public suspend fun declaration(params: DeclarationParams): List<Location>? = request(LspMethods.TEXT_DOCUMENT_DECLARATION, params)
+    public suspend fun declaration(params: DeclarationParams): DeclarationResult? = request(LspMethods.TEXT_DOCUMENT_DECLARATION, params)
 
     /**
-     * Request the definition of a symbol at a given text document position.
+     * Request the definition of a symbol at a given text document position, preserving single
+     * locations and location or link arrays.
      */
-    public suspend fun definition(params: DefinitionParams): List<Location>? {
-        val result = request<DefinitionParams, JsonElement>(LspMethods.TEXT_DOCUMENT_DEFINITION, params) ?: return null
-        return when (result) {
-            is JsonObject -> listOf(json.decodeFromJsonElement(Location.serializer(), result))
-            is JsonArray -> decodeDefinitionLocations(result)
-            else -> throw SerializationException("Definition result must be a Location object or an array")
-        }
-    }
-
-    private fun decodeDefinitionLocations(result: JsonArray): List<Location> =
-        try {
-            json.decodeFromJsonElement(ListSerializer(Location.serializer()), result)
-        } catch (failure: SerializationException) {
-            val shape =
-                try {
-                    json.decodeFromJsonElement(DefinitionResult.serializer(), result)
-                } catch (_: SerializationException) {
-                    null
-                }
-            if (shape is DefinitionResult.Links) {
-                throw SerializationException("Definition returned location links; use definitionResult to preserve them", failure)
-            }
-            throw failure
-        }
-
-    /** Requests a definition while preserving single locations and location or link arrays. */
-    public suspend fun definitionResult(params: DefinitionParams): DefinitionResult? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
+    public suspend fun definition(params: DefinitionParams): DefinitionResult? = request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
 
     /**
      * Request the type definition of a symbol at a given text document position.
      */
-    public suspend fun typeDefinition(params: TypeDefinitionParams): List<Location>? =
+    public suspend fun typeDefinition(params: TypeDefinitionParams): TypeDefinitionResult? =
         request(LspMethods.TEXT_DOCUMENT_TYPE_DEFINITION, params)
 
     /**
      * Request the implementation of a symbol at a given text document position.
      */
-    public suspend fun implementation(params: ImplementationParams): List<Location>? =
+    public suspend fun implementation(params: ImplementationParams): ImplementationResult? =
         request(LspMethods.TEXT_DOCUMENT_IMPLEMENTATION, params)
 
     /**
@@ -565,13 +534,14 @@ public class ServerProxy internal constructor(
     /**
      * Request document symbols for a given text document.
      */
-    public suspend fun documentSymbol(params: DocumentSymbolParams): List<DocumentSymbol>? =
+    public suspend fun documentSymbol(params: DocumentSymbolParams): DocumentSymbolResult? =
         request(LspMethods.TEXT_DOCUMENT_DOCUMENT_SYMBOL, params)
 
     /**
      * Request code actions for a given text document and range.
      */
-    public suspend fun codeAction(params: CodeActionParams): List<CodeAction>? = request(LspMethods.TEXT_DOCUMENT_CODE_ACTION, params)
+    public suspend fun codeAction(params: CodeActionParams): List<CommandOrCodeAction>? =
+        request(LspMethods.TEXT_DOCUMENT_CODE_ACTION, params)
 
     /**
      * Resolve additional information for a given code action.
@@ -666,7 +636,7 @@ public class ServerProxy internal constructor(
     /**
      * Request semantic tokens delta for a full document.
      */
-    public suspend fun semanticTokensFullDelta(params: SemanticTokensDeltaParams): SemanticTokensDelta? =
+    public suspend fun semanticTokensFullDelta(params: SemanticTokensDeltaParams): SemanticTokensDeltaResult? =
         request(LspMethods.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA, params)
 
     /**
@@ -749,7 +719,7 @@ public class ServerProxy internal constructor(
      * Request inline completions for a given text document position.
      * @since 3.18.0
      */
-    public suspend fun inlineCompletion(params: InlineCompletionParams): InlineCompletionList? =
+    public suspend fun inlineCompletion(params: InlineCompletionParams): InlineCompletionResult? =
         request(LspMethods.TEXT_DOCUMENT_INLINE_COMPLETION, params)
 
     /**
@@ -770,7 +740,7 @@ public class ServerProxy internal constructor(
     /**
      * Request workspace symbols matching a query.
      */
-    public suspend fun symbol(params: WorkspaceSymbolParams): List<WorkspaceSymbol>? = request(LspMethods.WORKSPACE_SYMBOL, params)
+    public suspend fun symbol(params: WorkspaceSymbolParams): WorkspaceSymbolResult? = request(LspMethods.WORKSPACE_SYMBOL, params)
 
     /**
      * Resolve additional information for a workspace symbol.

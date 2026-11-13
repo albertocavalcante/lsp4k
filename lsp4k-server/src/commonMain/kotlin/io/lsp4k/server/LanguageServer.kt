@@ -23,14 +23,15 @@ import io.lsp4k.protocol.CodeLensParams
 import io.lsp4k.protocol.ColorInformation
 import io.lsp4k.protocol.ColorPresentation
 import io.lsp4k.protocol.ColorPresentationParams
+import io.lsp4k.protocol.CommandOrCodeAction
 import io.lsp4k.protocol.CompletionItem
-import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionOptions
 import io.lsp4k.protocol.CompletionParams
 import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.ConfigurationParams
 import io.lsp4k.protocol.CreateFilesParams
 import io.lsp4k.protocol.DeclarationParams
+import io.lsp4k.protocol.DeclarationResult
 import io.lsp4k.protocol.DefinitionParams
 import io.lsp4k.protocol.DefinitionResult
 import io.lsp4k.protocol.DeleteFilesParams
@@ -59,8 +60,8 @@ import io.lsp4k.protocol.DocumentOnTypeFormattingOptions
 import io.lsp4k.protocol.DocumentOnTypeFormattingParams
 import io.lsp4k.protocol.DocumentRangeFormattingParams
 import io.lsp4k.protocol.DocumentRangesFormattingParams
-import io.lsp4k.protocol.DocumentSymbol
 import io.lsp4k.protocol.DocumentSymbolParams
+import io.lsp4k.protocol.DocumentSymbolResult
 import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.ExecuteCommandOptions
 import io.lsp4k.protocol.ExecuteCommandParams
@@ -69,18 +70,18 @@ import io.lsp4k.protocol.FoldingRangeParams
 import io.lsp4k.protocol.Hover
 import io.lsp4k.protocol.HoverParams
 import io.lsp4k.protocol.ImplementationParams
+import io.lsp4k.protocol.ImplementationResult
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.InlayHint
 import io.lsp4k.protocol.InlayHintParams
-import io.lsp4k.protocol.InlineCompletionList
 import io.lsp4k.protocol.InlineCompletionParams
+import io.lsp4k.protocol.InlineCompletionResult
 import io.lsp4k.protocol.InlineValue
 import io.lsp4k.protocol.InlineValueParams
 import io.lsp4k.protocol.LinkedEditingRangeParams
 import io.lsp4k.protocol.LinkedEditingRanges
 import io.lsp4k.protocol.Location
-import io.lsp4k.protocol.LocationLink
 import io.lsp4k.protocol.LogMessageParams
 import io.lsp4k.protocol.LogTraceParams
 import io.lsp4k.protocol.LspMethods
@@ -101,8 +102,8 @@ import io.lsp4k.protocol.SaveOptions
 import io.lsp4k.protocol.SelectionRange
 import io.lsp4k.protocol.SelectionRangeParams
 import io.lsp4k.protocol.SemanticTokens
-import io.lsp4k.protocol.SemanticTokensDelta
 import io.lsp4k.protocol.SemanticTokensDeltaParams
+import io.lsp4k.protocol.SemanticTokensDeltaResult
 import io.lsp4k.protocol.SemanticTokensOptions
 import io.lsp4k.protocol.SemanticTokensParams
 import io.lsp4k.protocol.SemanticTokensRangeParams
@@ -116,12 +117,12 @@ import io.lsp4k.protocol.ShowMessageRequestParams
 import io.lsp4k.protocol.SignatureHelp
 import io.lsp4k.protocol.SignatureHelpOptions
 import io.lsp4k.protocol.SignatureHelpParams
-import io.lsp4k.protocol.SymbolInformation
 import io.lsp4k.protocol.TextDocumentSyncKind
 import io.lsp4k.protocol.TextDocumentSyncOptions
 import io.lsp4k.protocol.TextEdit
 import io.lsp4k.protocol.TraceValue
 import io.lsp4k.protocol.TypeDefinitionParams
+import io.lsp4k.protocol.TypeDefinitionResult
 import io.lsp4k.protocol.TypeHierarchyItem
 import io.lsp4k.protocol.TypeHierarchyPrepareParams
 import io.lsp4k.protocol.TypeHierarchySubtypesParams
@@ -136,6 +137,7 @@ import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.protocol.WorkspaceSymbol
 import io.lsp4k.protocol.WorkspaceSymbolParams
+import io.lsp4k.protocol.WorkspaceSymbolResult
 import io.lsp4k.server.transport.SessionLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -619,12 +621,7 @@ public class TextDocumentHandlersBuilder(
     // ===== Language Features =====
 
     /** Registers a handler for `textDocument/completion` requests. */
-    public fun completion(handler: suspend (CompletionParams) -> CompletionList?) {
-        registerRequest(LspMethods.TEXT_DOCUMENT_COMPLETION, handler)
-    }
-
-    /** Registers a completion handler that can return either LSP response shape. */
-    public fun completionResult(handler: suspend (CompletionParams) -> CompletionResult?) {
+    public fun completion(handler: suspend (CompletionParams) -> CompletionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_COMPLETION, handler)
     }
 
@@ -644,32 +641,22 @@ public class TextDocumentHandlersBuilder(
     }
 
     /** Registers a handler for `textDocument/declaration` requests. */
-    public fun declaration(handler: suspend (DeclarationParams) -> List<Location>?) {
+    public fun declaration(handler: suspend (DeclarationParams) -> DeclarationResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_DECLARATION, handler)
     }
 
-    /** Registers a handler for `textDocument/definition` requests (returns [Location] list). */
-    public fun definition(handler: suspend (DefinitionParams) -> List<Location>?) {
-        registerRequest(LspMethods.TEXT_DOCUMENT_DEFINITION, handler)
-    }
-
-    /** Registers a handler for `textDocument/definition` requests (returns [LocationLink] list). */
-    public fun definitionWithLinks(handler: suspend (DefinitionParams) -> List<LocationLink>?) {
-        registerRequest(LspMethods.TEXT_DOCUMENT_DEFINITION, handler)
-    }
-
-    /** Registers a definition handler that can return any LSP definition result shape. */
-    public fun definitionResult(handler: suspend (DefinitionParams) -> DefinitionResult?) {
+    /** Registers a handler for `textDocument/definition` requests. */
+    public fun definition(handler: suspend (DefinitionParams) -> DefinitionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_DEFINITION, handler)
     }
 
     /** Registers a handler for `textDocument/typeDefinition` requests. */
-    public fun typeDefinition(handler: suspend (TypeDefinitionParams) -> List<Location>?) {
+    public fun typeDefinition(handler: suspend (TypeDefinitionParams) -> TypeDefinitionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_TYPE_DEFINITION, handler)
     }
 
     /** Registers a handler for `textDocument/implementation` requests. */
-    public fun implementation(handler: suspend (ImplementationParams) -> List<Location>?) {
+    public fun implementation(handler: suspend (ImplementationParams) -> ImplementationResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_IMPLEMENTATION, handler)
     }
 
@@ -683,18 +670,13 @@ public class TextDocumentHandlersBuilder(
         registerRequest(LspMethods.TEXT_DOCUMENT_DOCUMENT_HIGHLIGHT, handler)
     }
 
-    /** Registers a handler for `textDocument/documentSymbol` requests (hierarchical). */
-    public fun documentSymbol(handler: suspend (DocumentSymbolParams) -> List<DocumentSymbol>?) {
-        registerRequest(LspMethods.TEXT_DOCUMENT_DOCUMENT_SYMBOL, handler)
-    }
-
-    /** Registers a handler for `textDocument/documentSymbol` requests (flat [SymbolInformation] list). */
-    public fun documentSymbolFlat(handler: suspend (DocumentSymbolParams) -> List<SymbolInformation>?) {
+    /** Registers a handler for `textDocument/documentSymbol` requests (hierarchical or flat). */
+    public fun documentSymbol(handler: suspend (DocumentSymbolParams) -> DocumentSymbolResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_DOCUMENT_SYMBOL, handler)
     }
 
     /** Registers a handler for `textDocument/codeAction` requests. */
-    public fun codeAction(handler: suspend (CodeActionParams) -> List<CodeAction>?) {
+    public fun codeAction(handler: suspend (CodeActionParams) -> List<CommandOrCodeAction>?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_CODE_ACTION, handler)
     }
 
@@ -779,7 +761,7 @@ public class TextDocumentHandlersBuilder(
     }
 
     /** Registers a handler for `textDocument/semanticTokens/full/delta` requests. */
-    public fun semanticTokensFullDelta(handler: suspend (SemanticTokensDeltaParams) -> SemanticTokensDelta?) {
+    public fun semanticTokensFullDelta(handler: suspend (SemanticTokensDeltaParams) -> SemanticTokensDeltaResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA, handler)
     }
 
@@ -814,7 +796,7 @@ public class TextDocumentHandlersBuilder(
     }
 
     /** Registers a handler for `textDocument/inlineCompletion` requests. */
-    public fun inlineCompletion(handler: suspend (InlineCompletionParams) -> InlineCompletionList?) {
+    public fun inlineCompletion(handler: suspend (InlineCompletionParams) -> InlineCompletionResult?) {
         registerRequest(LspMethods.TEXT_DOCUMENT_INLINE_COMPLETION, handler)
     }
 
@@ -852,7 +834,7 @@ public class WorkspaceHandlersBuilder(
     }
 
     /** Registers a handler for `workspace/symbol` requests. */
-    public fun symbol(handler: suspend (WorkspaceSymbolParams) -> List<WorkspaceSymbol>?) {
+    public fun symbol(handler: suspend (WorkspaceSymbolParams) -> WorkspaceSymbolResult?) {
         registerRequest(LspMethods.WORKSPACE_SYMBOL, handler)
     }
 

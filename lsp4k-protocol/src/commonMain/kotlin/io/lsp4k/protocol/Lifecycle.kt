@@ -42,3 +42,10 @@ public data class LogTraceParams(
      */
     val verbose: String? = null,
 )
+
+/**
+ * Parameters for the `initialized` notification. They carry no properties and always encode
+ * as an empty JSON object, never as `null` or an omitted `params`.
+ */
+@Serializable
+public object InitializedParams
