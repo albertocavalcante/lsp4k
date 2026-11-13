@@ -119,12 +119,22 @@ appScope.launch {
 }
 ```
 
-The receive loop dispatches one message at a time, so awaiting a client request inside a handler would never
-see its response; such calls fail at once with `IllegalStateException`. Launch them in your own scope instead.
-The one exception is the `onInitialized` hook, which runs outside the loop and may call
-`client.registration.register`, `client.workspace.configuration` and the like. For the same reason a request
-handler does not see `window/workDoneProgress/cancel` while it runs: its `workDoneProgress.isCancelled` flips only
-after the handler returned. Work that must react to cancellation should use server initiated progress, as above.
+Inbound messages are dispatched concurrently with bounded limits (jsonrpc4k `BoundedDispatchPolicy`; the
+default allows 16 running request handlers and 1024 queued messages). Pass `policy = ...` and optionally
+`inboundLimits = ...` to `start` to change them; `BoundedDispatchPolicy(1, 1024)` runs one request at a time.
+The same holds for `languageClient {}.start(...)`.
+
+- Requests run concurrently. A request that arrives while the queue is full is answered with a server busy error.
+- Notifications are barriers: every earlier request finishes before a notification runs, and later messages
+  wait for it. `didOpen`, `didChange` and `didClose` therefore run in wire order, and a request sees the effect
+  of every notification sent before it.
+- `$/cancelRequest` cancels the handler of the request it names, which is answered with `RequestCancelled`
+  (-32800). Cancelling a request to the client, or letting it time out, sends `$/cancelRequest` to the peer.
+- A handler may await client requests such as `client.workspace.configuration`: responses are read outside the
+  dispatch queue. A chain of nested waits can still use up the concurrency limit.
+- Because notifications wait for earlier requests, a running request handler does not see
+  `window/workDoneProgress/cancel`: its `workDoneProgress.isCancelled` flips only after the handler returned.
+  Work that must react to cancellation should use server initiated progress, as above.
 
 The server enforces the lifecycle: requests before `initialize` fail with `ServerNotInitialized`, a second
 `initialize` and every request after `shutdown` fail with `InvalidRequest`, notifications other than `exit`

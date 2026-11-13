@@ -21,9 +21,8 @@ import kotlinx.serialization.json.JsonElement
  *
  * `telemetry/event`, `$/logTrace`, `$/progress` and `$/cancelRequest` are members of this class.
  *
- * Requests suspend until the client answers. Because inbound messages are dispatched one at a time, a request
- * awaited inside a handler could never read its response; such calls fail at once with [IllegalStateException].
- * Await them from another coroutine scope, for example one launched by the application.
+ * Requests suspend until the client answers. They may be awaited inside a handler: responses bypass the
+ * dispatch queue. A request whose caller is cancelled or times out is cancelled on the client with `$/cancelRequest`.
  */
 public class LanguageClient internal constructor(
     private val sender: ClientSender,

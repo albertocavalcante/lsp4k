@@ -16,9 +16,9 @@ internal const val PARTIAL_RESULT_TOKEN: String = "partialResultToken"
 /**
  * Receiver of every handler registered through the server DSL.
  *
- * The receive loop dispatches one inbound message at a time. Notifications sent through [client] are fine
- * inside a handler, but awaiting a client request there would block the loop that has to read the response,
- * so [LanguageClient] rejects such calls; launch them in another coroutine scope instead.
+ * Requests run concurrently and notifications run in order, each after the earlier requests finished (see
+ * [LanguageServerConfig.start]). A handler may send notifications through [client] and await client requests: responses are read
+ * outside the dispatch queue.
  *
  * @property server The running server that dispatched the message.
  */

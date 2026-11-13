@@ -1,6 +1,8 @@
 package io.lsp4k.server.transport
 
+import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.Connection
+import io.jsonrpc4k.core.InboundResourceLimits
 import io.jsonrpc4k.transport.Transport
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +19,8 @@ import kotlin.coroutines.cancellation.CancellationException
 /** Owns session jobs; the supplied scope and transport remain caller-owned. */
 internal class SessionLifecycle(
     parent: CoroutineScope,
+    policy: BoundedDispatchPolicy,
+    limits: InboundResourceLimits?,
 ) {
     private data class End(
         val cause: Throwable?,
@@ -24,7 +28,12 @@ internal class SessionLifecycle(
 
     private val job = SupervisorJob(parent.coroutineContext[Job])
     private val scope = CoroutineScope(parent.coroutineContext + job)
-    val connection = Connection(scope = scope)
+    val connection =
+        if (limits == null) {
+            Connection(policy = policy, scope = scope)
+        } else {
+            Connection(policy = policy, limits = limits, scope = scope)
+        }
     private val end = MutableStateFlow<End?>(null)
     private val terminated = CompletableDeferred<Throwable?>()
 

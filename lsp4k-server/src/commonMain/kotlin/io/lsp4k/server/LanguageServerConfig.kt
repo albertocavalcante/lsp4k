@@ -1,5 +1,7 @@
 package io.lsp4k.server
 
+import io.jsonrpc4k.core.BoundedDispatchPolicy
+import io.jsonrpc4k.core.InboundResourceLimits
 import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
@@ -106,6 +108,9 @@ internal fun requireNotReservedNotification(method: String) {
     }
 }
 
+/** Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows. */
+public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy = BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024)
+
 /**
  * DSL entry point for creating a [LanguageServerConfig].
  *
@@ -127,17 +132,32 @@ public fun languageServer(block: LanguageServerBuilder.() -> Unit): LanguageServ
 /**
  * Starts a language server with the given [transport] and optional [scope].
  *
- * The returned [LanguageServer] is fully wired: incoming transport data is decoded and dispatched one message at
- * a time, and outgoing messages are forwarded to the transport. The supplied scope and transport remain
- * caller-owned; closing a session does not close the transport.
+ * The returned [LanguageServer] is fully wired: incoming transport data is decoded and dispatched, and outgoing
+ * messages are forwarded to the transport. The supplied scope and transport remain caller-owned; closing a
+ * session does not close the transport.
+ *
+ * Dispatch is concurrent and bounded by [policy] (jsonrpc4k bounded dispatch). Request handlers run
+ * concurrently, up to [BoundedDispatchPolicy.maxConcurrentRequests]; a request that arrives while
+ * [BoundedDispatchPolicy.maxQueuedMessages] are queued is answered with a server busy error. Notifications are
+ * barriers: every earlier request finishes before a notification runs, and later messages wait for it, so
+ * `didOpen`, `didChange` and `didClose` run in wire order and a request sees the effect of every notification
+ * that preceded it. Responses and `$/cancelRequest` bypass the queue: a cancelled request is answered with
+ * `RequestCancelled` (-32800) and its handler is cancelled. Pass `BoundedDispatchPolicy(1, ...)` to run requests
+ * one at a time. Handlers may await requests to the client; nested chains of such waits can still use up the
+ * concurrency limit.
+ *
+ * @param policy Concurrency and queue limits; defaults to [DEFAULT_DISPATCH_POLICY].
+ * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.
  */
 public suspend fun LanguageServerConfig.start(
     transport: Transport,
     scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    policy: BoundedDispatchPolicy = DEFAULT_DISPATCH_POLICY,
+    inboundLimits: InboundResourceLimits? = null,
 ): LanguageServer {
     requestHandlers.keys.forEach(::requireNotReservedRequest)
     notificationHandlers.keys.forEach(::requireNotReservedNotification)
-    val session = SessionLifecycle(scope)
+    val session = SessionLifecycle(scope, policy, inboundLimits)
     val server = LanguageServer(this, session.connection, session)
     var started = false
     try {

@@ -23,7 +23,7 @@ import io.lsp4k.protocol.TextEdit
 import io.lsp4k.protocol.TraceValue
 import io.lsp4k.protocol.WorkspaceEdit
 import io.lsp4k.protocol.WorkspaceFolder
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonElement
@@ -125,30 +125,25 @@ class ClientCallsTest {
         }
 
     @Test
-    fun `awaiting a client request inside a handler fails fast while other scopes may await it`() =
+    fun `a handler may await a client request`() =
         runTest {
-            val folders = CompletableDeferred<List<WorkspaceFolder>?>()
-            val outside = backgroundScope
             val peer =
                 startPeer(backgroundScope) {
                     workspace {
                         executeCommand {
-                            client.window.logMessage(MessageType.Info, "inside")
-                            val failure = runCatching { client.workspace.workspaceFolders() }.exceptionOrNull()
-                            outside.launch { folders.complete(client.workspace.workspaceFolders()) }
-                            JsonPrimitive(failure is IllegalStateException)
+                            val folders = client.workspace.workspaceFolders().orEmpty()
+                            JsonPrimitive(folders.joinToString { it.name })
                         }
                     }
                 }
             peer.initialize()
 
-            val result = peer.call<ExecuteCommandParams, JsonElement>(LspMethods.WORKSPACE_EXECUTE_COMMAND, ExecuteCommandParams("app.ask"))
-            assertEquals(JsonPrimitive(true), result)
-            assertMessage(peer.notifications.receive(), LspMethods.WINDOW_LOG_MESSAGE, """{"type":3,"message":"inside"}""")
+            val params = wire(ExecuteCommandParams("app.ask"))
+            val command = backgroundScope.async { peer.request(LspMethods.WORKSPACE_EXECUTE_COMMAND, params) }
             val request = peer.requests.receive()
             assertEquals(LspMethods.WORKSPACE_WORKSPACE_FOLDERS, request.method())
             peer.respond(request, json("""[{"uri":"file:///ws","name":"ws"}]"""))
-            assertEquals(listOf(WorkspaceFolder("file:///ws", "ws")), folders.await())
+            assertEquals(JsonPrimitive("ws"), command.await().result())
         }
 
     @Test

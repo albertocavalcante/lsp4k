@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
+          ref: a79b71c24e3d77317fdf2e842b5bd85aef1d8efa
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
+          ref: a79b71c24e3d77317fdf2e842b5bd85aef1d8efa
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -133,7 +133,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
+          ref: a79b71c24e3d77317fdf2e842b5bd85aef1d8efa
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -177,7 +177,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
+          ref: a79b71c24e3d77317fdf2e842b5bd85aef1d8efa
           path: jsonrpc4k
           persist-credentials: false
       - name: Set up Java 17 and 21
