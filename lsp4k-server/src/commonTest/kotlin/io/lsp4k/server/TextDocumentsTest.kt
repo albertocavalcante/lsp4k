@@ -50,6 +50,9 @@ class TextDocumentsTest {
     private suspend fun TextDocuments.text(): String? = get(uri)?.text
 
     @Test
+    fun `open tracks document`() = runTest {
+        val docs = manager("hello")
+        docs.get(uri)?.text shouldBe "hello"
         docs.get(uri)?.languageId shouldBe "text"
         docs.version(uri) shouldBe 1
         docs.size() shouldBe 1
