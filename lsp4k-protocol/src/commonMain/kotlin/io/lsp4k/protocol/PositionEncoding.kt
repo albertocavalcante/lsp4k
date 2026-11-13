@@ -52,6 +52,13 @@ public object LineEndings {
  * - An unknown [PositionEncodingKind] is treated as UTF-16, the mandatory default.
  */
 public object PositionEncodings {
+    private const val SUPPLEMENTARY_BASE = 0x10000
+    private const val HIGH_SURROGATE_MIN = 0xD800
+    private const val LOW_SURROGATE_MIN = 0xDC00
+    private const val SURROGATE_SHIFT = 10
+    private const val UTF8_ONE_BYTE_LIMIT = 0x80
+    private const val UTF8_TWO_BYTE_LIMIT = 0x800
+
     /**
      * Converts [character], expressed in [encoding], to a UTF-16 index into [line].
      */
@@ -121,7 +128,8 @@ public object PositionEncodings {
     ): Int {
         val high = text[index]
         return if (codePointLength(text, index) == 2) {
-            0x10000 + ((high.code - 0xD800) shl 10) + (text[index + 1].code - 0xDC00)
+            SUPPLEMENTARY_BASE + ((high.code - HIGH_SURROGATE_MIN) shl SURROGATE_SHIFT) +
+                (text[index + 1].code - LOW_SURROGATE_MIN)
         } else {
             high.code
         }
@@ -134,14 +142,14 @@ public object PositionEncodings {
         when (encoding) {
             PositionEncodingKind.UTF32 -> 1
             PositionEncodingKind.UTF8 -> utf8Width(codePoint)
-            else -> if (codePoint >= 0x10000) 2 else 1
+            else -> if (codePoint >= SUPPLEMENTARY_BASE) 2 else 1
         }
 
     private fun utf8Width(codePoint: Int): Int =
         when {
-            codePoint < 0x80 -> 1
-            codePoint < 0x800 -> 2
-            codePoint < 0x10000 -> 3
+            codePoint < UTF8_ONE_BYTE_LIMIT -> 1
+            codePoint < UTF8_TWO_BYTE_LIMIT -> 2
+            codePoint < SUPPLEMENTARY_BASE -> 3
             else -> 4
         }
 }

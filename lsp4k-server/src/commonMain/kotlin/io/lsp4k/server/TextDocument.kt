@@ -8,7 +8,8 @@ import io.lsp4k.protocol.PositionEncodings
 import io.lsp4k.protocol.Range
 
 /**
- * An immutable snapshot of an open text document.
+ * An immutable snapshot of an open text document (all state is fixed at construction, so a snapshot
+ * is safe to share across coroutines). Instances are created by [TextDocuments].
  *
  * [Position] characters follow [encoding]; offsets returned by [offsetAt] and accepted by [positionAt]
  * are always UTF-16 indices into [text] (Kotlin string indices). Out-of-range input is clamped:
@@ -22,7 +23,7 @@ public class TextDocument internal constructor(
     public val text: String,
     public val encoding: PositionEncodingKind = PositionEncodingKind.UTF16,
 ) {
-    private val lineStarts: IntArray by lazy(LazyThreadSafetyMode.NONE) { LineEndings.lineStarts(text) }
+    private val lineStarts: IntArray  = LineEndings.lineStarts(text)
 
     /** Number of lines, counting a final empty line after a trailing terminator. */
     public val lineCount: Int get() = lineStarts.size
@@ -80,8 +81,20 @@ public class TextDocument internal constructor(
 
     private fun contentEnd(line: Int): Int {
         val end = if (line + 1 < lineCount) lineStarts[line + 1] else text.length
-        val terminator = LineEndings.terminatorLength(text.substring(lineStarts[line], end))
-        return end - terminator
+        return end - terminatorLengthBefore(lineStarts[line], end)
+    }
+
+    private fun terminatorLengthBefore(
+        start: Int,
+        end: Int,
+    ): Int {
+        if (end <= start) return 0
+        val last = text[end - 1]
+        return when {
+            last == '\n' && end - 1 > start && text[end - 2] == '\r' -> 2
+            last == '\n' || last == '\r' -> 1
+            else -> 0
+        }
     }
 
     private fun lineContaining(offset: Int): Int {

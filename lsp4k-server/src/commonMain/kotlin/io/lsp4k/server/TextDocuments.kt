@@ -5,6 +5,8 @@ import io.lsp4k.protocol.DidCloseTextDocumentParams
 import io.lsp4k.protocol.DidOpenTextDocumentParams
 import io.lsp4k.protocol.DocumentUri
 import io.lsp4k.protocol.PositionEncodingKind
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Outcome of [TextDocuments.didChange]. */
 public enum class ChangeResult {
@@ -33,7 +35,14 @@ public enum class ChangeResult {
  * not open is dropped ([ChangeResult.UNKNOWN_DOCUMENT]). A `didOpen` for an already open URI replaces
  * the tracked document, because open is authoritative. `didClose` for an unknown URI is a no-op.
  *
- * Not thread safe: call it from one dispatcher, or guard it externally.
+ * Duplicate versions: some clients resend a version (for example after undo) or reuse versions after
+ * reopening. Such a `didChange` is dropped, so inspect the returned [ChangeResult] and log or resync on
+ * [ChangeResult.STALE_VERSION] if your client behaves that way; closing and reopening resets tracking.
+ * The deprecated `rangeLength` of a content change is ignored; only the range is used.
+ *
+ * Concurrency: every operation holds an internal [Mutex], so notifications dispatched concurrently
+ * cannot lose updates or race the version check. Operations are therefore `suspend`. Returned
+ * [TextDocument] snapshots are immutable.
  *
  * Wiring: register `didOpen`, `didChange` and `didClose` handlers on the server builder that forward
  * to [didOpen], [didChange] and [didClose].
@@ -41,30 +50,34 @@ public enum class ChangeResult {
 public class TextDocuments(
     public val encoding: PositionEncodingKind = PositionEncodingKind.UTF16,
 ) {
+    private val lock = Mutex()
     private val documents = LinkedHashMap<DocumentUri, TextDocument>()
 
     /** Number of open documents. */
-    public val size: Int get() = documents.size
+    public suspend fun size(): Int = lock.withLock { documents.size }
 
     /** The open document for [uri], or null. */
-    public fun get(uri: DocumentUri): TextDocument? = documents[uri]
+    public suspend fun get(uri: DocumentUri): TextDocument? = lock.withLock { documents[uri] }
 
     /** Snapshots of all open documents in the order they were opened. */
-    public fun all(): List<TextDocument> = documents.values.toList()
+    public suspend fun all(): List<TextDocument> = lock.withLock { documents.values.toList() }
 
     /** The tracked version of [uri], or null when it is not open. */
-    public fun version(uri: DocumentUri): Int? = documents[uri]?.version
+    public suspend fun version(uri: DocumentUri): Int? = lock.withLock { documents[uri]?.version }
 
     /** Starts tracking the opened document, replacing any earlier state for the URI. */
-    public fun didOpen(params: DidOpenTextDocumentParams): TextDocument {
+    public suspend fun didOpen(params: DidOpenTextDocumentParams): TextDocument {
         val item = params.textDocument
         val document = TextDocument(item.uri, item.languageId, item.version, item.text, encoding)
-        documents[item.uri] = document
+        lock.withLock { documents[item.uri] = document }
         return document
     }
 
     /** Applies the content changes of [params] subject to the version policy. */
-    public fun didChange(params: DidChangeTextDocumentParams): ChangeResult {
+    public suspend fun didChange(params: DidChangeTextDocumentParams): ChangeResult =
+        lock.withLock { applyChange(params) }
+
+    private fun applyChange(params: DidChangeTextDocumentParams): ChangeResult {
         val id = params.textDocument
         val current = documents[id.uri] ?: return ChangeResult.UNKNOWN_DOCUMENT
         if (id.version <= current.version) return ChangeResult.STALE_VERSION
@@ -83,10 +96,11 @@ public class TextDocuments(
     }
 
     /** Stops tracking the document and returns its last snapshot, or null when it was not open. */
-    public fun didClose(params: DidCloseTextDocumentParams): TextDocument? = documents.remove(params.textDocument.uri)
+    public suspend fun didClose(params: DidCloseTextDocumentParams): TextDocument? =
+        lock.withLock { documents.remove(params.textDocument.uri) }
 
     /** Forgets every document, for example on shutdown. */
-    public fun clear() {
-        documents.clear()
+    public suspend fun clear() {
+        lock.withLock { documents.clear() }
     }
 }
