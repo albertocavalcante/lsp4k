@@ -74,8 +74,7 @@ public class TextDocuments(
     }
 
     /** Applies the content changes of [params] subject to the version policy. */
-    public suspend fun didChange(params: DidChangeTextDocumentParams): ChangeResult =
-        lock.withLock { applyChange(params) }
+    public suspend fun didChange(params: DidChangeTextDocumentParams): ChangeResult = lock.withLock { applyChange(params) }
 
     private fun applyChange(params: DidChangeTextDocumentParams): ChangeResult {
         val id = params.textDocument

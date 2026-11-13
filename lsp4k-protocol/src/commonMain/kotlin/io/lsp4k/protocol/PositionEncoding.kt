@@ -119,8 +119,7 @@ public object PositionEncodings {
     private fun codePointLength(
         text: String,
         index: Int,
-    ): Int =
-        if (text[index].isHighSurrogate() && index + 1 < text.length && text[index + 1].isLowSurrogate()) 2 else 1
+    ): Int = if (text[index].isHighSurrogate() && index + 1 < text.length && text[index + 1].isLowSurrogate()) 2 else 1
 
     private fun codePointOf(
         text: String,

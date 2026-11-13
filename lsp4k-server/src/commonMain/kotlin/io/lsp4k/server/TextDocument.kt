@@ -23,7 +23,7 @@ public class TextDocument internal constructor(
     public val text: String,
     public val encoding: PositionEncodingKind = PositionEncodingKind.UTF16,
 ) {
-    private val lineStarts: IntArray  = LineEndings.lineStarts(text)
+    private val lineStarts: IntArray = LineEndings.lineStarts(text)
 
     /** Number of lines, counting a final empty line after a trailing terminator. */
     public val lineCount: Int get() = lineStarts.size
