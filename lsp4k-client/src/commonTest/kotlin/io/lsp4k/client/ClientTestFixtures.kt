@@ -2,7 +2,6 @@ package io.lsp4k.client
 
 import io.jsonrpc4k.core.Connection
 import io.jsonrpc4k.core.JsonRpcCodec
-import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.core.RequestHandler
 import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
@@ -16,6 +15,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -36,6 +38,9 @@ internal class TestPeer(
     val connection = Connection(scope = scope)
     private val toClient = Channel<ByteArray>(Channel.UNLIMITED)
 
+    /** Every frame the client wrote, in order, whether or not the connection dispatches it to a handler. */
+    val written = Channel<ByteArray>(Channel.UNLIMITED)
+
     /** The transport handed to the client; frames it sends are delivered to [connection]. */
     val transport: Transport =
         object : Transport {
@@ -43,6 +48,7 @@ internal class TestPeer(
             override val isConnected: Boolean = true
 
             override suspend fun send(data: ByteArray) {
+                written.trySend(data)
                 connection.receive(data)
             }
 
@@ -95,21 +101,32 @@ internal suspend fun runCases(
                     null
                 },
             )
-        } else {
-            peer.connection.onNotification(
-                case.method,
-                NotificationHandler { params -> received.send(Received(case.method, params)) },
-            )
         }
     }
     val client = languageClient {}.start(peer.transport, scope)
     for (case in cases) {
         case.call(client.server)
-        val got = received.receive()
+        val got = if (case.request) received.receive() else nextNotification(peer.written, case.method)
         assertEquals(case.method, got.method)
         assertContainsAll(Json.parseToJsonElement(case.params), got.params, case.method)
     }
     client.close()
+}
+
+/**
+ * Reads the frames the client wrote until the notification [method] shows up. The frames are observed
+ * on the transport because the dispatcher consumes some notifications, such as `$/cancelRequest`, itself.
+ */
+private suspend fun nextNotification(
+    frames: Channel<ByteArray>,
+    method: String,
+): Received {
+    while (true) {
+        val frame = Json.parseToJsonElement(frames.receive().decodeToString())
+        if (frame is JsonObject && frame["id"] == null && frame["method"]?.jsonPrimitive?.content == method) {
+            return Received(method, frame["params"])
+        }
+    }
 }
 
 /** Asserts that [actual] carries every property of [expected]; extra properties are allowed. */
@@ -121,6 +138,10 @@ internal fun assertContainsAll(
     if (expected is JsonObject) {
         assertTrue(actual is JsonObject, "$path: expected an object but was $actual")
         for ((key, value) in expected) assertContainsAll(value, actual[key], "$path.$key")
+    } else if (expected is JsonPrimitive && !expected.isString && actual is JsonPrimitive && !actual.isString) {
+        // A Double such as 1.0 is written as 1.0 on some targets and 1 on others; compare numbers by value.
+        val wanted = expected.doubleOrNull
+        if (wanted != null) assertEquals(wanted, actual.doubleOrNull, path) else assertEquals(expected, actual, path)
     } else {
         assertEquals(expected, actual, path)
     }
