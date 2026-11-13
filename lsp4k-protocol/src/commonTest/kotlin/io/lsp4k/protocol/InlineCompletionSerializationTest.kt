@@ -25,14 +25,14 @@ class InlineCompletionSerializationTest {
     fun `InlineCompletionTriggerKind Invoked serialization`() {
         val kind = InlineCompletionTriggerKind.Invoked
         val encoded = json.encodeToString(kind)
-        encoded shouldBe "0"
+        encoded shouldBe "1"
     }
 
     @Test
     fun `InlineCompletionTriggerKind Automatic serialization`() {
         val kind = InlineCompletionTriggerKind.Automatic
         val encoded = json.encodeToString(kind)
-        encoded shouldBe "1"
+        encoded shouldBe "2"
     }
 
     @Test

@@ -1,5 +1,6 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -65,6 +66,7 @@ public data class FullDocumentDiagnosticReport(
     /**
      * A full document diagnostic report.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Full,
     /**
      * An optional result id. If provided it will be sent on the next
@@ -87,6 +89,7 @@ public data class UnchangedDocumentDiagnosticReport(
     /**
      * A document diagnostic report indicating no changes to the last result.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Unchanged,
     /**
      * A result id which will be sent on the next diagnostic request for the same document.
@@ -104,6 +107,7 @@ public data class RelatedFullDocumentDiagnosticReport(
     /**
      * A full document diagnostic report.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Full,
     /**
      * An optional result id. If provided it will be sent on the next
@@ -137,6 +141,7 @@ public data class RelatedUnchangedDocumentDiagnosticReport(
     /**
      * A document diagnostic report indicating no changes to the last result.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Unchanged,
     /**
      * A result id which will be sent on the next diagnostic request for the same document.
@@ -327,6 +332,7 @@ public data class WorkspaceFullDocumentDiagnosticReport(
     /**
      * A full document diagnostic report.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Full,
     /**
      * An optional result id. If provided it will be sent on the next
@@ -345,7 +351,7 @@ public data class WorkspaceFullDocumentDiagnosticReport(
      * The version number for which the diagnostics are reported.
      * If the document is not marked as open `null` can be provided.
      */
-    val version: Int? = null,
+    val version: Int?,
 )
 
 /**
@@ -358,6 +364,7 @@ public data class WorkspaceUnchangedDocumentDiagnosticReport(
     /**
      * A document diagnostic report indicating no changes to the last result.
      */
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: DocumentDiagnosticReportKind = DocumentDiagnosticReportKind.Unchanged,
     /**
      * A result id which will be sent on the next diagnostic request for the same document.
@@ -371,7 +378,7 @@ public data class WorkspaceUnchangedDocumentDiagnosticReport(
      * The version number for which the diagnostics are reported.
      * If the document is not marked as open `null` can be provided.
      */
-    val version: Int? = null,
+    val version: Int?,
 )
 
 /**
@@ -470,7 +477,7 @@ public data class DiagnosticRegistrationOptions(
     /**
      * A document selector to identify the scope of the registration.
      */
-    val documentSelector: List<DocumentFilter>? = null,
+    val documentSelector: List<DocumentFilter>?,
     /**
      * An optional identifier under which the diagnostics are managed by the client.
      */

@@ -15,11 +15,13 @@ public data class SemanticTokensOptions(
     /**
      * Server supports providing semantic tokens for a specific range of a document.
      */
-    val range: Boolean? = null,
+    @Serializable(with = SemanticTokensRangeSer::class)
+    val range: Either<Boolean, SemanticTokensRangeOptions>? = null,
     /**
      * Server supports providing semantic tokens for a full document.
      */
-    val full: SemanticTokensFullOptions? = null,
+    @Serializable(with = SemanticTokensFullSer::class)
+    val full: Either<Boolean, SemanticTokensFullOptions>? = null,
 )
 
 /**

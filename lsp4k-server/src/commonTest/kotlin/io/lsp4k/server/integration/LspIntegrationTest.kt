@@ -92,9 +92,11 @@ class LspIntegrationTest {
             val capabilities =
                 ServerCapabilities(
                     textDocumentSync =
-                        TextDocumentSyncOptions(
-                            openClose = true,
-                            change = TextDocumentSyncKind.Full,
+                        Either.right(
+                            TextDocumentSyncOptions(
+                                openClose = true,
+                                change = TextDocumentSyncKind.Full,
+                            ),
                         ),
                     hoverProvider = Either.left(true),
                 )
@@ -147,7 +149,9 @@ class LspIntegrationTest {
             initResult shouldNotBe null
             initResult!!.serverInfo?.name shouldBe "TestServer"
             initResult.serverInfo?.version shouldBe "1.0.0"
-            initResult.capabilities.textDocumentSync?.change shouldBe TextDocumentSyncKind.Full
+            initResult.capabilities.textDocumentSync
+                ?.right
+                ?.change shouldBe TextDocumentSyncKind.Full
             initResult.capabilities.hoverProvider shouldBe Either.left(true)
 
             // Send initialized notification

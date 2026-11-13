@@ -432,8 +432,8 @@ class ClientCapabilitiesSerializationTest {
                         dynamicRegistration = true,
                         requests =
                             SemanticTokensRequests(
-                                range = true,
-                                full = SemanticTokensFullRequestCapability(delta = true),
+                                range = Either.left(true),
+                                full = Either.right(SemanticTokensFullRequestCapability(delta = true)),
                             ),
                         tokenTypes = listOf("namespace", "type", "class", "enum", "function"),
                         tokenModifiers = listOf("declaration", "definition", "readonly"),
@@ -446,10 +446,11 @@ class ClientCapabilitiesSerializationTest {
             )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<TextDocumentClientCapabilities>(encoded)
-        decoded.semanticTokens?.requests?.range shouldBe true
+        decoded.semanticTokens?.requests?.range shouldBe Either.left(true)
         decoded.semanticTokens
             ?.requests
             ?.full
+            ?.right
             ?.delta shouldBe true
         decoded.semanticTokens?.tokenTypes?.size shouldBe 5
     }

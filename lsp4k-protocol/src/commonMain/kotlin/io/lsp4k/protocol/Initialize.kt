@@ -176,7 +176,8 @@ public data class TextDocumentSyncOptions(
     /**
      * Save notifications are sent to the server.
      */
-    val save: SaveOptions? = null,
+    @Serializable(with = SaveSer::class)
+    val save: Either<Boolean, SaveOptions>? = null,
 )
 
 /**
@@ -577,7 +578,8 @@ public data class ServerCapabilities(
     /**
      * Defines how text documents are synced.
      */
-    val textDocumentSync: TextDocumentSyncOptions? = null,
+    @Serializable(with = TextDocumentSyncSer::class)
+    val textDocumentSync: Either<TextDocumentSyncKind, TextDocumentSyncOptions>? = null,
     /**
      * Defines how notebook documents are synced.
      */
@@ -815,7 +817,8 @@ public data class WorkspaceFoldersServerCapabilities(
     /**
      * Whether the server wants to receive workspace folder change notifications.
      */
-    val changeNotifications: Boolean? = null,
+    @Serializable(with = ChangeNotificationsSer::class)
+    val changeNotifications: Either<String, Boolean>? = null,
 )
 
 /**
@@ -2100,11 +2103,13 @@ public data class SemanticTokensRequests(
     /**
      * The client will send the `textDocument/semanticTokens/range` request if the server provides a corresponding handler.
      */
-    val range: Boolean? = null,
+    @Serializable(with = SemanticTokensRangeSer::class)
+    val range: Either<Boolean, SemanticTokensRangeOptions>? = null,
     /**
      * The client will send the `textDocument/semanticTokens/full` request if the server provides a corresponding handler.
      */
-    val full: SemanticTokensFullRequestCapability? = null,
+    @Serializable(with = SemanticTokensFullRequestSer::class)
+    val full: Either<Boolean, SemanticTokensFullRequestCapability>? = null,
 )
 
 /**

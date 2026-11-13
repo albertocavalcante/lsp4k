@@ -206,7 +206,7 @@ class WindowSerializationTest {
             )
         val encoded = json.encodeToString(progress)
         encoded shouldContain "\"title\":\"Indexing\""
-        // kind has default value "begin" and may not be in output when encodeDefaults=false
+        encoded shouldContain "\"kind\":\"begin\""
         val decoded = json.decodeFromString<WorkDoneProgressBegin>(encoded)
         decoded.kind shouldBe "begin"
         decoded.title shouldBe "Indexing"
@@ -245,7 +245,7 @@ class WindowSerializationTest {
     fun `WorkDoneProgressReport minimal`() {
         val progress = WorkDoneProgressReport()
         val encoded = json.encodeToString(progress)
-        // kind has default value "report" and may not be in output when encodeDefaults=false
+        encoded shouldContain "\"kind\":\"report\""
         val decoded = json.decodeFromString<WorkDoneProgressReport>(encoded)
         decoded.kind shouldBe "report"
     }
@@ -284,7 +284,7 @@ class WindowSerializationTest {
     fun `WorkDoneProgressEnd minimal`() {
         val progress = WorkDoneProgressEnd()
         val encoded = json.encodeToString(progress)
-        // kind has default value "end" and may not be in output when encodeDefaults=false
+        encoded shouldContain "\"kind\":\"end\""
         val decoded = json.decodeFromString<WorkDoneProgressEnd>(encoded)
         decoded.kind shouldBe "end"
     }

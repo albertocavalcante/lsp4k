@@ -15,8 +15,8 @@ import kotlinx.serialization.json.JsonPrimitive
 public enum class InlineCompletionTriggerKind(
     public val value: Int,
 ) {
-    Invoked(0),
-    Automatic(1),
+    Invoked(1),
+    Automatic(2),
     ;
 
     public companion object {

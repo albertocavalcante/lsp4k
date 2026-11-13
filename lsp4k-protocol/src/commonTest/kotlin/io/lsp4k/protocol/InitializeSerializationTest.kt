@@ -355,17 +355,23 @@ class InitializeSerializationTest {
         val caps =
             ServerCapabilities(
                 textDocumentSync =
-                    TextDocumentSyncOptions(
-                        openClose = true,
-                        change = TextDocumentSyncKind.Incremental,
-                        save = SaveOptions(includeText = true),
+                    Either.right(
+                        TextDocumentSyncOptions(
+                            openClose = true,
+                            change = TextDocumentSyncKind.Incremental,
+                            save = Either.right(SaveOptions(includeText = true)),
+                        ),
                     ),
             )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<ServerCapabilities>(encoded)
-        decoded.textDocumentSync?.openClose shouldBe true
-        decoded.textDocumentSync?.change shouldBe TextDocumentSyncKind.Incremental
-        decoded.textDocumentSync?.save?.includeText shouldBe true
+        decoded.textDocumentSync?.right?.openClose shouldBe true
+        decoded.textDocumentSync?.right?.change shouldBe TextDocumentSyncKind.Incremental
+        decoded.textDocumentSync
+            ?.right
+            ?.save
+            ?.right
+            ?.includeText shouldBe true
     }
 
     @Test
@@ -497,7 +503,7 @@ class InitializeSerializationTest {
                         workspaceFolders =
                             WorkspaceFoldersServerCapabilities(
                                 supported = true,
-                                changeNotifications = true,
+                                changeNotifications = Either.right(true),
                             ),
                     ),
             )
@@ -505,7 +511,7 @@ class InitializeSerializationTest {
         val decoded = json.decodeFromString<ServerCapabilities>(encoded)
         decoded.workspaceSymbolProvider shouldBe Either.left(true)
         decoded.workspace?.workspaceFolders?.supported shouldBe true
-        decoded.workspace?.workspaceFolders?.changeNotifications shouldBe true
+        decoded.workspace?.workspaceFolders?.changeNotifications shouldBe Either.right(true)
     }
 
     @Test
@@ -528,9 +534,11 @@ class InitializeSerializationTest {
             ServerCapabilities(
                 positionEncoding = "utf-16",
                 textDocumentSync =
-                    TextDocumentSyncOptions(
-                        openClose = true,
-                        change = TextDocumentSyncKind.Full,
+                    Either.right(
+                        TextDocumentSyncOptions(
+                            openClose = true,
+                            change = TextDocumentSyncKind.Full,
+                        ),
                     ),
                 hoverProvider = Either.left(true),
                 completionProvider =
@@ -586,9 +594,11 @@ class InitializeSerializationTest {
                 capabilities =
                     ServerCapabilities(
                         textDocumentSync =
-                            TextDocumentSyncOptions(
-                                openClose = true,
-                                change = TextDocumentSyncKind.Incremental,
+                            Either.right(
+                                TextDocumentSyncOptions(
+                                    openClose = true,
+                                    change = TextDocumentSyncKind.Incremental,
+                                ),
                             ),
                         hoverProvider = Either.left(true),
                         completionProvider =
@@ -654,7 +664,7 @@ class InitializeSerializationTest {
                 change = TextDocumentSyncKind.Incremental,
                 willSave = true,
                 willSaveWaitUntil = true,
-                save = SaveOptions(includeText = true),
+                save = Either.right(SaveOptions(includeText = true)),
             )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<TextDocumentSyncOptions>(encoded)

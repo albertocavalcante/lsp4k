@@ -294,6 +294,7 @@ class PullDiagnosticsSerializationTest {
                             message = "Error in workspace",
                         ),
                     ),
+                version = null,
             )
         val original =
             WorkspaceDiagnosticReport(
@@ -314,6 +315,7 @@ class PullDiagnosticsSerializationTest {
             WorkspaceUnchangedDocumentDiagnosticReport(
                 uri = "file:///unchanged.kt",
                 resultId = "prev-result",
+                version = null,
             )
         val original =
             WorkspaceDiagnosticReport(
@@ -339,12 +341,14 @@ class PullDiagnosticsSerializationTest {
                                 uri = "file:///a.kt",
                                 items = emptyList(),
                                 resultId = "r1",
+                                version = null,
                             ),
                         ),
                         WorkspaceDocumentDiagnosticReport.Unchanged(
                             WorkspaceUnchangedDocumentDiagnosticReport(
                                 uri = "file:///b.kt",
                                 resultId = "r2",
+                                version = null,
                             ),
                         ),
                     ),
@@ -395,9 +399,10 @@ class PullDiagnosticsSerializationTest {
             WorkspaceFullDocumentDiagnosticReport(
                 uri = "file:///test.kt",
                 items = emptyList(),
+                version = null,
             )
         val encoded = json.encodeToString(original)
-        encoded shouldNotContain "version"
+        encoded shouldContain "\"version\":null"
         val decoded = json.decodeFromString<WorkspaceFullDocumentDiagnosticReport>(encoded)
         decoded.version shouldBe null
     }
@@ -425,9 +430,10 @@ class PullDiagnosticsSerializationTest {
             WorkspaceUnchangedDocumentDiagnosticReport(
                 uri = "file:///test.kt",
                 resultId = "r1",
+                version = null,
             )
         val encoded = json.encodeToString(original)
-        encoded shouldNotContain "version"
+        encoded shouldContain "\"version\":null"
         val decoded = json.decodeFromString<WorkspaceUnchangedDocumentDiagnosticReport>(encoded)
         decoded.version shouldBe null
     }
