@@ -16,6 +16,9 @@ import io.lsp4k.protocol.VersionedTextDocumentIdentifier
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
+// a, e-acute, euro, G-clef (surrogate pair), CJK, b
+private const val MULTI = "aé€𝄞中b"
+
 class TextDocumentsTest {
     private val uri = "file:///a.txt"
 
@@ -198,19 +201,16 @@ class TextDocumentsTest {
         docs.all().shouldBeEmpty()
     }
 
-    // a e-acute euro G-clef(surrogate pair) CJK b
-    private val multi = "aé€𝄞中b"
-
     @Test
     fun `utf16 edit after a surrogate pair`() = runTest {
-        val docs = manager(multi)
+        val docs = manager(MULTI)
         docs.edit(2, replace(range(0, 5, 0, 6), "X"))
         docs.text() shouldBe "aé€𝄞Xb"
     }
 
     @Test
     fun `utf8 edit after multibyte characters`() = runTest {
-        val docs = manager(multi, PositionEncodingKind.UTF8)
+        val docs = manager(MULTI, PositionEncodingKind.UTF8)
         docs.edit(2, replace(range(0, 10, 0, 13), "X"))
         docs.text() shouldBe "aé€𝄞Xb"
         val doc = docs.get(uri)
@@ -219,7 +219,7 @@ class TextDocumentsTest {
 
     @Test
     fun `utf32 edit counts code points`() = runTest {
-        val docs = manager(multi, PositionEncodingKind.UTF32)
+        val docs = manager(MULTI, PositionEncodingKind.UTF32)
         docs.edit(2, replace(range(0, 3, 0, 4), ""))
         docs.text() shouldBe "aé€中b"
     }
@@ -234,7 +234,7 @@ class TextDocumentsTest {
                 PositionEncodingKind.UTF32 to range(0, 3, 0, 4),
             )
         for ((encoding, r) in ranges) {
-            val docs = manager(multi, encoding)
+            val docs = manager(MULTI, encoding)
             docs.edit(2, replace(r, ""))
             docs.text() shouldBe expected
         }
@@ -287,8 +287,8 @@ class TextDocumentsTest {
 
     @Test
     fun `positionAt in utf8 and utf32`() = runTest {
-        val u8 = manager(multi, PositionEncodingKind.UTF8).get(uri)!!
-        val u32 = manager(multi, PositionEncodingKind.UTF32).get(uri)!!
+        val u8 = manager(MULTI, PositionEncodingKind.UTF8).get(uri)!!
+        val u32 = manager(MULTI, PositionEncodingKind.UTF32).get(uri)!!
         u8.positionAt(5) shouldBe Position(0, 10)
         u32.positionAt(5) shouldBe Position(0, 4)
         u8.offsetAt(Position(0, 6)) shouldBe 3
