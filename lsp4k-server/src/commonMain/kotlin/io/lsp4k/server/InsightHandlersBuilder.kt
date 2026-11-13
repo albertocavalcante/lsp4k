@@ -16,6 +16,8 @@ import io.lsp4k.protocol.Moniker
 import io.lsp4k.protocol.MonikerParams
 import io.lsp4k.protocol.SemanticTokens
 import io.lsp4k.protocol.SemanticTokensDeltaParams
+import io.lsp4k.protocol.SemanticTokensDeltaPartial
+import io.lsp4k.protocol.SemanticTokensDeltaPartialSerializer
 import io.lsp4k.protocol.SemanticTokensDeltaResult
 import io.lsp4k.protocol.SemanticTokensParams
 import io.lsp4k.protocol.SemanticTokensPartialResult
@@ -43,7 +45,7 @@ public class InsightHandlersBuilder internal constructor(
     public fun semanticTokensFullDelta(
         handler: suspend PartialResultContext<SemanticTokensDeltaPartial>.(SemanticTokensDeltaParams) -> SemanticTokensDeltaResult?,
     ) {
-        partialRequest(LspMethods.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA, SemanticTokensPartialSerializer, handler)
+        partialRequest(LspMethods.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA, SemanticTokensDeltaPartialSerializer, handler)
     }
 
     /** Handles `textDocument/semanticTokens/range` requests. */

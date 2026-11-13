@@ -233,12 +233,26 @@ DEVELOPER_DIR=/path/to/Xcode.app/Contents/Developer ./gradlew check
 Use `-Plsp4k.enableAppleTargets=true` in CI when Apple native targets must be
 present; the build fails during configuration if Xcode is not available.
 
-`lsp4k-server` and `lsp4k-client` depend on `jsonrpc4k`. Local development uses
+`lsp4k-server` and `lsp4k-client` depend on `jsonrpc4k`, and the `lsp4k-protocol` JVM tests use it to
+check the wire `Json` configuration. Local development uses
 a sibling `../jsonrpc4k` checkout automatically when present. Use
 `-Plsp4k.jsonrpc4kBuild=/path/to/jsonrpc4k` to point at another checkout, or
 `-Plsp4k.useLocalJsonrpc4k=false` to force resolution from published artifacts.
 For GitHub Packages, provide `gpr.user`/`gpr.key` Gradle properties or
 `GITHUB_ACTOR`/`GITHUB_TOKEN` environment variables.
+
+### Specification conformance
+
+`check` runs two JVM tests against the LSP 3.18 meta model vendored, and pinned by SHA-256, at
+`lsp4k-protocol/src/jvmTest/resources/lsp/3.18/metaModel.json`:
+
+- `MetaModelConformanceTest` (`lsp4k-protocol`) maps every structure, enumeration, type alias, request and
+  notification to its lsp4k serializer through an explicit table, then checks JSON property names, optionality,
+  nullability, enumeration values, method directions and wire round trips under the production `Json`
+  configuration. Known gaps belong in `conformance-allowlist.txt` next to the meta model; the test fails for a
+  violation that is not listed and for a listed one that no longer occurs.
+- `MethodCoverageTest` (`lsp4k-server`) checks that every method has a server hook and a client call, or a server
+  call and a client hook, as its direction requires.
 
 ## License
 

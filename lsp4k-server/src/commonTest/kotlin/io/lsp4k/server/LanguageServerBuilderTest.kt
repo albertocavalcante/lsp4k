@@ -433,6 +433,16 @@ class LanguageServerBuilderTest {
     }
 
     @Test
+    fun `lifecycle hooks can be registered only once`() {
+        assertFailsWith<IllegalArgumentException> {
+            languageServer {
+                onShutdown {}
+                onShutdown {}
+            }
+        }
+    }
+
+    @Test
     fun `duplicate request handlers are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageServer {

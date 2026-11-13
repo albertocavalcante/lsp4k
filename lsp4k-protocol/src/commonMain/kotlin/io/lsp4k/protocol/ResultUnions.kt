@@ -297,3 +297,42 @@ public object SemanticTokensDeltaResultSerializer : KSerializer<SemanticTokensDe
         }
     }
 }
+
+// =============================================================================
+// SemanticTokensPartialResult | SemanticTokensDeltaPartialResult
+// =============================================================================
+
+/**
+ * A partial result of `textDocument/semanticTokens/full/delta`: a token chunk (`Either.Left`) or an edit chunk
+ * (`Either.Right`).
+ */
+public typealias SemanticTokensDeltaPartial = Either<SemanticTokensPartialResult, SemanticTokensDeltaPartialResult>
+
+/** Distinguishes a token chunk by the `data` key from an edit chunk by the `edits` key; both or neither is rejected. */
+public object SemanticTokensDeltaPartialSerializer : KSerializer<SemanticTokensDeltaPartial> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("SemanticTokensDeltaPartial")
+
+    override fun serialize(
+        encoder: Encoder,
+        value: SemanticTokensDeltaPartial,
+    ) {
+        val json = encoder as JsonEncoder
+        when (value) {
+            is Either.Left -> json.encodeSerializableValue(SemanticTokensPartialResult.serializer(), value.value)
+            is Either.Right -> json.encodeSerializableValue(SemanticTokensDeltaPartialResult.serializer(), value.value)
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): SemanticTokensDeltaPartial {
+        val json = decoder as JsonDecoder
+        val element = json.decodeJsonElement().asObject("Semantic tokens partial result")
+        val hasData = "data" in element
+        val hasEdits = "edits" in element
+        if (hasData == hasEdits) throw SerializationException("Semantic tokens partial result must have exactly one of data or edits")
+        return if (hasData) {
+            Either.Left(json.json.decodeFromJsonElement(SemanticTokensPartialResult.serializer(), element))
+        } else {
+            Either.Right(json.json.decodeFromJsonElement(SemanticTokensDeltaPartialResult.serializer(), element))
+        }
+    }
+}
