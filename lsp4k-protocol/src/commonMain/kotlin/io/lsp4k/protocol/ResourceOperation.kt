@@ -1,5 +1,6 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -18,6 +19,7 @@ public data class CreateFileOptions(
 @Serializable
 @SerialName("create")
 public data class CreateFile(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "create",
     val uri: DocumentUri,
     val options: CreateFileOptions? = null,
@@ -39,6 +41,7 @@ public data class RenameFileOptions(
 @Serializable
 @SerialName("rename")
 public data class RenameFile(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "rename",
     val oldUri: DocumentUri,
     val newUri: DocumentUri,
@@ -61,6 +64,7 @@ public data class DeleteFileOptions(
 @Serializable
 @SerialName("delete")
 public data class DeleteFile(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "delete",
     val uri: DocumentUri,
     val options: DeleteFileOptions? = null,

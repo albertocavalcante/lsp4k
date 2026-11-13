@@ -1,5 +1,6 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.Serializable
 
 /**
@@ -28,6 +29,13 @@ public enum class MessageType(
      * A log message.
      */
     Log(4),
+
+    /**
+     * A debug message.
+     *
+     * @since 3.18.0
+     */
+    Debug(5),
 
     ;
 
@@ -112,6 +120,7 @@ public data class MessageActionItem(
  */
 @Serializable
 public data class WorkDoneProgressBegin(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "begin",
     /**
      * Mandatory title of the progress operation.
@@ -136,6 +145,7 @@ public data class WorkDoneProgressBegin(
  */
 @Serializable
 public data class WorkDoneProgressReport(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "report",
     /**
      * Controls enablement state of a cancel button.
@@ -156,6 +166,7 @@ public data class WorkDoneProgressReport(
  */
 @Serializable
 public data class WorkDoneProgressEnd(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "end",
     /**
      * Optional, a final message indicating completion.

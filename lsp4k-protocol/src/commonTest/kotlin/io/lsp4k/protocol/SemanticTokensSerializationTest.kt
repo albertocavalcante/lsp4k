@@ -86,11 +86,11 @@ class SemanticTokensSerializationTest {
                         tokenTypes = listOf("class"),
                         tokenModifiers = listOf("declaration"),
                     ),
-                range = true,
+                range = Either.left(true),
             )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)
-        decoded.range shouldBe true
+        decoded.range shouldBe Either.left(true)
     }
 
     @Test
@@ -102,12 +102,12 @@ class SemanticTokensSerializationTest {
                         tokenTypes = listOf("function", "variable"),
                         tokenModifiers = listOf("readonly"),
                     ),
-                range = true,
-                full = SemanticTokensFullOptions(delta = true),
+                range = Either.left(true),
+                full = Either.right(SemanticTokensFullOptions(delta = true)),
             )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)
-        decoded.full?.delta shouldBe true
+        decoded.full?.right?.delta shouldBe true
     }
 
     @Test
@@ -119,8 +119,8 @@ class SemanticTokensSerializationTest {
                         tokenTypes = listOf("namespace", "type", "class"),
                         tokenModifiers = listOf("definition", "static"),
                     ),
-                range = true,
-                full = SemanticTokensFullOptions(delta = true),
+                range = Either.left(true),
+                full = Either.right(SemanticTokensFullOptions(delta = true)),
             )
         val encoded = json.encodeToString(options)
         val decoded = json.decodeFromString<SemanticTokensOptions>(encoded)

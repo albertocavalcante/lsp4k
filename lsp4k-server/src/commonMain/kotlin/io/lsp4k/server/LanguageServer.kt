@@ -439,10 +439,12 @@ public class ServerCapabilitiesBuilder {
         ServerCapabilities(
             textDocumentSync =
                 textDocumentSync?.let {
-                    TextDocumentSyncOptions(
-                        openClose = true,
-                        change = it,
-                        save = SaveOptions(includeText = false),
+                    Either.right(
+                        TextDocumentSyncOptions(
+                            openClose = true,
+                            change = it,
+                            save = Either.right(SaveOptions(includeText = false)),
+                        ),
                     )
                 },
             notebookDocumentSync = notebookDocumentSync,

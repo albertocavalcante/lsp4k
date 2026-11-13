@@ -1,6 +1,7 @@
 package io.lsp4k.protocol
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -265,10 +266,11 @@ class BasicTypesSerializationTest {
         val doc =
             OptionalVersionedTextDocumentIdentifier(
                 uri = "file:///test.kt",
+                version = null,
             )
         val encoded = json.encodeToString(doc)
-        // version should be absent from JSON
-        encoded.contains("version") shouldBe false
+        // version is a required `integer | null`, so null is sent explicitly
+        encoded shouldContain "\"version\":null"
 
         val decoded = json.decodeFromString<OptionalVersionedTextDocumentIdentifier>(encoded)
         decoded shouldBe doc
@@ -385,7 +387,7 @@ class BasicTypesSerializationTest {
     fun `TextDocumentEdit with empty edits list`() {
         val docEdit =
             TextDocumentEdit(
-                textDocument = OptionalVersionedTextDocumentIdentifier(uri = "file:///test.kt"),
+                textDocument = OptionalVersionedTextDocumentIdentifier(uri = "file:///test.kt", version = null),
                 edits = emptyList(),
             )
         val encoded = json.encodeToString(docEdit)

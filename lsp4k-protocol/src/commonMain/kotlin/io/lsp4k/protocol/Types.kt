@@ -1,5 +1,6 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -222,7 +223,7 @@ public data class OptionalVersionedTextDocumentIdentifier(
      * in the editor the server can send `null` to indicate that the version is
      * known and the content on disk is the master.
      */
-    val version: Int? = null,
+    val version: Int?,
 )
 
 /**
@@ -306,6 +307,7 @@ public data class SnippetTextEdit(
  */
 @Serializable
 public data class StringValue(
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val kind: String = "snippet",
     val value: String,
 )
