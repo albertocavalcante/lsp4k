@@ -46,7 +46,7 @@ class PositionEncodingNegotiationTest {
 
     @Test
     fun `initialize parameters negotiate from general capabilities`() {
-        val offering = initializeParams().copy(capabilities = offered(utf16, utf8))
+        val offering = initializeParams().copy(capabilities = offered(listOf(utf16, utf8)))
         offering.negotiatePositionEncoding() shouldBe utf8
         offering.negotiatePositionEncoding(listOf(utf16)) shouldBe utf16
         initializeParams().negotiatePositionEncoding() shouldBe utf16
@@ -56,15 +56,15 @@ class PositionEncodingNegotiationTest {
     fun `text documents are built from negotiated values`() {
         TextDocuments(ServerCapabilities(positionEncoding = utf8)).encoding shouldBe utf8
         TextDocuments(ServerCapabilities()).encoding shouldBe utf16
-        TextDocuments(initializeParams().copy(capabilities = offered(utf32))).encoding shouldBe utf32
-        TextDocuments(initializeParams().copy(capabilities = offered(utf32)), listOf(utf8)).encoding shouldBe utf16
+        TextDocuments(initializeParams().copy(capabilities = offered(listOf(utf32)))).encoding shouldBe utf32
+        TextDocuments(initializeParams().copy(capabilities = offered(listOf(utf32))), listOf(utf8)).encoding shouldBe utf16
     }
 
     @Test
     fun `the default initialize result advertises the negotiated encoding`() =
         runTest {
             val peer = startPeer(backgroundScope) { negotiatePositionEncoding(listOf(utf8, utf16)) }
-            val response = peer.initialize(initializeParams().copy(capabilities = offered(utf16, utf8)))
+            val response = peer.initialize(initializeParams().copy(capabilities = offered(listOf(utf16, utf8))))
 
             advertised(response.result()) shouldBe utf8
             peer.server.positionEncoding shouldBe utf8
@@ -84,7 +84,7 @@ class PositionEncodingNegotiationTest {
     fun `without negotiation the configured capability is kept`() =
         runTest {
             val peer = startPeer(backgroundScope) { capabilities { positionEncoding = utf32 } }
-            val response = peer.initialize(initializeParams().copy(capabilities = offered(utf8)))
+            val response = peer.initialize(initializeParams().copy(capabilities = offered(listOf(utf8))))
 
             advertised(response.result()) shouldBe utf32
             peer.server.positionEncoding shouldBe utf32
@@ -103,7 +103,7 @@ class PositionEncodingNegotiationTest {
                         InitializeResult(ServerCapabilities(positionEncoding = encoding))
                     }
                 }
-            val response = peer.initialize(initializeParams().copy(capabilities = offered(utf8, utf32)))
+            val response = peer.initialize(initializeParams().copy(capabilities = offered(listOf(utf8, utf32))))
 
             advertised(response.result()) shouldBe utf32
             documents.encoding shouldBe utf32
@@ -111,8 +111,8 @@ class PositionEncodingNegotiationTest {
             peer.request(LspMethods.SHUTDOWN).result()
         }
 
-    private fun offered(vararg kinds: PositionEncodingKind) =
-        ClientCapabilities(general = GeneralClientCapabilities(positionEncodings = kinds.toList()))
+    private fun offered(kinds: List<PositionEncodingKind>) =
+        ClientCapabilities(general = GeneralClientCapabilities(positionEncodings = kinds))
 
     private fun advertised(result: JsonElement): PositionEncodingKind? =
         testJson.decodeFromJsonElement(InitializeResult.serializer(), result).capabilities.positionEncoding
