@@ -1,5 +1,7 @@
 package io.lsp4k.client
 
+import io.jsonrpc4k.core.JsonRpcException
+import io.jsonrpc4k.core.ResponseError
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.LspMethods
@@ -12,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class ServerRequestHandlersTest {
@@ -146,7 +149,8 @@ class ServerRequestHandlersTest {
         runTest {
             val peer = TestPeer(backgroundScope)
             languageClient {}.start(peer.transport, backgroundScope)
-            val failure = runCatching { peer.call(LspMethods.WORKSPACE_APPLY_EDIT, """{"edit":{}}""") }
-            assertTrue(failure.isFailure)
+            val failure =
+                assertFailsWith<JsonRpcException> { peer.call(LspMethods.WORKSPACE_APPLY_EDIT, """{"edit":{}}""") }
+            assertEquals(ResponseError.METHOD_NOT_FOUND, failure.code)
         }
 }
