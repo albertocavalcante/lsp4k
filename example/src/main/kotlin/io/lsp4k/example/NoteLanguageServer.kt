@@ -8,6 +8,7 @@ import io.lsp4k.protocol.CompletionOptions
 import io.lsp4k.protocol.Diagnostic
 import io.lsp4k.protocol.DiagnosticSeverity
 import io.lsp4k.protocol.DocumentSymbol
+import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.Hover
 import io.lsp4k.protocol.HoverContents
 import io.lsp4k.protocol.MarkupContent
@@ -279,7 +280,7 @@ private suspend fun publishDiagnosticsFor(
                             range = Range(Position(index, 0), Position(index, line.length)),
                             severity = DiagnosticSeverity.Information,
                             source = "note-ls",
-                            message = "Pending TODO item",
+                            message = Either.Left("Pending TODO item"),
                         ),
                     )
                 }
@@ -291,7 +292,7 @@ private suspend fun publishDiagnosticsFor(
                             range = Range(Position(index, 0), Position(index, line.length)),
                             severity = DiagnosticSeverity.Warning,
                             source = "note-ls",
-                            message = "FIXME: needs attention",
+                            message = Either.Left("FIXME: needs attention"),
                         ),
                     )
                 }
@@ -303,7 +304,7 @@ private suspend fun publishDiagnosticsFor(
                             range = Range(Position(index, 0), Position(index, line.length)),
                             severity = DiagnosticSeverity.Error,
                             source = "note-ls",
-                            message = "Section header must have a title",
+                            message = Either.Left("Section header must have a title"),
                         ),
                     )
                 }

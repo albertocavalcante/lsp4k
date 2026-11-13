@@ -21,6 +21,12 @@ public data class Command(
      * Arguments that the command handler should be invoked with.
      */
     val arguments: List<JsonElement>? = null,
+    /**
+     * An optional tooltip.
+     *
+     * @since 3.18.0
+     */
+    val tooltip: String? = null,
 )
 
 /**

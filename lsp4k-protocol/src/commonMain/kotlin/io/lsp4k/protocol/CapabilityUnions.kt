@@ -3,6 +3,7 @@ package io.lsp4k.protocol
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
@@ -30,6 +31,13 @@ private fun JsonElement.isInteger(): Boolean = this is JsonPrimitive && !isStrin
 private fun JsonElement.isStringLiteral(): Boolean = this is JsonPrimitive && isString
 
 private fun JsonElement.isObject(): Boolean = this is JsonObject
+
+private fun JsonElement.hasKind(kind: String): Boolean =
+    this is JsonObject && (this["kind"] as? JsonPrimitive)?.takeIf { it.isString }?.content == kind
+
+private fun JsonElement.isObjectWithKind(): Boolean = this is JsonObject && "kind" in this
+
+private fun JsonElement.isObjectWithoutKind(): Boolean = this is JsonObject && "kind" !in this
 
 /**
  * Builds a strict serializer for `L | R`: the JSON kind of the element selects the side,
@@ -121,3 +129,41 @@ internal object ChangeNotificationsSer : KSerializer<Either<String, Boolean>> by
     JsonElement::isStringLiteral,
     JsonElement::isBoolean,
 )
+
+/** `Diagnostic.message`: `string | MarkupContent`. */
+internal object DiagnosticMessageSer : KSerializer<Either<String, MarkupContent>> by strictUnion(
+    "StringOrMarkupContent",
+    String.serializer(),
+    MarkupContent.serializer(),
+    JsonElement::isStringLiteral,
+    JsonElement::isObject,
+)
+
+/** A `relatedDocuments` value: `FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport`, selected by `kind`. */
+public object RelatedDocumentReportSerializer : KSerializer<RelatedDocumentReport> by strictUnion(
+    "RelatedDocumentReport",
+    FullDocumentDiagnosticReport.serializer(),
+    UnchangedDocumentDiagnosticReport.serializer(),
+    { it.hasKind("full") },
+    { it.hasKind("unchanged") },
+)
+
+/** The `relatedDocuments` map of a diagnostic report, keyed by document URI. */
+public object RelatedDocumentsSerializer :
+    KSerializer<Map<DocumentUri, RelatedDocumentReport>> by MapSerializer(
+        String.serializer(),
+        RelatedDocumentReportSerializer,
+    )
+
+/**
+ * A partial-result chunk of `textDocument/diagnostic`: a [DocumentDiagnosticReport] (an object with a `kind`)
+ * or a [DocumentDiagnosticReportPartialResult] (an object without one).
+ */
+public object DocumentDiagnosticReportProgressSerializer :
+    KSerializer<DocumentDiagnosticReportProgress> by strictUnion(
+        "DocumentDiagnosticReportProgress",
+        DocumentDiagnosticReportSerializer,
+        DocumentDiagnosticReportPartialResult.serializer(),
+        JsonElement::isObjectWithKind,
+        JsonElement::isObjectWithoutKind,
+    )

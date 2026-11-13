@@ -135,6 +135,28 @@ public data class CompletionOptions(
      * The server provides support to resolve additional information for a completion item.
      */
     val resolveProvider: Boolean? = null,
+    /**
+     * The server supports the following `CompletionItem` specific capabilities.
+     *
+     * @since 3.17.0
+     */
+    val completionItem: ServerCompletionItemOptions? = null,
+)
+
+/**
+ * Completion item specific server options.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+public data class ServerCompletionItemOptions(
+    /**
+     * The server has support for completion item label details (see also `CompletionItemLabelDetails`)
+     * when receiving a completion item in a resolve call.
+     *
+     * @since 3.17.0
+     */
+    val labelDetailsSupport: Boolean? = null,
 )
 
 /**
@@ -301,6 +323,18 @@ public data class CodeActionOptions(
      * Work done progress options.
      */
     val workDoneProgress: Boolean? = null,
+    /**
+     * Static documentation for a class of code actions. Documentation from the provider should be shown
+     * in the code actions menu if either:
+     * - Code actions of `kind` are requested by the editor. In this case, the editor will show the documentation
+     *   that most closely matches the requested code action kind.
+     * - Any code actions of `kind` are returned by the provider.
+     *
+     * At most one documentation entry should be shown per provider.
+     *
+     * @since 3.18.0
+     */
+    val documentation: List<CodeActionKindDocumentation>? = null,
 )
 
 /**
@@ -1608,6 +1642,13 @@ public data class CompletionListCapabilities(
      * The client supports the following itemDefaults on a completion list.
      */
     val itemDefaults: List<String>? = null,
+    /**
+     * Specifies whether the client supports `CompletionList.applyKind` to indicate how supported values
+     * from `completionList.itemDefaults` and `completion` will be combined.
+     *
+     * @since 3.18.0
+     */
+    val applyKindSupport: Boolean? = null,
 )
 
 /**
@@ -1771,6 +1812,32 @@ public data class CodeActionClientCapabilities(
      * Whether the client honors the change annotations in text edits and resource operations.
      */
     val honorsChangeAnnotations: Boolean? = null,
+    /**
+     * Whether the client supports documentation for a class of code actions.
+     *
+     * @since 3.18.0
+     */
+    val documentationSupport: Boolean? = null,
+    /**
+     * Client supports the tag property on a code action. Clients supporting tags have to handle unknown tags
+     * gracefully.
+     *
+     * @since 3.18.0
+     */
+    val tagSupport: CodeActionTagSupport? = null,
+)
+
+/**
+ * The tags supported by the client on a code action.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+public data class CodeActionTagSupport(
+    /**
+     * The tags supported by the client.
+     */
+    val valueSet: List<CodeActionTag>,
 )
 
 /**
@@ -2195,6 +2262,30 @@ public data class DiagnosticClientCapabilities(
      * Whether the clients supports related documents for document diagnostic pulls.
      */
     val relatedDocumentSupport: Boolean? = null,
+    /**
+     * Whether the clients accepts diagnostics with related information.
+     */
+    val relatedInformation: Boolean? = null,
+    /**
+     * Client supports the tag property to provide meta data about a diagnostic.
+     * Clients supporting tags have to handle unknown tags gracefully.
+     */
+    val tagSupport: DiagnosticTagSupport? = null,
+    /**
+     * Client supports a codeDescription property.
+     */
+    val codeDescriptionSupport: Boolean? = null,
+    /**
+     * Whether code action supports the `data` property which is preserved between a
+     * `textDocument/publishDiagnostics` and `textDocument/codeAction` request.
+     */
+    val dataSupport: Boolean? = null,
+    /**
+     * Whether the client supports `MarkupContent` in a diagnostic's message.
+     *
+     * @since 3.18.0
+     */
+    val markupMessageSupport: Boolean? = null,
 )
 
 // ============================================================================

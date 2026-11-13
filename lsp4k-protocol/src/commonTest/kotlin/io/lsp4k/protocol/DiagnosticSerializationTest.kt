@@ -130,7 +130,7 @@ class DiagnosticSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),
-                message = "Syntax error",
+                message = Either.Left("Syntax error"),
             )
         val encoded = json.encodeToString(diagnostic)
         val decoded = json.decodeFromString<Diagnostic>(encoded)
@@ -145,7 +145,7 @@ class DiagnosticSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),
-                message = "Unused variable",
+                message = Either.Left("Unused variable"),
                 severity = DiagnosticSeverity.Warning,
             )
         val encoded = json.encodeToString(diagnostic)
@@ -161,7 +161,7 @@ class DiagnosticSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),
-                message = "Variable is deprecated",
+                message = Either.Left("Variable is deprecated"),
                 severity = DiagnosticSeverity.Warning,
                 code = Either.right("DEPRECATION"),
                 codeDescription = CodeDescription(href = "https://kotlinlang.org/docs/deprecation.html"),
@@ -190,7 +190,7 @@ class DiagnosticSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(5, 0), Position(5, 15)),
-                message = "Deprecated and unused",
+                message = Either.Left("Deprecated and unused"),
                 tags = listOf(DiagnosticTag.Deprecated, DiagnosticTag.Unnecessary),
             )
         val encoded = json.encodeToString(diagnostic)
@@ -203,7 +203,7 @@ class DiagnosticSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(20, 0), Position(20, 30)),
-                message = "Type mismatch",
+                message = Either.Left("Type mismatch"),
                 severity = DiagnosticSeverity.Error,
                 relatedInformation =
                     listOf(
@@ -234,7 +234,7 @@ class DiagnosticSerializationTest {
             }
             """.trimIndent()
         val decoded = json.decodeFromString<Diagnostic>(jsonStr)
-        decoded.message shouldBe "Test message"
+        decoded.message shouldBe Either.Left("Test message")
     }
 
     // ==================== PublishDiagnosticsParams Tests ====================
@@ -248,7 +248,7 @@ class DiagnosticSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(0, 0), Position(0, 10)),
-                            message = "Error message",
+                            message = Either.Left("Error message"),
                         ),
                     ),
             )
@@ -271,7 +271,7 @@ class DiagnosticSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(0, 0), Position(0, 10)),
-                            message = "Error message",
+                            message = Either.Left("Error message"),
                             severity = DiagnosticSeverity.Error,
                         ),
                     ),
@@ -305,17 +305,17 @@ class DiagnosticSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(1, 0), Position(1, 10)),
-                            message = "First error",
+                            message = Either.Left("First error"),
                             severity = DiagnosticSeverity.Error,
                         ),
                         Diagnostic(
                             range = Range(Position(5, 0), Position(5, 20)),
-                            message = "Warning here",
+                            message = Either.Left("Warning here"),
                             severity = DiagnosticSeverity.Warning,
                         ),
                         Diagnostic(
                             range = Range(Position(10, 0), Position(10, 15)),
-                            message = "Just a hint",
+                            message = Either.Left("Just a hint"),
                             severity = DiagnosticSeverity.Hint,
                         ),
                     ),

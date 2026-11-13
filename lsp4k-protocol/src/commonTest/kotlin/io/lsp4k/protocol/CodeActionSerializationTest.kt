@@ -99,11 +99,11 @@ class CodeActionSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(10, 0), Position(10, 20)),
-                            message = "Unused variable 'x'",
+                            message = Either.Left("Unused variable 'x'"),
                         ),
                         Diagnostic(
                             range = Range(Position(15, 0), Position(15, 10)),
-                            message = "Type mismatch",
+                            message = Either.Left("Type mismatch"),
                         ),
                     ),
             )
@@ -144,7 +144,7 @@ class CodeActionSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(5, 0), Position(5, 10)),
-                            message = "Error",
+                            message = Either.Left("Error"),
                             severity = DiagnosticSeverity.Error,
                         ),
                     ),
@@ -184,7 +184,7 @@ class CodeActionSerializationTest {
                             listOf(
                                 Diagnostic(
                                     range = Range(Position(5, 0), Position(5, 15)),
-                                    message = "Unused import",
+                                    message = Either.Left("Unused import"),
                                     severity = DiagnosticSeverity.Warning,
                                     tags = listOf(DiagnosticTag.Unnecessary),
                                 ),
@@ -226,7 +226,7 @@ class CodeActionSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 10)),
-                message = "Unused variable",
+                message = Either.Left("Unused variable"),
             )
         val action =
             CodeAction(
@@ -334,7 +334,7 @@ class CodeActionSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(5, 4), Position(5, 7)),
-                            message = "Variable 'foo' should be renamed",
+                            message = Either.Left("Variable 'foo' should be renamed"),
                         ),
                     ),
                 isPreferred = true,

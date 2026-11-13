@@ -104,7 +104,7 @@ class PullDiagnosticsSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(10, 0), Position(10, 20)),
-                            message = "Unused variable",
+                            message = Either.Left("Unused variable"),
                         ),
                     ),
             )
@@ -124,7 +124,7 @@ class PullDiagnosticsSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(0, 0), Position(0, 5)),
-                            message = "Error",
+                            message = Either.Left("Error"),
                         ),
                     ),
             )
@@ -166,13 +166,13 @@ class PullDiagnosticsSerializationTest {
     @Test
     fun `DocumentDiagnosticReport Full variant serialization roundtrip`() {
         val report =
-            FullDocumentDiagnosticReport(
+            RelatedFullDocumentDiagnosticReport(
                 resultId = "full-result-1",
                 items =
                     listOf(
                         Diagnostic(
                             range = Range(Position(5, 0), Position(5, 10)),
-                            message = "Warning",
+                            message = Either.Left("Warning"),
                         ),
                     ),
             )
@@ -187,7 +187,7 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticReport Unchanged variant serialization roundtrip`() {
-        val report = UnchangedDocumentDiagnosticReport(resultId = "unchanged-result-1")
+        val report = RelatedUnchangedDocumentDiagnosticReport(resultId = "unchanged-result-1")
         val original: DocumentDiagnosticReport = DocumentDiagnosticReport.Unchanged(report)
         val encoded = jsonWithDefaults.encodeToString(original)
         encoded shouldContain "\"unchanged\""
@@ -198,7 +198,7 @@ class PullDiagnosticsSerializationTest {
 
     @Test
     fun `DocumentDiagnosticReport Full with empty diagnostics`() {
-        val report = FullDocumentDiagnosticReport(items = emptyList())
+        val report = RelatedFullDocumentDiagnosticReport(items = emptyList())
         val original: DocumentDiagnosticReport = DocumentDiagnosticReport.Full(report)
         val encoded = jsonWithDefaults.encodeToString(original)
         val decoded = jsonWithDefaults.decodeFromString<DocumentDiagnosticReport>(encoded)
@@ -291,7 +291,7 @@ class PullDiagnosticsSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(1, 0), Position(1, 10)),
-                            message = "Error in workspace",
+                            message = Either.Left("Error in workspace"),
                         ),
                     ),
                 version = null,
@@ -379,7 +379,7 @@ class PullDiagnosticsSerializationTest {
                     listOf(
                         Diagnostic(
                             range = Range(Position(0, 0), Position(0, 10)),
-                            message = "Syntax error",
+                            message = Either.Left("Syntax error"),
                         ),
                     ),
                 resultId = "ws-result-1",

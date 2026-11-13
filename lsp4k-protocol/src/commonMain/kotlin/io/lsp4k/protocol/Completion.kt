@@ -407,6 +407,71 @@ public data class CompletionList(
      * A completion list can therefore define item defaults.
      */
     val itemDefaults: CompletionItemDefaults? = null,
+    /**
+     * Specifies how fields from a completion item should be combined with those from
+     * `completionList.itemDefaults`. If unspecified, all fields will be treated as ApplyKind.Replace.
+     *
+     * @since 3.18.0
+     */
+    val applyKind: CompletionItemApplyKinds? = null,
+)
+
+/**
+ * Defines how values from a set of defaults and an individual item will be merged.
+ *
+ * @since 3.18.0
+ */
+@Serializable(with = ApplyKindSerializer::class)
+public enum class ApplyKind(
+    public val value: Int,
+) {
+    /**
+     * The value from the individual item (if provided and not `null`) will be used instead of the default.
+     */
+    Replace(1),
+
+    /**
+     * The value from the item will be merged with the default. The specific rules for merging values
+     * are defined against each field that supports merging.
+     */
+    Merge(2),
+
+    ;
+
+    public companion object {
+        public fun fromValue(value: Int): ApplyKind =
+            entries.firstOrNull { it.value == value }
+                ?: throw IllegalArgumentException("Unknown ApplyKind: $value")
+    }
+}
+
+/**
+ * Serializer for ApplyKind that encodes/decodes as integer.
+ */
+public object ApplyKindSerializer : IntEnumSerializer<ApplyKind>(
+    "ApplyKind",
+    ApplyKind::fromValue,
+    { it.value },
+)
+
+/**
+ * Specifies how fields from a completion item should be combined with those from
+ * `completionList.itemDefaults`.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+public data class CompletionItemApplyKinds(
+    /**
+     * Specifies whether `commitCharacters` on a completion will replace or be merged with those in
+     * `completionList.itemDefaults.commitCharacters`.
+     */
+    val commitCharacters: ApplyKind? = null,
+    /**
+     * Specifies whether the `data` field on a completion will replace or be merged with data from
+     * `completionList.itemDefaults.data`.
+     */
+    val data: ApplyKind? = null,
 )
 
 /** A completion response preserving whether the server sent an array or a list object. */

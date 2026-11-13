@@ -148,9 +148,11 @@ public data class Diagnostic(
      */
     val range: Range,
     /**
-     * The diagnostic's message.
+     * The diagnostic's message. It usually appears in the user interface. The markup form is only
+     * valid when the client announces `markupMessageSupport`.
      */
-    val message: String,
+    @Serializable(with = DiagnosticMessageSer::class)
+    val message: Either<String, MarkupContent>,
     /**
      * The diagnostic's severity.
      */

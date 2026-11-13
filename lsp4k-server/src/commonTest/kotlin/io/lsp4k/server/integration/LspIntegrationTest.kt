@@ -616,13 +616,13 @@ class LspIntegrationTest {
                         listOf(
                             Diagnostic(
                                 range = Range(Position(5, 0), Position(5, 10)),
-                                message = "Unresolved reference: foobar",
+                                message = Either.Left("Unresolved reference: foobar"),
                                 severity = DiagnosticSeverity.Error,
                                 source = "kotlin",
                             ),
                             Diagnostic(
                                 range = Range(Position(10, 4), Position(10, 20)),
-                                message = "Unused variable 'x'",
+                                message = Either.Left("Unused variable 'x'"),
                                 severity = DiagnosticSeverity.Warning,
                                 source = "kotlin",
                             ),
@@ -640,7 +640,7 @@ class LspIntegrationTest {
             receivedDiagnostics!!.uri shouldBe "file:///test/error.kt"
             receivedDiagnostics!!.version shouldBe 1
             receivedDiagnostics!!.diagnostics shouldHaveSize 2
-            receivedDiagnostics!!.diagnostics[0].message shouldBe "Unresolved reference: foobar"
+            receivedDiagnostics!!.diagnostics[0].message shouldBe Either.Left("Unresolved reference: foobar")
             receivedDiagnostics!!.diagnostics[0].severity shouldBe DiagnosticSeverity.Error
             receivedDiagnostics!!.diagnostics[1].severity shouldBe DiagnosticSeverity.Warning
 
