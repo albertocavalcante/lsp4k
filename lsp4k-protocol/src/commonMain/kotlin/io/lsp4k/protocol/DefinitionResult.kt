@@ -99,3 +99,12 @@ public object DefinitionResultSerializer : KSerializer<DefinitionResult> {
 
     private enum class Family { LOCATION, LINK }
 }
+
+/** `textDocument/declaration` result: `Location | Location[] | LocationLink[] | null`, shaped like [DefinitionResult]. */
+public typealias DeclarationResult = DefinitionResult
+
+/** `textDocument/typeDefinition` result: `Location | Location[] | LocationLink[] | null`, shaped like [DefinitionResult]. */
+public typealias TypeDefinitionResult = DefinitionResult
+
+/** `textDocument/implementation` result: `Location | Location[] | LocationLink[] | null`, shaped like [DefinitionResult]. */
+public typealias ImplementationResult = DefinitionResult

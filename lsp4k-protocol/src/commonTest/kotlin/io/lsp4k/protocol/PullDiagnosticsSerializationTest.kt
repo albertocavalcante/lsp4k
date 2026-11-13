@@ -441,34 +441,26 @@ class PullDiagnosticsSerializationTest {
     // ==================== DocumentFilter Tests ====================
 
     @Test
-    fun `DocumentFilter with all fields`() {
+    fun `TextDocumentFilter with all fields`() {
         val original =
-            DocumentFilter(
+            TextDocumentFilter(
                 language = "kotlin",
                 scheme = "file",
-                pattern = "*.kt",
+                pattern = Either.Left("*.kt"),
             )
-        val encoded = json.encodeToString(original)
+        val encoded = json.encodeToString<DocumentFilter>(original)
+        encoded shouldBe """{"language":"kotlin","scheme":"file","pattern":"*.kt"}"""
         val decoded = json.decodeFromString<DocumentFilter>(encoded)
         decoded shouldBe original
     }
 
     @Test
-    fun `DocumentFilter with language only`() {
-        val original = DocumentFilter(language = "typescript")
-        val encoded = json.encodeToString(original)
+    fun `TextDocumentFilter with language only`() {
+        val original = TextDocumentFilter(language = "typescript")
+        val encoded = json.encodeToString<DocumentFilter>(original)
         encoded shouldNotContain "scheme"
         encoded shouldNotContain "pattern"
         val decoded = json.decodeFromString<DocumentFilter>(encoded)
-        decoded.language shouldBe "typescript"
-        decoded.scheme shouldBe null
-        decoded.pattern shouldBe null
-    }
-
-    @Test
-    fun `DocumentFilter with no fields`() {
-        val original = DocumentFilter()
-        val encoded = json.encodeToString(original)
-        encoded shouldBe "{}"
+        decoded shouldBe original
     }
 }

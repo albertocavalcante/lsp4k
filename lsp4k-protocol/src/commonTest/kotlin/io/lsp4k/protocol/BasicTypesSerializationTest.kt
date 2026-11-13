@@ -374,8 +374,8 @@ class BasicTypesSerializationTest {
                     ),
                 edits =
                     listOf(
-                        Either.Left(TextEdit(Range(Position(1, 0), Position(1, 5)), "new")),
-                        Either.Left(TextEdit(Range(Position(3, 0), Position(3, 10)), "replacement")),
+                        TextEdit(Range(Position(1, 0), Position(1, 5)), "new"),
+                        TextEdit(Range(Position(3, 0), Position(3, 10)), "replacement"),
                     ),
             )
         val encoded = json.encodeToString(docEdit)

@@ -111,7 +111,7 @@ class WorkspaceSerializationTest {
                                     ),
                                 edits =
                                     listOf(
-                                        Either.Left(TextEdit(Range(Position(0, 0), Position(0, 5)), "edited")),
+                                        TextEdit(Range(Position(0, 0), Position(0, 5)), "edited"),
                                     ),
                             ),
                         ),

@@ -47,25 +47,19 @@ class PublicDefinitionTest {
             """"targetSelectionRange":{"start":{"line":3,"character":1},"end":{"line":3,"character":7}}}"""
 
     @Test
-    fun `client decodes literal definition shapes and legacy behavior`() =
+    fun `client decodes literal definition shapes`() =
         runTest {
             val peer = DefinitionPeer()
             val client = languageClient {}.start(peer, backgroundScope)
             peer.result = locationJson
-            assertEquals(DefinitionResult.Single(location), client.server.definitionResult(params))
-            assertEquals(listOf(location), client.server.definition(params))
+            assertEquals(DefinitionResult.Single(location), client.server.definition(params))
             peer.result = "[$locationJson]"
-            assertEquals(DefinitionResult.Locations(listOf(location)), client.server.definitionResult(params))
-            assertEquals(listOf(location), client.server.definition(params))
+            assertEquals(DefinitionResult.Locations(listOf(location)), client.server.definition(params))
             peer.result = "[$linkJson]"
-            assertEquals(DefinitionResult.Links(listOf(link)), client.server.definitionResult(params))
-            val failure = assertFailsWith<SerializationException> { client.server.definition(params) }
-            assertTrue(failure.message.orEmpty().contains("definitionResult"))
+            assertEquals(DefinitionResult.Links(listOf(link)), client.server.definition(params))
             peer.result = "[]"
-            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definitionResult(params))
-            assertEquals(emptyList(), client.server.definition(params))
+            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definition(params))
             peer.result = "null"
-            assertEquals(null, client.server.definitionResult(params))
             assertEquals(null, client.server.definition(params))
             client.close()
         }
@@ -85,22 +79,7 @@ class PublicDefinitionTest {
                 """[{"targetUri":"file:///x","targetRange":{}}]""",
             )) {
                 peer.result = bad
-                assertFailsWith<SerializationException> { client.server.definitionResult(params) }
-            }
-            client.close()
-        }
-
-    @Test
-    fun `legacy definition accepts locations with unknown link-family fields`() =
-        runTest {
-            val peer = DefinitionPeer()
-            val client = languageClient {}.start(peer, backgroundScope)
-            val partial = locationJson.dropLast(1) + ""","targetUri":"file:///extra"}"""
-            val complete = locationJson.dropLast(1) + "," + linkJson.drop(1)
-            for (extended in listOf(partial, complete)) {
-                peer.result = "[$extended]"
-                assertEquals(listOf(location), client.server.definition(params))
-                assertFailsWith<SerializationException> { client.server.definitionResult(params) }
+                assertFailsWith<SerializationException> { client.server.definition(params) }
             }
             client.close()
         }
@@ -124,7 +103,7 @@ class PublicDefinitionTest {
                             InitializeResult(ServerCapabilities())
                         }
                         textDocument {
-                            definitionResult {
+                            definition {
                                 if (negotiated) {
                                     DefinitionResult.Links(listOf(link))
                                 } else {
@@ -140,7 +119,7 @@ class PublicDefinitionTest {
                 val client = languageClient { capabilities(capabilities) }.start(clientTransport, backgroundScope)
                 client.initialize()
                 responses.receive()
-                val actual = client.server.definitionResult(params)
+                val actual = client.server.definition(params)
                 val expected =
                     if (supportsLinks) DefinitionResult.Links(listOf(link)) else DefinitionResult.Locations(listOf(location))
                 assertEquals(expected, actual)
@@ -159,46 +138,23 @@ class PublicDefinitionTest {
             val responses = Channel<JsonObject>(Channel.UNLIMITED)
             var result: DefinitionResult? = DefinitionResult.Single(location)
             val server =
-                languageServer { textDocument { definitionResult { result } } }
+                languageServer { textDocument { definition { result } } }
                     .start(DefinitionTransport(toServer, toClient, responses), backgroundScope)
             val client = languageClient {}.start(DefinitionTransport(toClient, toServer, null), backgroundScope)
             client.initialize()
             responses.receive()
-            assertEquals(result, client.server.definitionResult(params))
+            assertEquals(result, client.server.definition(params))
             assertEquals(Json.parseToJsonElement(locationJson), responses.receive()["result"])
             result = DefinitionResult.Links(emptyList())
-            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definitionResult(params))
+            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definition(params))
             assertEquals(Json.parseToJsonElement("[]"), responses.receive()["result"])
             result = null
-            assertEquals(null, client.server.definitionResult(params))
+            assertEquals(null, client.server.definition(params))
             val response = responses.receive()
             assertTrue("result" in response)
             assertEquals(JsonNull, response["result"])
             client.close()
             server.close()
-        }
-
-    @Test
-    fun `existing server definition handlers remain available`() =
-        runTest {
-            for (links in listOf(false, true)) {
-                val toClient = Channel<ByteArray>(Channel.UNLIMITED)
-                val toServer = Channel<ByteArray>(Channel.UNLIMITED)
-                val server =
-                    languageServer {
-                        textDocument {
-                            if (links) definitionWithLinks { listOf(link) } else definition { listOf(location) }
-                        }
-                    }.start(DefinitionTransport(toServer, toClient, null), backgroundScope)
-                val client = languageClient {}.start(DefinitionTransport(toClient, toServer, null), backgroundScope)
-                client.initialize()
-                assertEquals(
-                    if (links) DefinitionResult.Links(listOf(link)) else DefinitionResult.Locations(listOf(location)),
-                    client.server.definitionResult(params),
-                )
-                client.close()
-                server.close()
-            }
         }
 }
 

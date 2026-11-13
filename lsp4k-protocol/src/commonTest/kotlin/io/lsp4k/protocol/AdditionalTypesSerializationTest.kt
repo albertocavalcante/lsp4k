@@ -6,6 +6,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 /**
  * Tests for additional types to achieve 90%+ coverage:
@@ -165,10 +166,8 @@ class AdditionalTypesSerializationTest {
     // ==================== NotebookSelector Tests ====================
 
     @Test
-    fun `NotebookSelector minimal`() {
-        val selector = NotebookSelector()
-        val encoded = json.encodeToString(selector)
-        encoded shouldBe "{}"
+    fun `NotebookSelector rejects an empty shape`() {
+        assertFailsWith<IllegalArgumentException> { NotebookSelector() }
     }
 
     @Test

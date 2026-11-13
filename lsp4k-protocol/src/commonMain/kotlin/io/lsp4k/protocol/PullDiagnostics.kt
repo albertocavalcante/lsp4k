@@ -33,6 +33,16 @@ public data class DocumentDiagnosticParams(
      * The result id of a previous response if provided.
      */
     val previousResultId: String? = null,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**
@@ -282,6 +292,16 @@ public data class WorkspaceDiagnosticParams(
      * previous result ids.
      */
     val previousResultIds: List<PreviousResultId>,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**
@@ -475,25 +495,8 @@ public data class DiagnosticRegistrationOptions(
      * The id used to register the request.
      */
     val id: String? = null,
-)
-
-/**
- * A document filter denotes a document through properties like language, scheme, or pattern.
- *
- * @since 3.17.0
- */
-@Serializable
-public data class DocumentFilter(
     /**
-     * A language id, like `typescript`.
+     * Whether the server supports work done progress.
      */
-    val language: String? = null,
-    /**
-     * A Uri scheme, like `file` or `untitled`.
-     */
-    val scheme: String? = null,
-    /**
-     * A glob pattern, like `*.{ts,js}`.
-     */
-    val pattern: String? = null,
+    val workDoneProgress: Boolean? = null,
 )

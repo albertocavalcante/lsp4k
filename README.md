@@ -36,10 +36,12 @@ val config = languageServer {
 
     textDocument {
         completion { params ->
-            CompletionList(
-                isIncomplete = false,
-                items = listOf(
-                    CompletionItem(label = "hello", kind = CompletionItemKind.Text)
+            CompletionResult.ListResult(
+                CompletionList(
+                    isIncomplete = false,
+                    items = listOf(
+                        CompletionItem(label = "hello", kind = CompletionItemKind.Text)
+                    )
                 )
             )
         }

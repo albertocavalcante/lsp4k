@@ -12,6 +12,16 @@ public data class DocumentLinkParams(
      * The document to provide document links for.
      */
     val textDocument: TextDocumentIdentifier,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**

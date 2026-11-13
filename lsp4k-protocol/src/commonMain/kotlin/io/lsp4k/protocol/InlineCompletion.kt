@@ -49,6 +49,16 @@ public data class InlineCompletionParams(
     val textDocument: TextDocumentIdentifier,
     val position: Position,
     val context: InlineCompletionContext,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**
@@ -91,4 +101,15 @@ public data class InlineCompletionItem(
 @Serializable
 public data class InlineCompletionList(
     val items: List<InlineCompletionItem>,
+)
+
+/**
+ * Client capabilities specific to inline completions.
+ */
+@Serializable
+public data class InlineCompletionClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration for inline completion providers.
+     */
+    val dynamicRegistration: Boolean? = null,
 )

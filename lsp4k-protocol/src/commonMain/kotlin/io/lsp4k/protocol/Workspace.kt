@@ -145,6 +145,26 @@ public data class ApplyWorkspaceEditParams(
      * The edits to apply.
      */
     val edit: WorkspaceEdit,
+    /**
+     * Additional data about the edit.
+     *
+     * @since 3.18.0
+     */
+    val metadata: WorkspaceEditMetadata? = null,
+)
+
+/**
+ * Additional data about a workspace edit. Clients support it when
+ * `workspace.workspaceEdit.metadataSupport` is set.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+public data class WorkspaceEditMetadata(
+    /**
+     * Signal to the editor that this edit is a refactoring.
+     */
+    val isRefactoring: Boolean? = null,
 )
 
 /**
@@ -176,6 +196,16 @@ public data class WorkspaceSymbolParams(
      * A query string to filter symbols by.
      */
     val query: String,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**
@@ -382,17 +412,15 @@ public object WatchKind {
 
 @Serializable
 public data class FileSystemWatcher(
-    val globPattern: String,
+    /**
+     * The glob pattern to watch: a string pattern or a [RelativePattern].
+     */
+    @Serializable(with = GlobPatternSerializer::class)
+    val globPattern: GlobPattern,
     val kind: Int? = null,
 )
 
 @Serializable
 public data class DidChangeWatchedFilesRegistrationOptions(
     val watchers: List<FileSystemWatcher>,
-)
-
-@Serializable
-public data class RelativePattern(
-    val baseUri: String,
-    val pattern: String,
 )

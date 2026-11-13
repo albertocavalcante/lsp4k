@@ -22,6 +22,10 @@ public data class SemanticTokensOptions(
      */
     @Serializable(with = SemanticTokensFullSer::class)
     val full: Either<Boolean, SemanticTokensFullOptions>? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -228,3 +232,26 @@ public object SemanticTokenModifiers {
     public const val DOCUMENTATION: String = "documentation"
     public const val DEFAULT_LIBRARY: String = "defaultLibrary"
 }
+
+/**
+ * Partial result of `textDocument/semanticTokens/full` and `textDocument/semanticTokens/range`,
+ * sent through `$/progress`.
+ */
+@Serializable
+public data class SemanticTokensPartialResult(
+    /**
+     * The actual tokens of this chunk.
+     */
+    val data: List<Int>,
+)
+
+/**
+ * Partial result of `textDocument/semanticTokens/full/delta`, sent through `$/progress`.
+ */
+@Serializable
+public data class SemanticTokensDeltaPartialResult(
+    /**
+     * The semantic token edits of this chunk.
+     */
+    val edits: List<SemanticTokensEdit>,
+)
