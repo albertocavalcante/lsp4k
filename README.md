@@ -28,43 +28,104 @@ val config = languageServer {
 
     capabilities {
         textDocumentSync = TextDocumentSyncKind.Incremental
-        completionProvider = CompletionOptions(
-            triggerCharacters = listOf(".", ":")
-        )
+        completionProvider = CompletionOptions(triggerCharacters = listOf(".", ":"))
         hoverProvider = true
     }
 
+    onInitialized {
+        client.window.logMessage(MessageType.Info, "ready")
+    }
+
     textDocument {
+        didOpen { params ->
+            client.textDocument.publishDiagnostics(
+                PublishDiagnosticsParams(uri = params.textDocument.uri, diagnostics = emptyList()),
+            )
+        }
+
         completion { params ->
             CompletionResult.ListResult(
                 CompletionList(
                     isIncomplete = false,
-                    items = listOf(
-                        CompletionItem(label = "hello", kind = CompletionItemKind.Text)
-                    )
-                )
+                    items = listOf(CompletionItem(label = "hello", kind = CompletionItemKind.Text)),
+                ),
             )
         }
 
         hover { params ->
-            Hover(
-                contents = MarkupContent(
-                    kind = MarkupKind.Markdown,
-                    value = "**Hello** from lsp4k!"
-                )
-            )
-        }
-
-        didOpen { params ->
-            // Handle document open
+            Hover(HoverContents.Markup(MarkupContent(kind = MarkupKind.Markdown, value = "**Hello** from lsp4k!")))
         }
     }
 }
 
-// Start with stdio transport
-val transport = TransportFactory.stdio()
-val server = config.start(transport)
+fun main() {
+    val exitCode = runBlocking {
+        val server = config.start(TransportFactory.stdio())
+        server.awaitTermination()
+        server.exitCode ?: 1 // 0 when the client sent shutdown before exit
+    }
+    exitProcess(exitCode)
+}
 ```
+
+## Server API
+
+`lsp4k-server` has a handler hook for every client-to-server request and notification of LSP 3.18 and a
+typed call for every server-to-client one.
+
+| Handler block | Methods |
+|---------------|---------|
+| `textDocument { }` | `didOpen`, `didChange`, `didClose`, `didSave`, `willSave`, `willSaveWaitUntil`, `completion`, `completionResolve`, `hover`, `signatureHelp`, `declaration`, `definition`, `typeDefinition`, `implementation`, `references`, `documentHighlight`, `documentSymbol` |
+| `editing { }` | `codeAction`, `codeActionResolve`, `codeLens`, `codeLensResolve`, `documentLink`, `documentLinkResolve`, `documentColor`, `colorPresentation`, `formatting`, `rangeFormatting`, `rangesFormatting`, `onTypeFormatting`, `rename`, `prepareRename`, `foldingRange`, `selectionRange`, `linkedEditingRange` |
+| `insights { }` | `semanticTokensFull`, `semanticTokensFullDelta`, `semanticTokensRange`, `inlayHint`, `inlayHintResolve`, `diagnostic`, `moniker`, `inlineValue`, `inlineCompletion` |
+| `hierarchy { }` | `prepareCallHierarchy`, `callHierarchyIncomingCalls`, `callHierarchyOutgoingCalls`, `prepareTypeHierarchy`, `typeHierarchySupertypes`, `typeHierarchySubtypes` |
+| `workspace { }` | `symbol`, `workspaceSymbolResolve`, `executeCommand`, `workspaceDiagnostic`, `textDocumentContent`, `didChangeConfiguration`, `didChangeWatchedFiles`, `didChangeWorkspaceFolders`, `willCreateFiles`, `didCreateFiles`, `willRenameFiles`, `didRenameFiles`, `willDeleteFiles`, `didDeleteFiles` |
+| `notebook { }` | `didOpen`, `didChange`, `didSave`, `didClose` |
+| `window { }` | `workDoneProgressCancel` |
+| top level | `onInitialize`, `onInitialized`, `onShutdown`, `onExit`, `onSetTrace`, `onProgress`, `onRequest`, `onNotification` |
+
+Handlers run with a receiver that exposes `client` and `server`. Request handlers also get the request's
+work-done progress, and handlers of requests that support partial results get `sendPartialResult`:
+
+```kotlin
+textDocument {
+    references { params ->
+        workDoneProgress?.begin("Searching references")
+        for (chunk in findReferences(params)) {
+            if (!sendPartialResult(chunk)) return@references findAllReferences(params)
+        }
+        emptyList() // the final result is empty once partial results were sent
+    }
+}
+```
+
+Calls to the client are grouped the same way: `client.window` (`showMessage`, `showMessageRequest`,
+`logMessage`, `showDocument`, `createWorkDoneProgress`), `client.workspace` (`applyEdit`, `configuration`,
+`workspaceFolders`, every refresh request), `client.textDocument.publishDiagnostics`, `client.registration`
+(`registerCapability`, `unregisterCapability`, and a `register` helper returning a handle that unregisters),
+plus `telemetryEvent`, `logTrace` (filtered by the trace level from `initialize` and `$/setTrace`), `progress`
+and `cancelRequest`.
+
+```kotlin
+appScope.launch {
+    val progress = server.client.window.createWorkDoneProgress()
+    progress.begin("Indexing", cancellable = true)
+    for ((index, file) in files.withIndex()) {
+        if (progress.isCancelled) break
+        index(file)
+        progress.report(percentage = index * 100 / files.size)
+    }
+    progress.end()
+}
+```
+
+The receive loop dispatches one message at a time, so awaiting a client request inside a handler would never
+see its response; such calls fail at once with `IllegalStateException`. Launch them in your own scope instead.
+
+The server enforces the lifecycle: requests before `initialize` fail with `ServerNotInitialized`, a second
+`initialize` and every request after `shutdown` fail with `InvalidRequest`, notifications other than `exit`
+are dropped in those states, and `exit` records `exitCode` (0 after `shutdown`, otherwise 1) for the
+application to act on.
 
 ## Installation
 
