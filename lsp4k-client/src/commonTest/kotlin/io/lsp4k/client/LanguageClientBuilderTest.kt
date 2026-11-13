@@ -9,20 +9,17 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.lsp4k.protocol.ApplyWorkspaceEditResult
 import io.lsp4k.protocol.LspMethods
-import io.lsp4k.protocol.MessageActionItem
-import io.lsp4k.protocol.WorkspaceFolder
+import io.lsp4k.protocol.ShowDocumentResult
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 /**
- * Tests for the language client builder DSL: LanguageClientBuilder,
- * notification handler registration, request handler registration.
+ * Tests for the language client builder DSL: namespace registration, custom handlers and
+ * duplicate detection.
  */
 class LanguageClientBuilderTest {
-    // ==================== DSL Entry Point Tests ====================
-
     @Test
-    fun `languageClient DSL builds config with defaults`() {
+    fun `defaults are empty`() {
         val config = languageClient {}
         config.clientInfo.shouldBeNull()
         config.rootUri.shouldBeNull()
@@ -31,177 +28,93 @@ class LanguageClientBuilderTest {
     }
 
     @Test
-    fun `languageClient DSL sets clientInfo`() {
+    fun `client info and root uri are recorded`() {
         val config =
             languageClient {
-                clientInfo("test-client", "1.0.0")
+                clientInfo("editor", "1.0.0")
+                rootUri("file:///workspace")
             }
-        val clientInfo = config.clientInfo.shouldNotBeNull()
-        clientInfo.name shouldBe "test-client"
-        clientInfo.version shouldBe "1.0.0"
+        val info = config.clientInfo.shouldNotBeNull()
+        info.name shouldBe "editor"
+        info.version shouldBe "1.0.0"
+        config.rootUri shouldBe "file:///workspace"
     }
 
     @Test
-    fun `languageClient DSL sets clientInfo without version`() {
-        val config =
-            languageClient {
-                clientInfo("minimal-client")
-            }
-        val clientInfo = config.clientInfo.shouldNotBeNull()
-        clientInfo.name shouldBe "minimal-client"
-        clientInfo.version.shouldBeNull()
+    fun `capabilities block configures capabilities`() {
+        languageClient { capabilities { } }.capabilities.shouldNotBeNull()
     }
 
     @Test
-    fun `languageClient DSL sets rootUri`() {
+    fun `window hooks register their methods`() {
         val config =
             languageClient {
-                rootUri("file:///workspace/project")
+                window {
+                    showMessage { }
+                    logMessage { }
+                    showMessageRequest { null }
+                    showDocument { ShowDocumentResult(success = true) }
+                    workDoneProgressCreate { }
+                }
             }
-        config.rootUri shouldBe "file:///workspace/project"
-    }
-
-    // ==================== Notification Handler Registration Tests ====================
-
-    @Test
-    fun `onShowMessage handler registration`() {
-        val config =
-            languageClient {
-                onShowMessage { _, _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
-    }
-
-    @Test
-    fun `onPublishDiagnostics handler registration`() {
-        val config =
-            languageClient {
-                onPublishDiagnostics { _, _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
+        config.notificationHandlers.keys shouldBe setOf(LspMethods.WINDOW_SHOW_MESSAGE, LspMethods.WINDOW_LOG_MESSAGE)
+        config.requestHandlers.keys shouldBe
+            setOf(
+                LspMethods.WINDOW_SHOW_MESSAGE_REQUEST,
+                LspMethods.WINDOW_SHOW_DOCUMENT,
+                LspMethods.WINDOW_WORK_DONE_PROGRESS_CREATE,
+            )
     }
 
     @Test
-    fun `onLogMessage handler registration`() {
-        val config =
-            languageClient {
-                onLogMessage { _, _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_LOG_MESSAGE
-    }
-
-    @Test
-    fun `onTelemetryEvent handler registration`() {
-        val config =
-            languageClient {
-                onTelemetryEvent { _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.TELEMETRY_EVENT
-    }
-
-    @Test
-    fun `onProgress handler registration`() {
-        val config =
-            languageClient {
-                onProgress { _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.PROGRESS
-    }
-
-    @Test
-    fun `multiple notification handlers can be registered`() {
-        val config =
-            languageClient {
-                onShowMessage { _, _ -> }
-                onPublishDiagnostics { _, _ -> }
-                onLogMessage { _, _ -> }
-                onTelemetryEvent { _ -> }
-                onProgress { _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
-        config.notificationHandlers shouldContainKey LspMethods.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_LOG_MESSAGE
-        config.notificationHandlers shouldContainKey LspMethods.TELEMETRY_EVENT
-        config.notificationHandlers shouldContainKey LspMethods.PROGRESS
-        config.notificationHandlers.size shouldBe 5
-    }
-
-    // ==================== Request Handler Registration Tests ====================
-
-    @Test
-    fun `onShowMessageRequest handler registration`() {
-        val config =
-            languageClient {
-                onShowMessageRequest { _ -> null }
-            }
-        config.requestHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE_REQUEST
-    }
-
-    @Test
-    fun `onApplyEdit handler registration`() {
-        val config =
-            languageClient {
-                onApplyEdit { _ -> ApplyWorkspaceEditResult(applied = true) }
-            }
+    fun `workspace hooks register requests including every refresh`() {
+        val config = languageClient { registerEveryHook() }
         config.requestHandlers shouldContainKey LspMethods.WORKSPACE_APPLY_EDIT
-    }
-
-    @Test
-    fun `onWorkspaceFolders handler registration`() {
-        val config =
-            languageClient {
-                onWorkspaceFolders { null }
-            }
-        config.requestHandlers shouldContainKey LspMethods.WORKSPACE_WORKSPACE_FOLDERS
-    }
-
-    @Test
-    fun `onConfiguration handler registration`() {
-        val config =
-            languageClient {
-                onConfiguration { _ -> emptyList() }
-            }
         config.requestHandlers shouldContainKey LspMethods.WORKSPACE_CONFIGURATION
+        config.requestHandlers shouldContainKey LspMethods.WORKSPACE_WORKSPACE_FOLDERS
+        config.requestHandlers shouldContainKey LspMethods.WORKSPACE_CODE_LENS_REFRESH
+        config.requestHandlers shouldContainKey LspMethods.WORKSPACE_TEXT_DOCUMENT_CONTENT_REFRESH
+        config.requestHandlers shouldContainKey LspMethods.CLIENT_REGISTER_CAPABILITY
+        config.requestHandlers shouldContainKey LspMethods.CLIENT_UNREGISTER_CAPABILITY
+        config.notificationHandlers shouldContainKey LspMethods.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
+        config.notificationHandlers shouldContainKey LspMethods.TELEMETRY_EVENT
+        config.notificationHandlers shouldContainKey LspMethods.LOG_TRACE
+        config.notificationHandlers shouldContainKey LspMethods.PROGRESS
     }
 
     @Test
-    fun `multiple request handlers can be registered`() {
-        val config =
-            languageClient {
-                onShowMessageRequest { _ -> null }
-                onApplyEdit { _ -> ApplyWorkspaceEditResult(applied = true) }
-                onWorkspaceFolders { null }
-                onConfiguration { _ -> emptyList() }
-            }
-        config.requestHandlers.size shouldBe 4
-    }
-
-    // ==================== Custom Handler Registration Tests ====================
-
-    @Test
-    fun `custom notification handler registration`() {
-        val config =
-            languageClient {
-                onNotification("custom/serverNotification", NotificationHandler { _ -> })
-            }
-        config.notificationHandlers shouldContainKey "custom/serverNotification"
+    fun `unregistered methods have no handler`() {
+        val config = languageClient { window { showMessage { } } }
+        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
+        config.notificationHandlers shouldNotContainKey LspMethods.WINDOW_LOG_MESSAGE
+        config.requestHandlers shouldBe emptyMap()
     }
 
     @Test
-    fun `custom request handler registration`() {
+    fun `custom handlers sit beside standard ones`() {
         val config =
             languageClient {
-                onRequest("custom/serverRequest", RequestHandler { _ -> null })
+                window { showMessage { } }
+                onNotification("custom/notification", NotificationHandler { })
+                onRequest("custom/request", RequestHandler { null })
             }
-        config.requestHandlers shouldContainKey "custom/serverRequest"
+        config.notificationHandlers shouldContainKey "custom/notification"
+        config.requestHandlers shouldContainKey "custom/request"
+        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
     }
 
     @Test
     fun `duplicate notification handlers are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageClient {
-                onShowMessage { _, _ -> }
-                onNotification(LspMethods.WINDOW_SHOW_MESSAGE, NotificationHandler { _ -> })
+                window { showMessage { } }
+                onNotification(LspMethods.WINDOW_SHOW_MESSAGE, NotificationHandler { })
+            }
+        }
+        assertFailsWith<IllegalArgumentException> {
+            languageClient {
+                onProgress { }
+                onProgress { }
             }
         }
     }
@@ -210,89 +123,15 @@ class LanguageClientBuilderTest {
     fun `duplicate request handlers are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageClient {
-                onApplyEdit { _ -> ApplyWorkspaceEditResult(applied = true) }
-                onRequest(LspMethods.WORKSPACE_APPLY_EDIT, RequestHandler { _ -> null })
+                workspace { applyEdit { ApplyWorkspaceEditResult(applied = true) } }
+                onRequest(LspMethods.WORKSPACE_APPLY_EDIT, RequestHandler { null })
             }
         }
-    }
-
-    @Test
-    fun `custom handlers do not conflict with standard handlers`() {
-        val config =
+        assertFailsWith<IllegalArgumentException> {
             languageClient {
-                onShowMessage { _, _ -> }
-                onNotification("custom/myNotification", NotificationHandler { _ -> })
-                onRequest("custom/myRequest", RequestHandler { _ -> null })
+                workspace { codeLensRefresh { } }
+                workspace { codeLensRefresh { } }
             }
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
-        config.notificationHandlers shouldContainKey "custom/myNotification"
-        config.requestHandlers shouldContainKey "custom/myRequest"
-    }
-
-    // ==================== Handler Isolation Tests ====================
-
-    @Test
-    fun `no handlers registered for unregistered methods`() {
-        val config =
-            languageClient {
-                onShowMessage { _, _ -> }
-            }
-        config.notificationHandlers shouldContainKey LspMethods.WINDOW_SHOW_MESSAGE
-        config.notificationHandlers shouldNotContainKey LspMethods.WINDOW_LOG_MESSAGE
-        config.notificationHandlers shouldNotContainKey LspMethods.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
-        config.requestHandlers shouldBe emptyMap()
-    }
-
-    // ==================== Full Configuration Tests ====================
-
-    @Test
-    fun `full client configuration builds correctly`() {
-        val config =
-            languageClient {
-                clientInfo("my-editor", "3.0.0")
-                rootUri("file:///home/user/project")
-
-                onShowMessage { _, _ -> }
-                onPublishDiagnostics { _, _ -> }
-                onLogMessage { _, _ -> }
-                onProgress { _ -> }
-
-                onShowMessageRequest { _ ->
-                    MessageActionItem(title = "OK")
-                }
-                onApplyEdit { _ ->
-                    ApplyWorkspaceEditResult(applied = true)
-                }
-                onWorkspaceFolders {
-                    listOf(
-                        WorkspaceFolder(
-                            uri = "file:///home/user/project",
-                            name = "project",
-                        ),
-                    )
-                }
-                onConfiguration { _ -> emptyList() }
-            }
-
-        val clientInfo = config.clientInfo.shouldNotBeNull()
-        clientInfo.name shouldBe "my-editor"
-        clientInfo.version shouldBe "3.0.0"
-        config.rootUri shouldBe "file:///home/user/project"
-
-        config.notificationHandlers.size shouldBe 4
-        config.requestHandlers.size shouldBe 4
-    }
-
-    // ==================== Capabilities Tests ====================
-
-    @Test
-    fun `capabilities block configures client capabilities`() {
-        val config =
-            languageClient {
-                capabilities {
-                    // ClientCapabilities is a data class, verify block executes
-                }
-            }
-        config.capabilities.shouldNotBeNull()
+        }
     }
 }

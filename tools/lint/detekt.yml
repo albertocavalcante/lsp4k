@@ -34,9 +34,6 @@ complexity:
     - '**/test/**'
     - '**/*Test/**'
     - '**/visitor/**'
-    # The client facade maps 1:1 to protocol methods. The server API is
-    # split by namespace and stays within the limits below.
-    - '**/client/LanguageClient.kt'
     thresholdInFiles: 20
     thresholdInClasses: 18
     thresholdInInterfaces: 13

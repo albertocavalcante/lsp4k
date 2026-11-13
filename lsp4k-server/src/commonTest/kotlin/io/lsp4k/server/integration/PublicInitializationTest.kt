@@ -138,7 +138,7 @@ class PublicInitializationTest {
             clientTransport.send(JsonRpcCodec.Default.encode(NotificationMessage("initialized")))
             assertEquals(
                 ResponseError.SERVER_NOT_INITIALIZED,
-                assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
+                assertFailsWith<JsonRpcException> { client.server.textDocument.hover(hover) }.code,
             )
             assertFailsWith<JsonRpcException> {
                 client.initialize(
@@ -154,11 +154,11 @@ class PublicInitializationTest {
             clientTransport.send(JsonRpcCodec.Default.encode(NotificationMessage("initialized")))
             assertEquals(
                 ResponseError.SERVER_NOT_INITIALIZED,
-                assertFailsWith<JsonRpcException> { client.server.hover(hover) }.code,
+                assertFailsWith<JsonRpcException> { client.server.textDocument.hover(hover) }.code,
             )
             client.initialize()
             assertEquals(TraceValue.Off, server.traceLevel)
-            assertEquals(null, client.server.hover(hover))
+            assertEquals(null, client.server.textDocument.hover(hover))
             assertEquals(ResponseError.INVALID_REQUEST, assertFailsWith<JsonRpcException> { client.initialize() }.code)
             assertEquals(2, attempts)
         }

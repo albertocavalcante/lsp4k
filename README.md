@@ -156,6 +156,46 @@ val doc = documents.get(uri) // suspend; returns an immutable snapshot
 val offset = doc?.offsetAt(Position(line = 3, character = 5))
 ```
 
+## Client
+
+`lsp4k-client` covers every LSP 3.18 method in both directions. Calls to the server are grouped by
+namespace on `session.server`; handlers for server requests and notifications are registered by
+namespace in the `languageClient` DSL.
+
+```kotlin
+val config = languageClient {
+    clientInfo("my-editor", "1.0.0")
+
+    window {
+        showMessage { params -> println(params.message) }
+        showMessageRequest { params -> params.actions?.firstOrNull() }
+        workDoneProgressCreate { params -> /* subscribe with session.progress.workDone(params.token) */ }
+    }
+    workspace {
+        applyEdit { ApplyWorkspaceEditResult(applied = true) }
+        configuration { params -> params.items.map { JsonNull } }
+        semanticTokensRefresh { /* re-request tokens */ }
+    }
+    textDocument { publishDiagnostics { params -> render(params.uri, params.diagnostics) } }
+}
+
+val session = config.start(transport)
+session.initialize()
+session.server.textDocument.didOpen(DidOpenTextDocumentParams(item))
+val hover = session.server.textDocument.hover(HoverParams(document, position))
+val tokens = session.server.insights.semanticTokensFull(SemanticTokensParams(document))
+session.shutdown()
+```
+
+Progress arrives as flows keyed by token. Start collecting before the request that carries the token:
+
+```kotlin
+val locations = async(start = CoroutineStart.UNDISPATCHED) {
+    session.progress.partialResults<List<Location>>(token).toList()
+}
+session.server.textDocument.references(ReferenceParams(document, position, context, partialResultToken = token))
+```
+
 ## Installation
 
 Add to your `build.gradle.kts`:

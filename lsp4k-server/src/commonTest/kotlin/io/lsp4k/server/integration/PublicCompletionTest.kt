@@ -33,22 +33,22 @@ class PublicCompletionTest {
             val transport = CompletionPeer()
             val client = languageClient {}.start(transport, backgroundScope)
             transport.result = """[{"label":"one","data":{"key":"value"}}]"""
-            val items = client.server.completion(params) as CompletionResult.Items
+            val items = client.server.textDocument.completion(params) as CompletionResult.Items
             assertEquals("one", items.items.single().label)
             assertEquals(Json.parseToJsonElement("""{"key":"value"}"""), items.items.single().data)
             transport.result = "[]"
-            assertEquals(CompletionResult.Items(emptyList()), client.server.completion(params))
+            assertEquals(CompletionResult.Items(emptyList()), client.server.textDocument.completion(params))
             transport.result = """{"isIncomplete":true,"items":[],"itemDefaults":{"commitCharacters":["."],"data":{"shared":true}}}"""
-            val list = (client.server.completion(params) as CompletionResult.ListResult).list
+            val list = (client.server.textDocument.completion(params) as CompletionResult.ListResult).list
             assertEquals(true, list.isIncomplete)
             assertEquals(listOf("."), list.itemDefaults?.commitCharacters)
             assertEquals(Json.parseToJsonElement("""{"shared":true}"""), list.itemDefaults?.data)
             transport.result = "null"
-            assertEquals(null, client.server.completion(params))
+            assertEquals(null, client.server.textDocument.completion(params))
             transport.result = "42"
-            assertFailsWith<IllegalArgumentException> { client.server.completion(params) }
+            assertFailsWith<IllegalArgumentException> { client.server.textDocument.completion(params) }
             transport.result = "{}"
-            assertFailsWith<IllegalArgumentException> { client.server.completion(params) }
+            assertFailsWith<IllegalArgumentException> { client.server.textDocument.completion(params) }
             client.close()
         }
 
@@ -65,13 +65,13 @@ class PublicCompletionTest {
             val client = languageClient {}.start(clientTransport, backgroundScope)
             client.initialize()
             responses.receive() // initialize
-            client.server.completion(params)
+            client.server.textDocument.completion(params)
             assertEquals(Json.parseToJsonElement("""[{"label":"one"}]"""), responses.receive()["result"])
             result = CompletionResult.ListResult(CompletionList(true, emptyList()))
-            client.server.completion(params)
+            client.server.textDocument.completion(params)
             assertEquals(Json.parseToJsonElement("""{"isIncomplete":true,"items":[]}"""), responses.receive()["result"])
             result = null
-            assertEquals(null, client.server.completion(params))
+            assertEquals(null, client.server.textDocument.completion(params))
             val nullResponse = responses.receive()
             assertTrue("result" in nullResponse)
             assertEquals(JsonNull, nullResponse["result"])
