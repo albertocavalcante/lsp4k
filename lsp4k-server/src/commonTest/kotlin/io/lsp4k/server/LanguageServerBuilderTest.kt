@@ -5,9 +5,18 @@ import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.lsp4k.protocol.CommandOrCodeAction
 import io.lsp4k.protocol.CompletionOptions
+import io.lsp4k.protocol.DefinitionResult
+import io.lsp4k.protocol.DocumentSymbolResult
+import io.lsp4k.protocol.InlineCompletionResult
 import io.lsp4k.protocol.LspMethods
+import io.lsp4k.protocol.PrepareRenameDefaultBehavior
+import io.lsp4k.protocol.PrepareRenameResult
+import io.lsp4k.protocol.SemanticTokensDelta
+import io.lsp4k.protocol.SemanticTokensDeltaResult
 import io.lsp4k.protocol.TextDocumentSyncKind
+import io.lsp4k.protocol.WorkspaceSymbolResult
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
@@ -272,6 +281,37 @@ class LanguageServerBuilderTest {
     }
 
     @Test
+    fun `union result handlers register with their wire shapes`() {
+        val config =
+            languageServer {
+                textDocument {
+                    declaration { _ -> DefinitionResult.Locations(emptyList()) }
+                    typeDefinition { _ -> DefinitionResult.Links(emptyList()) }
+                    implementation { _ -> null }
+                    documentSymbol { _ -> DocumentSymbolResult.Flat(emptyList()) }
+                    codeAction { _ -> emptyList<CommandOrCodeAction>() }
+                    prepareRename { _ -> PrepareRenameResult.OfDefaultBehavior(PrepareRenameDefaultBehavior(true)) }
+                    semanticTokensFullDelta { _ -> SemanticTokensDeltaResult.Delta(SemanticTokensDelta(edits = emptyList())) }
+                    inlineCompletion { _ -> InlineCompletionResult.Items(emptyList()) }
+                }
+                workspace {
+                    symbol { _ -> WorkspaceSymbolResult.Information(emptyList()) }
+                }
+            }
+        listOf(
+            LspMethods.TEXT_DOCUMENT_DECLARATION,
+            LspMethods.TEXT_DOCUMENT_TYPE_DEFINITION,
+            LspMethods.TEXT_DOCUMENT_IMPLEMENTATION,
+            LspMethods.TEXT_DOCUMENT_DOCUMENT_SYMBOL,
+            LspMethods.TEXT_DOCUMENT_CODE_ACTION,
+            LspMethods.TEXT_DOCUMENT_PREPARE_RENAME,
+            LspMethods.TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA,
+            LspMethods.TEXT_DOCUMENT_INLINE_COMPLETION,
+            LspMethods.WORKSPACE_SYMBOL,
+        ).forEach { config.requestHandlers shouldContainKey it }
+    }
+
+    @Test
     fun `workspace executeCommand handler registration`() {
         val config =
             languageServer {
@@ -403,56 +443,20 @@ class LanguageServerBuilderTest {
     }
 
     @Test
-    fun `completion registrations cannot replace each other`() {
+    fun `duplicate completion and definition registrations are rejected`() {
         assertFailsWith<IllegalArgumentException> {
             languageServer {
                 textDocument {
                     completion { null }
-                    completionResult { null }
-                }
-            }
-        }
-        assertFailsWith<IllegalArgumentException> {
-            languageServer {
-                textDocument {
-                    completionResult { null }
                     completion { null }
                 }
             }
         }
-    }
-
-    @Test
-    fun `definition registrations cannot replace each other`() {
         assertFailsWith<IllegalArgumentException> {
             languageServer {
                 textDocument {
                     definition { null }
-                    definitionResult { null }
-                }
-            }
-        }
-        assertFailsWith<IllegalArgumentException> {
-            languageServer {
-                textDocument {
-                    definitionResult { null }
                     definition { null }
-                }
-            }
-        }
-        assertFailsWith<IllegalArgumentException> {
-            languageServer {
-                textDocument {
-                    definitionWithLinks { null }
-                    definitionResult { null }
-                }
-            }
-        }
-        assertFailsWith<IllegalArgumentException> {
-            languageServer {
-                textDocument {
-                    definitionResult { null }
-                    definitionWithLinks { null }
                 }
             }
         }

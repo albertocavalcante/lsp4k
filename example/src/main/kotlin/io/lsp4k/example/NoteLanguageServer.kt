@@ -5,9 +5,11 @@ import io.lsp4k.protocol.CompletionItem
 import io.lsp4k.protocol.CompletionItemKind
 import io.lsp4k.protocol.CompletionList
 import io.lsp4k.protocol.CompletionOptions
+import io.lsp4k.protocol.CompletionResult
 import io.lsp4k.protocol.Diagnostic
 import io.lsp4k.protocol.DiagnosticSeverity
 import io.lsp4k.protocol.DocumentSymbol
+import io.lsp4k.protocol.DocumentSymbolResult
 import io.lsp4k.protocol.Hover
 import io.lsp4k.protocol.HoverContents
 import io.lsp4k.protocol.MarkupContent
@@ -125,7 +127,7 @@ fun createNoteServer() =
                         }
                     }
 
-                CompletionList(isIncomplete = false, items = items)
+                CompletionResult.ListResult(CompletionList(isIncomplete = false, items = items))
             }
 
             // -- Hover ------------------------------------------------------------
@@ -177,34 +179,37 @@ fun createNoteServer() =
                 val uri = params.textDocument.uri
                 val text = documents[uri] ?: return@documentSymbol null
 
-                text.lines().mapIndexedNotNull { index, line ->
-                    val trimmed = line.trimStart()
-                    when {
-                        trimmed.startsWith("# ") ->
-                            DocumentSymbol(
-                                name = trimmed.removePrefix("# ").trim(),
-                                kind = SymbolKind.Namespace,
-                                range = Range(Position(index, 0), Position(index, line.length)),
-                                selectionRange = Range(Position(index, 0), Position(index, line.length)),
-                            )
-                        keywords.any { trimmed.startsWith("$it:") } -> {
-                            val keyword = keywords.first { trimmed.startsWith("$it:") }
-                            val symbolKind =
-                                when (keyword) {
-                                    "TODO", "FIXME" -> SymbolKind.Event
-                                    "DONE" -> SymbolKind.Constant
-                                    else -> SymbolKind.Property
-                                }
-                            DocumentSymbol(
-                                name = trimmed,
-                                kind = symbolKind,
-                                range = Range(Position(index, 0), Position(index, line.length)),
-                                selectionRange = Range(Position(index, 0), Position(index, line.length)),
-                            )
+                val symbols =
+                    text.lines().mapIndexedNotNull { index, line ->
+                        val trimmed = line.trimStart()
+                        when {
+                            trimmed.startsWith("# ") ->
+                                DocumentSymbol(
+                                    name = trimmed.removePrefix("# ").trim(),
+                                    kind = SymbolKind.Namespace,
+                                    range = Range(Position(index, 0), Position(index, line.length)),
+                                    selectionRange = Range(Position(index, 0), Position(index, line.length)),
+                                )
+                            keywords.any { trimmed.startsWith("$it:") } -> {
+                                val keyword = keywords.first { trimmed.startsWith("$it:") }
+                                val symbolKind =
+                                    when (keyword) {
+                                        "TODO", "FIXME" -> SymbolKind.Event
+                                        "DONE" -> SymbolKind.Constant
+                                        else -> SymbolKind.Property
+                                    }
+                                DocumentSymbol(
+                                    name = trimmed,
+                                    kind = symbolKind,
+                                    range = Range(Position(index, 0), Position(index, line.length)),
+                                    selectionRange = Range(Position(index, 0), Position(index, line.length)),
+                                )
+                            }
+                            else -> null
                         }
-                        else -> null
                     }
-                }
+
+                DocumentSymbolResult.Hierarchical(symbols)
             }
 
             // -- Formatting -------------------------------------------------------
