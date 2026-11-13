@@ -3,6 +3,7 @@ package io.lsp4k.server
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.LspMethods
+import io.lsp4k.protocol.PositionEncodingKind
 import io.lsp4k.protocol.ProgressParams
 import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.ServerInfo
@@ -33,6 +34,7 @@ public class LanguageServerBuilder internal constructor() {
     internal var serverInfo: ServerInfo? = null
     internal var capabilities: ServerCapabilities = ServerCapabilities()
     internal var lifecycle: LifecycleHandlers = LifecycleHandlers()
+    internal var positionEncodingPreference: List<PositionEncodingKind>? = null
 
     /**
      * Sets the server name and optional version advertised in the default `initialize` result.
@@ -49,6 +51,16 @@ public class LanguageServerBuilder internal constructor() {
      */
     public fun capabilities(block: ServerCapabilitiesBuilder.() -> Unit) {
         capabilities = ServerCapabilitiesBuilder().apply(block).build()
+    }
+
+    /**
+     * Negotiates the position encoding in the default `initialize` result: the first of [preference] that the client
+     * lists in `general.positionEncodings` is advertised as `positionEncoding`, UTF-16 when none matches.
+     * Read the outcome from [LanguageServer.positionEncoding]. A handler given to [onInitialize] builds its own
+     * result; negotiate there with [negotiatePositionEncoding].
+     */
+    public fun negotiatePositionEncoding(vararg preference: PositionEncodingKind) {
+        positionEncodingPreference = if (preference.isEmpty()) DEFAULT_POSITION_ENCODING_PREFERENCE else preference.toList()
     }
 
     /**
@@ -160,4 +172,5 @@ internal fun LanguageServerBuilder.toConfig(): LanguageServerConfig =
         requestHandlers = registry.requests.toMap(),
         notificationHandlers = registry.notifications.toMap(),
         lifecycle = lifecycle,
+        positionEncodingPreference = positionEncodingPreference,
     )

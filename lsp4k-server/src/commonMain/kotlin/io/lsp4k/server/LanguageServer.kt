@@ -4,6 +4,8 @@ import io.jsonrpc4k.core.Connection
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.LspMethods
+import io.lsp4k.protocol.PositionEncodingKind
+import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.SetTraceParams
 import io.lsp4k.protocol.TraceValue
 import io.lsp4k.protocol.WorkDoneProgressCancelParams
@@ -53,6 +55,15 @@ public class LanguageServer internal constructor(
     /** The parameters of the successful `initialize` request, including the client capabilities; null before it. */
     public val initializeParams: InitializeParams? get() = lifecycle.initializeParams
 
+    @Volatile
+    private var positionEncodingInEffect: PositionEncodingKind = PositionEncodingKind.UTF16
+
+    /**
+     * The position encoding the successful `initialize` result advertised, UTF-16 before it or when the result
+     * names none. Use it for [TextDocuments] and offset arithmetic.
+     */
+    public val positionEncoding: PositionEncodingKind get() = positionEncodingInEffect
+
     /**
      * The exit code the client asked for: 0 when `exit` followed `shutdown`, 1 when it did not, and null while no
      * `exit` arrived (for example after end of input or [close]). Read it after [awaitTermination].
@@ -99,15 +110,21 @@ public class LanguageServer internal constructor(
             val hook = config.lifecycle.initialize
             val result =
                 if (hook == null) {
-                    InitializeResult(capabilities = config.capabilities, serverInfo = config.serverInfo)
+                    InitializeResult(capabilities = defaultCapabilities(decoded), serverInfo = config.serverInfo)
                 } else {
                     val context = requestContext(LspMethods.INITIALIZE, params)
                     runHandler(context) { context.hook(decoded) }
                 }
             val encoded = wireJson.encodeToJsonElement(InitializeResult.serializer(), result)
             lifecycle.initializeParams = decoded
+            positionEncodingInEffect = result.capabilities.positionEncoding ?: PositionEncodingKind.UTF16
             encoded
         }
+
+    private fun defaultCapabilities(params: InitializeParams): ServerCapabilities {
+        val preference = config.positionEncodingPreference ?: return config.capabilities
+        return config.capabilities.copy(positionEncoding = params.negotiatePositionEncoding(preference))
+    }
 
     private suspend fun initialized() {
         if (!lifecycle.markInitialized()) return

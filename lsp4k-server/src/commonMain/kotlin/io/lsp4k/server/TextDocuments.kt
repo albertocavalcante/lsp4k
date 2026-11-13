@@ -4,7 +4,9 @@ import io.lsp4k.protocol.DidChangeTextDocumentParams
 import io.lsp4k.protocol.DidCloseTextDocumentParams
 import io.lsp4k.protocol.DidOpenTextDocumentParams
 import io.lsp4k.protocol.DocumentUri
+import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.PositionEncodingKind
+import io.lsp4k.protocol.ServerCapabilities
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -50,6 +52,15 @@ public enum class ChangeResult {
 public class TextDocuments(
     public val encoding: PositionEncodingKind = PositionEncodingKind.UTF16,
 ) {
+    /** Tracks documents in the encoding that [capabilities] advertise (UTF-16 when none), e.g. an `initialize` result's. */
+    public constructor(capabilities: ServerCapabilities) : this(capabilities.positionEncoding ?: PositionEncodingKind.UTF16)
+
+    /** Tracks documents in the encoding negotiated for [params] against [serverPreference]; see [negotiatePositionEncoding]. */
+    public constructor(
+        params: InitializeParams,
+        serverPreference: List<PositionEncodingKind> = DEFAULT_POSITION_ENCODING_PREFERENCE,
+    ) : this(params.negotiatePositionEncoding(serverPreference))
+
     private val lock = Mutex()
     private val documents = LinkedHashMap<DocumentUri, TextDocument>()
 
