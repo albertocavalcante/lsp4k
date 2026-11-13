@@ -2,9 +2,11 @@ package io.lsp4k.protocol
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 /**
  * Tests for Hover type serialization: Hover, MarkupContent, MarkupKind,
@@ -349,6 +351,42 @@ class HoverSerializationTest {
         val decoded = json.decodeFromString<Hover>(jsonStr)
         val contents = decoded.contents.shouldBeInstanceOf<HoverContents.MultiMarked>()
         contents.values.size shouldBe 0
+    }
+
+    @Test
+    fun `Hover rejects non-string primitive contents`() {
+        for (contents in listOf("null", "42", "1.5", "true", "false")) {
+            assertFailsWith<SerializationException> {
+                json.decodeFromString<Hover>("""{"contents":$contents}""")
+            }
+        }
+    }
+
+    @Test
+    fun `Hover result can still be null`() {
+        json.decodeFromString<Hover?>("null") shouldBe null
+    }
+
+    @Test
+    fun `Hover rejects non-string primitives and nested arrays in MarkedString arrays`() {
+        for (item in listOf("null", "42", "1.5", "true", "false", "[]")) {
+            assertFailsWith<SerializationException> {
+                json.decodeFromString<Hover>("""{"contents":["valid",$item]}""")
+            }
+        }
+    }
+
+    @Test
+    fun `Hover preserves quoted primitive spellings as strings`() {
+        for (text in listOf("null", "42", "1.5", "true", "false", "")) {
+            val encodedText = json.encodeToString(text)
+            val single = json.decodeFromString<Hover>("""{"contents":$encodedText}""")
+            single.contents shouldBe HoverContents.SingleMarked(Either.Left(text))
+            val multiple = json.decodeFromString<Hover>("""{"contents":[$encodedText]}""")
+            multiple.contents shouldBe HoverContents.MultiMarked(listOf(Either.Left(text)))
+            json.decodeFromString<Hover>(json.encodeToString(single)) shouldBe single
+            json.decodeFromString<Hover>(json.encodeToString(multiple)) shouldBe multiple
+        }
     }
 
     // ==================== HoverParams Tests ====================
