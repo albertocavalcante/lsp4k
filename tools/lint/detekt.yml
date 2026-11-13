@@ -34,10 +34,8 @@ complexity:
     - '**/test/**'
     - '**/*Test/**'
     - '**/visitor/**'
-    # LSP proxy/facade classes map 1:1 to protocol methods, so they
-    # inherently have many functions. Centralised here to avoid
-    # scattering @Suppress annotations in source code.
-    - '**/server/LanguageServer.kt'
+    # The client facade maps 1:1 to protocol methods. The server API is
+    # split by namespace and stays within the limits below.
     - '**/client/LanguageClient.kt'
     thresholdInFiles: 20
     thresholdInClasses: 18

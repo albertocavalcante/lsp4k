@@ -325,7 +325,7 @@ class PublicSessionOwnershipTest {
         }
 
     @Test
-    fun `pipelined server exit waits for shutdown response write`() =
+    fun `pipelined server exit waits for the uninitialized shutdown error write`() =
         runTest {
             val parent = SupervisorJob()
             val scope = CoroutineScope(parent + StandardTestDispatcher(testScheduler))
@@ -343,7 +343,8 @@ class PublicSessionOwnershipTest {
                 assertEquals(null, withTimeout(1.seconds) { termination.await() })
                 val response = JsonRpcMessageDecoder().feed(transport.sent.single()).single() as ResponseMessage
                 assertEquals(RequestId.of(7), response.id)
-                assertEquals(null, response.error)
+                assertEquals(ResponseError.SERVER_NOT_INITIALIZED, response.error?.code)
+                assertEquals(1, server.exitCode)
                 assertTrue(parent.isActive)
                 assertFalse(transport.closed)
             } finally {

@@ -22,10 +22,11 @@ import io.lsp4k.protocol.Range
 import io.lsp4k.protocol.SymbolKind
 import io.lsp4k.protocol.TextDocumentSyncKind
 import io.lsp4k.protocol.TextEdit
-import io.lsp4k.server.LanguageServer
+import io.lsp4k.server.LanguageClient
 import io.lsp4k.server.languageServer
 import io.lsp4k.server.start
 import kotlinx.coroutines.runBlocking
+import kotlin.system.exitProcess
 
 /**
  * A simple "Note" language server demonstrating lsp4k features.
@@ -46,6 +47,7 @@ import kotlinx.coroutines.runBlocking
  * - Diagnostics (publish on change)
  * - Document symbols (sections)
  * - Formatting
+ * - Lifecycle: a greeting after `initialized` and the exit code requested by the client
  */
 
 private val documents = mutableMapOf<String, String>()
@@ -67,6 +69,10 @@ fun createNoteServer() =
             documentFormattingProvider = true
         }
 
+        onInitialized {
+            client.window.showMessage(MessageType.Info, "Note Language Server started")
+        }
+
         // =========================================================================
         // Text Document Handlers
         // =========================================================================
@@ -77,14 +83,14 @@ fun createNoteServer() =
                 val uri = params.textDocument.uri
                 val text = params.textDocument.text
                 documents[uri] = text
-                publishDiagnosticsFor(uri, text)
+                publishDiagnosticsFor(client, uri, text)
             }
 
             didChange { params ->
                 val uri = params.textDocument.uri
                 val text = params.contentChanges.lastOrNull()?.text ?: return@didChange
                 documents[uri] = text
-                publishDiagnosticsFor(uri, text)
+                publishDiagnosticsFor(client, uri, text)
             }
 
             didClose { params ->
@@ -212,9 +218,12 @@ fun createNoteServer() =
 
                 DocumentSymbolResult.Hierarchical(symbols)
             }
+        }
 
-            // -- Formatting -------------------------------------------------------
-
+        // =========================================================================
+        // Editing Handlers
+        // =========================================================================
+        editing {
             formatting { params ->
                 val uri = params.textDocument.uri
                 val text = documents[uri] ?: return@formatting null
@@ -262,14 +271,8 @@ fun createNoteServer() =
 // Diagnostics
 // =============================================================================
 
-/**
- * Reference to the running server instance, used for publishing diagnostics.
- *
- * Set after [LanguageServerConfig.start] returns.
- */
-private var serverInstance: LanguageServer? = null
-
 private suspend fun publishDiagnosticsFor(
+    client: LanguageClient,
     uri: String,
     text: String,
 ) {
@@ -316,19 +319,23 @@ private suspend fun publishDiagnosticsFor(
             }
         }
 
-    serverInstance?.client?.publishDiagnostics(
-        PublishDiagnosticsParams(uri = uri, diagnostics = diagnostics),
-    )
+    client.textDocument.publishDiagnostics(PublishDiagnosticsParams(uri = uri, diagnostics = diagnostics))
 }
 
 // =============================================================================
 // Entry Point
 // =============================================================================
 
-fun main(): Unit =
-    runBlocking {
-        val config = createNoteServer()
-        val transport = TransportFactory.stdio()
-        serverInstance = config.start(transport)
-        serverInstance?.client?.showMessage(MessageType.Info, "Note Language Server started")
-    }
+/**
+ * Serves stdio until the client sends `exit`, then ends the process with the exit code the client requested
+ * (0 after `shutdown`, otherwise 1). End of input or a transport failure also ends with 1.
+ */
+fun main() {
+    val exitCode =
+        runBlocking {
+            val server = createNoteServer().start(TransportFactory.stdio())
+            server.awaitTermination()
+            server.exitCode ?: 1
+        }
+    exitProcess(exitCode)
+}

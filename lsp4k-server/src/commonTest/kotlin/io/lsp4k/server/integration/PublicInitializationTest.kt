@@ -2,9 +2,7 @@ package io.lsp4k.server.integration
 
 import io.jsonrpc4k.core.JsonRpcCodec
 import io.jsonrpc4k.core.JsonRpcException
-import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.core.NotificationMessage
-import io.jsonrpc4k.core.RequestHandler
 import io.jsonrpc4k.core.RequestId
 import io.jsonrpc4k.core.RequestMessage
 import io.jsonrpc4k.core.ResponseError
@@ -21,6 +19,8 @@ import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.TextDocumentIdentifier
 import io.lsp4k.protocol.TraceValue
 import io.lsp4k.protocol.WorkspaceFolder
+import io.lsp4k.server.ServerNotificationHandler
+import io.lsp4k.server.ServerRequestHandler
 import io.lsp4k.server.languageServer
 import io.lsp4k.server.start
 import kotlinx.coroutines.channels.Channel
@@ -38,13 +38,15 @@ class PublicInitializationTest {
         runTest {
             val config = languageServer {}
             listOf("initialize", "shutdown").forEach { method ->
+                val handlers = mapOf(method to ServerRequestHandler { _, _ -> null })
                 assertFailsWith<IllegalArgumentException> {
-                    config.copy(requestHandlers = mapOf(method to RequestHandler { null })).start(UnusedTransport, backgroundScope)
+                    config.copy(requestHandlers = handlers).start(UnusedTransport, backgroundScope)
                 }
             }
             listOf("initialized", "exit", "$/setTrace", "$/cancelRequest").forEach { method ->
+                val handlers = mapOf(method to ServerNotificationHandler { _, _ -> })
                 assertFailsWith<IllegalArgumentException> {
-                    config.copy(notificationHandlers = mapOf(method to NotificationHandler {})).start(UnusedTransport, backgroundScope)
+                    config.copy(notificationHandlers = handlers).start(UnusedTransport, backgroundScope)
                 }
             }
         }

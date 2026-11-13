@@ -289,8 +289,12 @@ class LanguageServerBuilderTest {
                     typeDefinition { _ -> DefinitionResult.Links(emptyList()) }
                     implementation { _ -> null }
                     documentSymbol { _ -> DocumentSymbolResult.Flat(emptyList()) }
+                }
+                editing {
                     codeAction { _ -> emptyList<CommandOrCodeAction>() }
                     prepareRename { _ -> PrepareRenameResult.OfDefaultBehavior(PrepareRenameDefaultBehavior(true)) }
+                }
+                insights {
                     semanticTokensFullDelta { _ -> SemanticTokensDeltaResult.Delta(SemanticTokensDelta(edits = emptyList())) }
                     inlineCompletion { _ -> InlineCompletionResult.Items(emptyList()) }
                 }
@@ -322,71 +326,69 @@ class LanguageServerBuilderTest {
         config.requestHandlers shouldContainKey LspMethods.WORKSPACE_EXECUTE_COMMAND
     }
 
-    // ==================== Call Hierarchy Handler Registration Tests ====================
+    // ==================== Hierarchy Handler Registration Tests ====================
 
     @Test
-    fun `callHierarchy prepare handler registration`() {
+    fun `hierarchy prepareCallHierarchy handler registration`() {
         val config =
             languageServer {
-                callHierarchy {
-                    prepare { _ -> null }
+                hierarchy {
+                    prepareCallHierarchy { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.TEXT_DOCUMENT_PREPARE_CALL_HIERARCHY
     }
 
     @Test
-    fun `callHierarchy incomingCalls handler registration`() {
+    fun `hierarchy callHierarchyIncomingCalls handler registration`() {
         val config =
             languageServer {
-                callHierarchy {
-                    incomingCalls { _ -> null }
+                hierarchy {
+                    callHierarchyIncomingCalls { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.CALL_HIERARCHY_INCOMING_CALLS
     }
 
     @Test
-    fun `callHierarchy outgoingCalls handler registration`() {
+    fun `hierarchy callHierarchyOutgoingCalls handler registration`() {
         val config =
             languageServer {
-                callHierarchy {
-                    outgoingCalls { _ -> null }
+                hierarchy {
+                    callHierarchyOutgoingCalls { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.CALL_HIERARCHY_OUTGOING_CALLS
     }
 
-    // ==================== Type Hierarchy Handler Registration Tests ====================
-
     @Test
-    fun `typeHierarchy prepare handler registration`() {
+    fun `hierarchy prepareTypeHierarchy handler registration`() {
         val config =
             languageServer {
-                typeHierarchy {
-                    prepare { _ -> null }
+                hierarchy {
+                    prepareTypeHierarchy { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.TEXT_DOCUMENT_PREPARE_TYPE_HIERARCHY
     }
 
     @Test
-    fun `typeHierarchy supertypes handler registration`() {
+    fun `hierarchy typeHierarchySupertypes handler registration`() {
         val config =
             languageServer {
-                typeHierarchy {
-                    supertypes { _ -> null }
+                hierarchy {
+                    typeHierarchySupertypes { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.TYPE_HIERARCHY_SUPERTYPES
     }
 
     @Test
-    fun `typeHierarchy subtypes handler registration`() {
+    fun `hierarchy typeHierarchySubtypes handler registration`() {
         val config =
             languageServer {
-                typeHierarchy {
-                    subtypes { _ -> null }
+                hierarchy {
+                    typeHierarchySubtypes { _ -> null }
                 }
             }
         config.requestHandlers shouldContainKey LspMethods.TYPE_HIERARCHY_SUBTYPES

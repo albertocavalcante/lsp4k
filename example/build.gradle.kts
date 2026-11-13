@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.lsp4k.example.MainKt")
+    mainClass.set("io.lsp4k.example.NoteLanguageServerKt")
 }
 
 dependencies {
