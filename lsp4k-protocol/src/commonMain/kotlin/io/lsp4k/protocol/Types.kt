@@ -1,8 +1,8 @@
 package io.lsp4k.protocol
 
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -372,15 +372,26 @@ public data class TextDocumentEdit(
  * A set of predefined position encoding kinds.
  */
 @Serializable
-public enum class PositionEncodingKind {
-    @SerialName("utf-32")
-    UTF32,
+@JvmInline
+public value class PositionEncodingKind(
+    public val value: String,
+) {
+    public companion object {
+        /**
+         * Character offsets count UTF-8 code units (bytes).
+         */
+        public val UTF8: PositionEncodingKind = PositionEncodingKind("utf-8")
 
-    @SerialName("utf-16")
-    UTF16,
+        /**
+         * Character offsets count UTF-16 code units. This is the default and must always be supported.
+         */
+        public val UTF16: PositionEncodingKind = PositionEncodingKind("utf-16")
 
-    @SerialName("utf-8")
-    UTF8,
+        /**
+         * Character offsets count UTF-32 code units (Unicode code points).
+         */
+        public val UTF32: PositionEncodingKind = PositionEncodingKind("utf-32")
+    }
 }
 
 /**

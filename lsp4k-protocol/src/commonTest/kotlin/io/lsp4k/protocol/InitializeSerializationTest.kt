@@ -336,10 +336,10 @@ class InitializeSerializationTest {
 
     @Test
     fun `ServerCapabilities with positionEncoding`() {
-        val caps = ServerCapabilities(positionEncoding = "utf-16")
+        val caps = ServerCapabilities(positionEncoding = PositionEncodingKind.UTF16)
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<ServerCapabilities>(encoded)
-        decoded.positionEncoding shouldBe "utf-16"
+        decoded.positionEncoding shouldBe PositionEncodingKind.UTF16
     }
 
     @Test
@@ -532,7 +532,7 @@ class InitializeSerializationTest {
     fun `ServerCapabilities comprehensive`() {
         val caps =
             ServerCapabilities(
-                positionEncoding = "utf-16",
+                positionEncoding = PositionEncodingKind.UTF16,
                 textDocumentSync =
                     Either.right(
                         TextDocumentSyncOptions(

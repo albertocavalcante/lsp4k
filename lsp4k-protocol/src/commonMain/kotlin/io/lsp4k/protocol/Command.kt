@@ -36,4 +36,9 @@ public data class ExecuteCommandParams(
      * Arguments that the command should be invoked with.
      */
     val arguments: List<JsonElement>? = null,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
 )

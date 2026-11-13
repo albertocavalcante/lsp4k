@@ -135,6 +135,10 @@ public data class CompletionOptions(
      * The server provides support to resolve additional information for a completion item.
      */
     val resolveProvider: Boolean? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -150,6 +154,10 @@ public data class SignatureHelpOptions(
      * List of characters that re-trigger signature help.
      */
     val retriggerCharacters: List<String>? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -360,6 +368,11 @@ public data class DocumentRangeFormattingOptions(
      * Work done progress options.
      */
     val workDoneProgress: Boolean? = null,
+    /**
+     * Whether the server supports formatting multiple ranges at once
+     * (`textDocument/rangesFormatting`).
+     */
+    val rangesSupport: Boolean? = null,
 )
 
 /**
@@ -574,7 +587,7 @@ public data class ServerCapabilities(
     /**
      * The position encoding the server picked from the encodings offered by the client.
      */
-    val positionEncoding: String? = null,
+    val positionEncoding: PositionEncodingKind? = null,
     /**
      * Defines how text documents are synced.
      */
@@ -751,6 +764,10 @@ public data class CodeLensOptions(
      * Code lens has a resolve provider as well.
      */
     val resolveProvider: Boolean? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -762,6 +779,10 @@ public data class DocumentLinkOptions(
      * Document links have a resolve provider as well.
      */
     val resolveProvider: Boolean? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -788,6 +809,10 @@ public data class ExecuteCommandOptions(
      * The commands to be executed on the server.
      */
     val commands: List<String>,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**
@@ -921,7 +946,7 @@ public data class GeneralClientCapabilities(
     /**
      * The position encodings supported by the client.
      */
-    val positionEncodings: List<String>? = null,
+    val positionEncodings: List<PositionEncodingKind>? = null,
 )
 
 /**
@@ -999,6 +1024,10 @@ public data class ClientCapabilities(
      * Experimental client capabilities.
      */
     val experimental: JsonElement? = null,
+    /**
+     * Capabilities specific to the notebook document support.
+     */
+    val notebookDocument: NotebookDocumentClientCapabilities? = null,
 )
 
 /**
@@ -1062,6 +1091,10 @@ public data class WorkspaceClientCapabilities(
      * Client workspace capabilities specific to diagnostics.
      */
     val diagnostics: DiagnosticWorkspaceClientCapabilities? = null,
+    /**
+     * Capabilities specific to the folding range requests scoped to the workspace.
+     */
+    val foldingRange: FoldingRangeWorkspaceClientCapabilities? = null,
 )
 
 // ============================================================================
@@ -1207,7 +1240,7 @@ public data class SymbolTagSupport(
     /**
      * The tags supported by the client.
      */
-    val valueSet: List<SymbolTag>? = null,
+    val valueSet: List<SymbolTag>,
 )
 
 /**
@@ -1451,6 +1484,10 @@ public data class TextDocumentClientCapabilities(
      * Capabilities specific to the diagnostic pull model.
      */
     val diagnostic: DiagnosticClientCapabilities? = null,
+    /**
+     * Client capabilities specific to inline completions.
+     */
+    val inlineCompletion: InlineCompletionClientCapabilities? = null,
 )
 
 /**
@@ -1661,6 +1698,12 @@ public data class SignatureInformationCapability(
      * The client supports the `activeParameter` property on `SignatureInformation`.
      */
     val activeParameterSupport: Boolean? = null,
+    /**
+     * The client supports the `activeParameter` property on `SignatureHelp` and
+     * `SignatureInformation` being set to `null` to indicate that no parameter
+     * should be active.
+     */
+    val noActiveParameterSupport: Boolean? = null,
 )
 
 /**
@@ -1815,6 +1858,11 @@ public data class CodeLensClientCapabilities(
      * Whether code lens supports dynamic registration.
      */
     val dynamicRegistration: Boolean? = null,
+    /**
+     * Whether the client supports resolving additional code lens properties via a separate
+     * `codeLens/resolve` request.
+     */
+    val resolveSupport: ClientCodeLensResolveOptions? = null,
 )
 
 /**
@@ -2341,6 +2389,11 @@ public data class InitializeParams(
      * The workspace folders configured in the client when the server starts.
      */
     val workspaceFolders: List<WorkspaceFolder>? = null,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
 )
 
 /**
