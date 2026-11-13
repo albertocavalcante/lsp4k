@@ -56,7 +56,10 @@ class ProgressStreamsTest {
             val intToken: ProgressToken = Either.left(7)
             val batches =
                 async(start = CoroutineStart.UNDISPATCHED) {
-                    client.progress.partialResults<List<String>>(intToken).take(2).toList()
+                    client.progress
+                        .partialResults<List<String>>(intToken)
+                        .take(2)
+                        .toList()
                 }
 
             peer.send(LspMethods.PROGRESS, """{"token":"work","value":["wrong"]}""")

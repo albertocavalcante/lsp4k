@@ -122,11 +122,18 @@ private suspend fun nextNotification(
     method: String,
 ): Received {
     while (true) {
-        val frame = Json.parseToJsonElement(frames.receive().decodeToString())
+        val frame = Json.parseToJsonElement(frameBody(frames.receive()))
         if (frame is JsonObject && frame["id"] == null && frame["method"]?.jsonPrimitive?.content == method) {
             return Received(method, frame["params"])
         }
     }
+}
+
+/** Strips the `Content-Length` header block from one encoded frame and returns its JSON body. */
+private fun frameBody(frame: ByteArray): String {
+    val text = frame.decodeToString()
+    val separator = text.indexOf("\r\n\r\n")
+    return if (separator < 0) text else text.substring(separator + 4)
 }
 
 /** Asserts that [actual] carries every property of [expected]; extra properties are allowed. */

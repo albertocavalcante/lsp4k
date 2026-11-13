@@ -27,8 +27,7 @@ public class WorkspaceCalls internal constructor(
     /**
      * Request workspace symbols matching a query.
      */
-    public suspend fun symbol(params: WorkspaceSymbolParams): WorkspaceSymbolResult? =
-        caller.request(LspMethods.WORKSPACE_SYMBOL, params)
+    public suspend fun symbol(params: WorkspaceSymbolParams): WorkspaceSymbolResult? = caller.request(LspMethods.WORKSPACE_SYMBOL, params)
 
     /**
      * Resolve additional information for a workspace symbol.
@@ -83,8 +82,7 @@ public class WorkspaceCalls internal constructor(
     /**
      * Notify the server that files were created.
      */
-    public suspend fun didCreateFiles(params: CreateFilesParams): Unit =
-        caller.notify(LspMethods.WORKSPACE_DID_CREATE_FILES, params)
+    public suspend fun didCreateFiles(params: CreateFilesParams): Unit = caller.notify(LspMethods.WORKSPACE_DID_CREATE_FILES, params)
 
     /**
      * Request workspace edits before files are renamed.
@@ -95,8 +93,7 @@ public class WorkspaceCalls internal constructor(
     /**
      * Notify the server that files were renamed.
      */
-    public suspend fun didRenameFiles(params: RenameFilesParams): Unit =
-        caller.notify(LspMethods.WORKSPACE_DID_RENAME_FILES, params)
+    public suspend fun didRenameFiles(params: RenameFilesParams): Unit = caller.notify(LspMethods.WORKSPACE_DID_RENAME_FILES, params)
 
     /**
      * Request workspace edits before files are deleted.
@@ -107,6 +104,5 @@ public class WorkspaceCalls internal constructor(
     /**
      * Notify the server that files were deleted.
      */
-    public suspend fun didDeleteFiles(params: DeleteFilesParams): Unit =
-        caller.notify(LspMethods.WORKSPACE_DID_DELETE_FILES, params)
+    public suspend fun didDeleteFiles(params: DeleteFilesParams): Unit = caller.notify(LspMethods.WORKSPACE_DID_DELETE_FILES, params)
 }
