@@ -29,12 +29,12 @@ public data class InlayHintParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
     /**
      * An optional token that a server can use to report partial results.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val partialResultToken: ProgressToken? = null,
 )
 
@@ -87,7 +87,7 @@ public data class InlayHintLabelPart(
      * The tooltip text when you hover over this label part.
      * Can be a plain string or a MarkupContent object.
      */
-    @Serializable(with = NullableStringOrMarkupContentSerializer::class)
+    @Serializable(with = StringOrMarkupContentSerializer::class)
     val tooltip: Either<String, MarkupContent>? = null,
     /**
      * An optional source code location that represents this label part.
@@ -171,7 +171,7 @@ public data class InlayHint(
      * The tooltip text when you hover over this item.
      * Can be a plain string or a MarkupContent object.
      */
-    @Serializable(with = NullableStringOrMarkupContentSerializer::class)
+    @Serializable(with = StringOrMarkupContentSerializer::class)
     val tooltip: Either<String, MarkupContent>? = null,
     /**
      * Render padding before the hint.

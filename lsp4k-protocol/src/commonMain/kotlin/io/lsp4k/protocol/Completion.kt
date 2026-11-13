@@ -327,7 +327,7 @@ public data class CompletionItem(
      * A human-readable string that represents a doc-comment.
      * Can be either a plain string or MarkupContent as per LSP spec.
      */
-    @Serializable(with = NullableStringOrMarkupContentSerializer::class)
+    @Serializable(with = StringOrMarkupContentSerializer::class)
     val documentation: Documentation? = null,
     /**
      * Indicates if this item is deprecated.
@@ -562,12 +562,12 @@ public data class CompletionParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
     /**
      * An optional token that a server can use to report partial results.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val partialResultToken: ProgressToken? = null,
 )
 

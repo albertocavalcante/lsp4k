@@ -4,6 +4,7 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -11,9 +12,9 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlin.jvm.JvmInline
 
 /**
@@ -44,60 +45,16 @@ public typealias URI = String
 public typealias ProgressToken = Either<Int, String>
 
 /**
- * Serializer for [ProgressToken] (`Either<Int, String>`).
- * Discriminates based on whether the JSON primitive is a string or integer.
+ * Serializer for [ProgressToken] (`Either<Int, String>`): an integer JSON number or a JSON string.
+ * Any other JSON value, including a fractional number, is rejected.
  */
-public object ProgressTokenSerializer : KSerializer<ProgressToken> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("ProgressToken", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: ProgressToken,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        when (value) {
-            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): ProgressToken {
-        val jsonDecoder = decoder as JsonDecoder
-        val element = jsonDecoder.decodeJsonElement() as JsonPrimitive
-        return if (element.isString) {
-            Either.right(element.content)
-        } else {
-            Either.left(element.content.toInt())
-        }
-    }
-}
-
-/**
- * Serializer for nullable [ProgressToken].
- */
-public object NullableProgressTokenSerializer : KSerializer<ProgressToken?> {
-    override val descriptor: SerialDescriptor =
-        PrimitiveSerialDescriptor("ProgressToken?", PrimitiveKind.STRING)
-
-    override fun serialize(
-        encoder: Encoder,
-        value: ProgressToken?,
-    ) {
-        if (value == null) {
-            encoder.encodeNull()
-        } else {
-            ProgressTokenSerializer.serialize(encoder, value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): ProgressToken? =
-        if (decoder.decodeNotNullMark()) {
-            ProgressTokenSerializer.deserialize(decoder)
-        } else {
-            decoder.decodeNull()
-        }
-}
+public object ProgressTokenSerializer : KSerializer<ProgressToken> by strictUnion(
+    "ProgressToken",
+    Int.serializer(),
+    String.serializer(),
+    JsonElement::isInteger,
+    JsonElement::isStringLiteral,
+)
 
 /**
  * Position in a text document expressed as zero-based line and character offset.
@@ -416,59 +373,12 @@ public value class PositionEncodingKind(
 /**
  * Serializer for `Either<String, MarkupContent>` as used in LSP spec for fields
  * like `tooltip` and `documentation` that can be either a plain string or a MarkupContent object.
- *
- * On serialization: if Left (String), writes a JsonPrimitive; if Right (MarkupContent), serializes as object.
- * On deserialization: checks if the element is a JsonPrimitive (string) or a JsonObject (MarkupContent).
+ * Any other JSON value is rejected.
  */
-public object StringOrMarkupContentSerializer : KSerializer<Either<String, MarkupContent>> {
-    override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor("Either<String, MarkupContent>")
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<String, MarkupContent>,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        when (value) {
-            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeSerializableValue(MarkupContent.serializer(), value.value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<String, MarkupContent> {
-        val jsonDecoder = decoder as JsonDecoder
-        val element = jsonDecoder.decodeJsonElement()
-        return if (element is JsonPrimitive && element.isString) {
-            Either.Left(element.content)
-        } else {
-            Either.Right(jsonDecoder.json.decodeFromJsonElement(MarkupContent.serializer(), element))
-        }
-    }
-}
-
-/**
- * Serializer for nullable `Either<String, MarkupContent>?`.
- * Handles null, plain string, or MarkupContent object.
- */
-public object NullableStringOrMarkupContentSerializer : KSerializer<Either<String, MarkupContent>?> {
-    override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor("Either<String, MarkupContent>?")
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<String, MarkupContent>?,
-    ) {
-        if (value == null) {
-            encoder.encodeNull()
-        } else {
-            StringOrMarkupContentSerializer.serialize(encoder, value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<String, MarkupContent>? =
-        if (decoder.decodeNotNullMark()) {
-            StringOrMarkupContentSerializer.deserialize(decoder)
-        } else {
-            decoder.decodeNull()
-        }
-}
+public object StringOrMarkupContentSerializer : KSerializer<Either<String, MarkupContent>> by strictUnion(
+    "StringOrMarkupContent",
+    String.serializer(),
+    MarkupContent.serializer(),
+    JsonElement::isStringLiteral,
+    JsonElement::isObject,
+)

@@ -5,6 +5,7 @@ import io.lsp4k.client.start
 import io.lsp4k.protocol.ClientCapabilities
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
+import io.lsp4k.protocol.Maybe
 import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.WorkspaceFolder
 import io.lsp4k.server.languageServer
@@ -29,7 +30,11 @@ fun main() =
             val server =
                 languageServer {
                     onInitialize { params ->
-                        check(params.workspaceFolders?.single()?.name == "fixture")
+                        check(
+                            params.workspaceFolders.valueOrNull
+                                ?.single()
+                                ?.name == "fixture",
+                        )
                         check(params.initializationOptions == JsonPrimitive("options"))
                         InitializeResult(ServerCapabilities())
                     }
@@ -42,7 +47,7 @@ fun main() =
                         rootUri = "file:///fixture",
                         capabilities = ClientCapabilities(),
                         initializationOptions = JsonPrimitive("options"),
-                        workspaceFolders = listOf(WorkspaceFolder("file:///fixture", "fixture")),
+                        workspaceFolders = Maybe.Of(listOf(WorkspaceFolder("file:///fixture", "fixture"))),
                     ),
                 )
                 client.shutdown()

@@ -193,6 +193,6 @@ public data class HoverParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
 )
