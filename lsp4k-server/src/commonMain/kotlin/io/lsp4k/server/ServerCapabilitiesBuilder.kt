@@ -139,7 +139,9 @@ public class ServerCapabilitiesBuilder internal constructor() {
 
     private fun Boolean.toEither3(): Either3<Boolean, Nothing, Nothing>? = if (this) Either3.first(true) else null
 
-    internal fun build(): ServerCapabilities =
+    internal fun build(): ServerCapabilities = baseCapabilities().withNavigationForms().withLanguageForms()
+
+    private fun baseCapabilities(): ServerCapabilities =
         ServerCapabilities(
             positionEncoding = positionEncoding,
             textDocumentSync =
@@ -156,35 +158,43 @@ public class ServerCapabilitiesBuilder internal constructor() {
             completionProvider = completionProvider,
             hoverProvider = hoverProvider.toEither(),
             signatureHelpProvider = signatureHelpProvider,
-            declarationProvider = forms.declaration ?: declarationProvider.toEither3(),
             definitionProvider = definitionProvider.toEither(),
-            typeDefinitionProvider = forms.typeDefinition ?: typeDefinitionProvider.toEither3(),
-            implementationProvider = forms.implementation ?: implementationProvider.toEither3(),
             referencesProvider = referencesProvider.toEither(),
             documentHighlightProvider = documentHighlightProvider.toEither(),
             documentSymbolProvider = documentSymbolProvider.toEither(),
             codeActionProvider = codeActionProvider.toEither(),
             codeLensProvider = codeLensProvider,
             documentLinkProvider = documentLinkProvider,
-            colorProvider = forms.color ?: colorProvider.toEither3(),
             documentFormattingProvider = documentFormattingProvider.toEither(),
             documentRangeFormattingProvider = documentRangeFormattingProvider.toEither(),
             documentOnTypeFormattingProvider = documentOnTypeFormattingProvider,
             renameProvider = renameProvider.toEither(),
-            foldingRangeProvider = forms.foldingRange ?: foldingRangeProvider.toEither3(),
-            selectionRangeProvider = forms.selectionRange ?: selectionRangeProvider.toEither3(),
-            linkedEditingRangeProvider = forms.linkedEditingRange ?: linkedEditingRangeProvider.toEither3(),
-            callHierarchyProvider = forms.callHierarchy ?: callHierarchyProvider.toEither3(),
             semanticTokensProvider = forms.semanticTokens ?: semanticTokensProvider?.let { Either.left(it) },
-            monikerProvider = forms.moniker ?: monikerProvider.toEither3(),
-            typeHierarchyProvider = forms.typeHierarchy ?: typeHierarchyProvider.toEither3(),
-            inlineValueProvider = forms.inlineValue ?: inlineValueProvider.toEither3(),
             inlineCompletionProvider = inlineCompletionProvider.toEither(),
-            inlayHintProvider = forms.inlayHint ?: inlayHintProvider.toEither3(),
             diagnosticProvider = forms.diagnostic ?: diagnosticProvider?.let { Either.left(it) },
             workspaceSymbolProvider = workspaceSymbolProvider.toEither(),
             executeCommandProvider = executeCommandProvider,
             workspace = workspace,
             experimental = experimental,
+        )
+
+    private fun ServerCapabilities.withNavigationForms(): ServerCapabilities =
+        copy(
+            declarationProvider = forms.declaration ?: declarationProvider.toEither3(),
+            typeDefinitionProvider = forms.typeDefinition ?: typeDefinitionProvider.toEither3(),
+            implementationProvider = forms.implementation ?: implementationProvider.toEither3(),
+            colorProvider = forms.color ?: colorProvider.toEither3(),
+            foldingRangeProvider = forms.foldingRange ?: foldingRangeProvider.toEither3(),
+            selectionRangeProvider = forms.selectionRange ?: selectionRangeProvider.toEither3(),
+            linkedEditingRangeProvider = forms.linkedEditingRange ?: linkedEditingRangeProvider.toEither3(),
+            callHierarchyProvider = forms.callHierarchy ?: callHierarchyProvider.toEither3(),
+        )
+
+    private fun ServerCapabilities.withLanguageForms(): ServerCapabilities =
+        copy(
+            monikerProvider = forms.moniker ?: monikerProvider.toEither3(),
+            typeHierarchyProvider = forms.typeHierarchy ?: typeHierarchyProvider.toEither3(),
+            inlineValueProvider = forms.inlineValue ?: inlineValueProvider.toEither3(),
+            inlayHintProvider = forms.inlayHint ?: inlayHintProvider.toEither3(),
         )
 }

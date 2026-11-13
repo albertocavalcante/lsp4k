@@ -83,18 +83,21 @@ internal fun <L, R> strictUnion(
         }
     }
 
+/** One member of a strict union: its [serializer] and the [matches] predicate on the JSON kind that selects it. */
+internal class UnionMember<T>(
+    val serializer: KSerializer<T>,
+    val matches: (JsonElement) -> Boolean,
+)
+
 /**
  * Builds a strict serializer for `A | B | C`: the JSON kind of the element selects the member,
  * and any element matching none of them is rejected.
  */
 internal fun <A, B, C> strictUnion3(
     name: String,
-    firstSerializer: KSerializer<A>,
-    secondSerializer: KSerializer<B>,
-    thirdSerializer: KSerializer<C>,
-    isFirst: (JsonElement) -> Boolean,
-    isSecond: (JsonElement) -> Boolean,
-    isThird: (JsonElement) -> Boolean,
+    first: UnionMember<A>,
+    second: UnionMember<B>,
+    third: UnionMember<C>,
 ): KSerializer<Either3<A, B, C>> =
     object : KSerializer<Either3<A, B, C>> {
         override val descriptor: SerialDescriptor = buildClassSerialDescriptor(name)
@@ -105,9 +108,9 @@ internal fun <A, B, C> strictUnion3(
         ) {
             val jsonEncoder = encoder as JsonEncoder
             when (value) {
-                is Either3.First -> jsonEncoder.encodeSerializableValue(firstSerializer, value.value)
-                is Either3.Second -> jsonEncoder.encodeSerializableValue(secondSerializer, value.value)
-                is Either3.Third -> jsonEncoder.encodeSerializableValue(thirdSerializer, value.value)
+                is Either3.First -> jsonEncoder.encodeSerializableValue(first.serializer, value.value)
+                is Either3.Second -> jsonEncoder.encodeSerializableValue(second.serializer, value.value)
+                is Either3.Third -> jsonEncoder.encodeSerializableValue(third.serializer, value.value)
             }
         }
 
@@ -115,9 +118,9 @@ internal fun <A, B, C> strictUnion3(
             val jsonDecoder = decoder as JsonDecoder
             val element = jsonDecoder.decodeJsonElement()
             return when {
-                isFirst(element) -> Either3.First(jsonDecoder.json.decodeFromJsonElement(firstSerializer, element))
-                isSecond(element) -> Either3.Second(jsonDecoder.json.decodeFromJsonElement(secondSerializer, element))
-                isThird(element) -> Either3.Third(jsonDecoder.json.decodeFromJsonElement(thirdSerializer, element))
+                first.matches(element) -> Either3.First(jsonDecoder.json.decodeFromJsonElement(first.serializer, element))
+                second.matches(element) -> Either3.Second(jsonDecoder.json.decodeFromJsonElement(second.serializer, element))
+                third.matches(element) -> Either3.Third(jsonDecoder.json.decodeFromJsonElement(third.serializer, element))
                 else -> throw SerializationException("Invalid $name: $element")
             }
         }
@@ -140,12 +143,9 @@ internal fun <O, R> booleanOrOptionsOrRegistration(
 ): KSerializer<Either3<Boolean, O, R>> =
     strictUnion3(
         name,
-        Boolean.serializer(),
-        options,
-        registration,
-        JsonElement::isBoolean,
-        { it.isObjectWithout(DOCUMENT_SELECTOR) },
-        { it.isObjectWith(DOCUMENT_SELECTOR) },
+        UnionMember(Boolean.serializer(), JsonElement::isBoolean),
+        UnionMember(options) { it.isObjectWithout(DOCUMENT_SELECTOR) },
+        UnionMember(registration) { it.isObjectWith(DOCUMENT_SELECTOR) },
     )
 
 /**
