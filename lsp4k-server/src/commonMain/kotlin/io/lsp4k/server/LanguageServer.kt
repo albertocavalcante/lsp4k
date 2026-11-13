@@ -93,6 +93,9 @@ public class LanguageServer internal constructor(
     private suspend fun initialize(params: JsonElement?): JsonElement =
         lifecycle.initialize {
             val decoded = decodeParams(LspMethods.INITIALIZE, InitializeParams.serializer(), params)
+            // The requested trace level applies as soon as the request is decoded, so the hook can already log with
+            // it and it stays after a failed attempt; an omitted level defaults to off, including on a retry.
+            traceLevel = decoded.trace ?: TraceValue.Off
             val hook = config.lifecycle.initialize
             val result =
                 if (hook == null) {
@@ -102,8 +105,6 @@ public class LanguageServer internal constructor(
                     runHandler(context) { context.hook(decoded) }
                 }
             val encoded = wireJson.encodeToJsonElement(InitializeResult.serializer(), result)
-            // An omitted trace level defaults to off, including on a retry; a failed hook leaves it untouched.
-            traceLevel = decoded.trace ?: TraceValue.Off
             lifecycle.initializeParams = decoded
             encoded
         }
