@@ -34,6 +34,16 @@ public data class DocumentColorParams(
      * The text document.
      */
     val textDocument: TextDocumentIdentifier,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**
@@ -68,6 +78,16 @@ public data class ColorPresentationParams(
      * The range where the color would be inserted.
      */
     val range: Range,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
+    /**
+     * An optional token that a server can use to report partial results.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val partialResultToken: ProgressToken? = null,
 )
 
 /**

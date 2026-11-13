@@ -113,3 +113,31 @@ public data class DidCloseNotebookDocumentParams(
     val notebookDocument: NotebookDocumentIdentifier,
     val cellTextDocuments: List<TextDocumentIdentifier>,
 )
+
+/**
+ * Notebook specific client capabilities.
+ */
+@Serializable
+public data class NotebookDocumentClientCapabilities(
+    /**
+     * Capabilities specific to notebook document synchronization.
+     */
+    val synchronization: NotebookDocumentSyncClientCapabilities,
+)
+
+/**
+ * Notebook specific client capabilities for notebook document synchronization.
+ */
+@Serializable
+public data class NotebookDocumentSyncClientCapabilities(
+    /**
+     * Whether implementation supports dynamic registration. If this is set to `true` the client
+     * supports the new `(NotebookDocumentSyncRegistrationOptions & NotebookDocumentSyncOptions)`
+     * return value for the corresponding server capability as well.
+     */
+    val dynamicRegistration: Boolean? = null,
+    /**
+     * The client supports sending execution summary data per cell.
+     */
+    val executionSummarySupport: Boolean? = null,
+)

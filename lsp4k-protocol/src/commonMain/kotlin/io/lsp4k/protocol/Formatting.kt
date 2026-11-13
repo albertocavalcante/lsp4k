@@ -104,4 +104,9 @@ public data class DocumentRangesFormattingParams(
     val textDocument: TextDocumentIdentifier,
     val ranges: List<Range>,
     val options: FormattingOptions,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
 )

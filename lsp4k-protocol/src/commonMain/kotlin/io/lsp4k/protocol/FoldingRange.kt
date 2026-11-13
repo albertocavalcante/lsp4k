@@ -1,6 +1,6 @@
 package io.lsp4k.protocol
 
-import kotlinx.serialization.SerialName
+import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
 
 /**
@@ -60,16 +60,44 @@ public data class FoldingRange(
 )
 
 /**
- * Enum of known range kinds.
+ * A set of predefined range kinds. The set is open: servers may send, and clients must
+ * accept, custom values.
  */
 @Serializable
-public enum class FoldingRangeKind {
-    @SerialName("comment")
-    Comment,
+@JvmInline
+public value class FoldingRangeKind(
+    public val value: String,
+) {
+    public companion object {
+        /**
+         * Folding range for a comment.
+         */
+        public val Comment: FoldingRangeKind = FoldingRangeKind("comment")
 
-    @SerialName("imports")
-    Imports,
+        /**
+         * Folding range for an import or include.
+         */
+        public val Imports: FoldingRangeKind = FoldingRangeKind("imports")
 
-    @SerialName("region")
-    Region,
+        /**
+         * Folding range for a region (for example `#region`).
+         */
+        public val Region: FoldingRangeKind = FoldingRangeKind("region")
+    }
 }
+
+/**
+ * Client workspace capabilities specific to folding ranges.
+ */
+@Serializable
+public data class FoldingRangeWorkspaceClientCapabilities(
+    /**
+     * Whether the client implementation supports a refresh request sent from the server to the
+     * client.
+     *
+     * Note that this event is global and will force the client to refresh all folding ranges
+     * currently shown. It should be used with absolute care and is useful for situations where a
+     * server, for example, detects a project wide change that requires such a calculation.
+     */
+    val refreshSupport: Boolean? = null,
+)

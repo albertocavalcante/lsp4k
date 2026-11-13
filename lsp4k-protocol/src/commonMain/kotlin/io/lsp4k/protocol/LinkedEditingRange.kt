@@ -15,6 +15,11 @@ public data class LinkedEditingRangeParams(
      * The position inside the text document.
      */
     val position: Position,
+    /**
+     * An optional token that a server can use to report work done progress.
+     */
+    @Serializable(with = NullableProgressTokenSerializer::class)
+    val workDoneToken: ProgressToken? = null,
 )
 
 /**

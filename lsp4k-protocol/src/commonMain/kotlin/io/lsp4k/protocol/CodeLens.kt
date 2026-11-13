@@ -43,3 +43,14 @@ public data class CodeLens(
      */
     val data: JsonElement? = null,
 )
+
+/**
+ * Client capabilities for resolving additional code lens properties.
+ */
+@Serializable
+public data class ClientCodeLensResolveOptions(
+    /**
+     * The properties that a client can resolve lazily.
+     */
+    val properties: List<String>,
+)

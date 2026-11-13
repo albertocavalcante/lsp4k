@@ -113,4 +113,8 @@ public data class DiagnosticOptions(
      * The server provides support for workspace diagnostics as well.
      */
     val workspaceDiagnostics: Boolean,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )

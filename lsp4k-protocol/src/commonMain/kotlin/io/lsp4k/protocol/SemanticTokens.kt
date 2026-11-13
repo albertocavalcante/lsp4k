@@ -22,6 +22,10 @@ public data class SemanticTokensOptions(
      */
     @Serializable(with = SemanticTokensFullSer::class)
     val full: Either<Boolean, SemanticTokensFullOptions>? = null,
+    /**
+     * Whether the server supports work done progress.
+     */
+    val workDoneProgress: Boolean? = null,
 )
 
 /**

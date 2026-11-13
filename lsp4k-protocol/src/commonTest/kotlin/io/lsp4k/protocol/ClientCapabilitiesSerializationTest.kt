@@ -541,14 +541,14 @@ class ClientCapabilitiesSerializationTest {
                         version = "1.0.0",
                         allowedTags = listOf("a", "code", "pre"),
                     ),
-                positionEncodings = listOf("utf-16", "utf-32"),
+                positionEncodings = listOf(PositionEncodingKind.UTF16, PositionEncodingKind.UTF32),
             )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<GeneralClientCapabilities>(encoded)
         decoded.staleRequestSupport?.cancel shouldBe true
         decoded.regularExpressions?.engine shouldBe "ECMAScript"
         decoded.markdown?.parser shouldBe "marked"
-        decoded.positionEncodings shouldBe listOf("utf-16", "utf-32")
+        decoded.positionEncodings shouldBe listOf(PositionEncodingKind.UTF16, PositionEncodingKind.UTF32)
     }
 
     // ==================== Full ClientCapabilities Tests ====================
@@ -576,7 +576,7 @@ class ClientCapabilitiesSerializationTest {
                 window = WindowClientCapabilities(workDoneProgress = true),
                 general =
                     GeneralClientCapabilities(
-                        positionEncodings = listOf("utf-16"),
+                        positionEncodings = listOf(PositionEncodingKind.UTF16),
                     ),
             )
         val encoded = json.encodeToString(caps)
@@ -584,6 +584,6 @@ class ClientCapabilitiesSerializationTest {
         decoded.workspace?.applyEdit shouldBe true
         decoded.textDocument?.hover?.dynamicRegistration shouldBe true
         decoded.window?.workDoneProgress shouldBe true
-        decoded.general?.positionEncodings shouldBe listOf("utf-16")
+        decoded.general?.positionEncodings shouldBe listOf(PositionEncodingKind.UTF16)
     }
 }
