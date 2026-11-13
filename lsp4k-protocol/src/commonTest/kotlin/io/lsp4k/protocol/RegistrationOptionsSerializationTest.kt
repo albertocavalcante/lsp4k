@@ -253,6 +253,17 @@ class RegistrationOptionsSerializationTest {
         json.decodeFromString<ServerCapabilities>(json.encodeToString(options)) shouldBe options
     }
 
+    @Test
+    fun `notebook sync registration without id decodes as options`() {
+        val selector = listOf(NotebookSelector(notebook = Either.left("jupyter")))
+        val caps =
+            ServerCapabilities(
+                notebookDocumentSync = Either.right(NotebookDocumentSyncRegistrationOptions(notebookSelector = selector)),
+            )
+        val decoded = json.decodeFromString<ServerCapabilities>(json.encodeToString(caps))
+        decoded.notebookDocumentSync shouldBe Either.left(NotebookDocumentSyncOptions(notebookSelector = selector))
+    }
+
     // ==================== method constants ====================
 
     @Test
