@@ -131,6 +131,26 @@ The server enforces the lifecycle: requests before `initialize` fail with `Serve
 are dropped in those states, and `exit` records `exitCode` (0 after `shutdown`, otherwise 1) for the
 application to act on.
 
+### Tracking open documents
+
+`TextDocuments` keeps the text of open documents in sync, including incremental edits in the
+negotiated position encoding (UTF-16, UTF-8 or UTF-32). Changes with a stale version are dropped.
+
+```kotlin
+val documents = TextDocuments() // pass the negotiated PositionEncodingKind if not UTF-16
+
+languageServer {
+    textDocument {
+        didOpen { documents.didOpen(it) }
+        didChange { documents.didChange(it) }
+        didClose { documents.didClose(it) }
+    }
+}
+
+val doc = documents.get(uri)
+val offset = doc?.offsetAt(Position(line = 3, character = 5))
+```
+
 ## Installation
 
 Add to your `build.gradle.kts`:
