@@ -5,7 +5,7 @@ Idiomatic Kotlin Multiplatform library for the [Language Server Protocol (LSP)](
 ## Features
 
 - **Pure Kotlin** - No Java dependencies, designed for Kotlin from the ground up
-- **Multiplatform** - JVM, Native (macOS, Linux, Windows), and JS targets
+- **Multiplatform** - JVM, JS (Node.js and browser) and Kotlin/Native targets; see [Targets](#targets) for which ones CI runs
 - **kotlinx-serialization** - Type-safe JSON serialization with `@Serializable` data classes
 - **Coroutines** - Async-first API with `suspend` functions and `Flow`
 - **DSL-based** - Intuitive builder DSL for server configuration
@@ -66,6 +66,49 @@ fun main() {
     }
     exitProcess(exitCode)
 }
+```
+
+## Specification, targets and transports
+
+### Specification version
+
+lsp4k implements [LSP 3.18](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/),
+including its proposed (still unfinalized) items such as inline completion, text document content and
+`rangesFormatting`. Proposed items follow the published meta model and can change when the specification does.
+
+Conformance is checked against the specification's machine-readable `metaModel.json`: the server and client API
+coverage tests compare the handler hooks and typed calls with the method list taken from the 3.18 meta model
+(`MetaModelMethods` in the `lsp4k-server` tests), so a method missing from either side fails `./gradlew check`.
+The meta model's structures are not yet diffed against the `lsp4k-protocol` types automatically.
+
+### Targets
+
+| Target | What CI does |
+|--------|--------------|
+| JVM (toolchain 17, published for Java 17) | Runs all tests, including the end-to-end TCP session test (`TcpEndToEndTest`), on Linux; a separate job builds a Java 17 consumer |
+| JS (Node.js, browser) | Part of `./gradlew check` on the Linux job |
+| macOS native (`macosArm64`, `macosX64`) | `./gradlew check` on a macOS runner with Apple targets enabled |
+| `linuxX64` | Tests run on the Linux job |
+| `linuxArm64` | Compile-only: there is no Linux arm64 job, so its tests never execute |
+| `mingwX64` (Windows) | Compile-only: lsp4k has no Windows job, so its tests never execute |
+
+Compile-only targets are built by `check` but their behaviour is unverified here. The end-to-end session test
+is JVM only.
+
+### Transports
+
+lsp4k does not frame bytes itself; `start(transport)` takes a `jsonrpc4k` `Transport` and speaks `Content-Length`
+framed JSON-RPC over it. jsonrpc4k provides stdio (`TransportFactory.stdio()`), TCP client and listener
+(`TcpSocket`, `TcpListener`), Unix sockets, named pipes (Node.js on Windows), Node IPC, a child process
+(`ProcessTransport`) and an in-memory pair (`InMemoryTransport.pair()`). Which of them each platform supports is
+tabulated in the [jsonrpc4k README](https://github.com/albertocavalcante/jsonrpc4k#transports-by-platform); an
+unsupported combination throws `UnsupportedTransportException`.
+
+```kotlin
+val listener = TcpListener.bind("127.0.0.1", 0)           // server process
+val server = config.start(listener.accept())
+
+val session = clientConfig.start(TcpSocket.connect("127.0.0.1", port)) // client process
 ```
 
 ## Server API
@@ -166,6 +209,35 @@ val doc = documents.get(uri) // suspend; returns an immutable snapshot
 val offset = doc?.offsetAt(Position(line = 3, character = 5))
 ```
 
+### Position encoding negotiation
+
+Positions count UTF-16 code units unless the client and server agree on `utf-8` or `utf-32`. A client lists
+the encodings it supports in `general.positionEncodings`; the server answers with `positionEncoding`. Use
+`negotiatePositionEncoding` for the decision: the first entry of the server's preference that the client
+offers wins, and UTF-16 is the result when the client lists nothing or nothing matches.
+
+```kotlin
+negotiatePositionEncoding(listOf(PositionEncodingKind.UTF16, PositionEncodingKind.UTF8), listOf(UTF8, UTF16)) // UTF8
+negotiatePositionEncoding(null, listOf(UTF8, UTF16)) // UTF16: the client offered nothing
+```
+
+The builder wires it into the default `initialize` result, and the outcome is `server.positionEncoding` once
+`initialize` was answered, so `TextDocuments` can be created in the `initialized` hook:
+
+```kotlin
+val documents = CompletableDeferred<TextDocuments>()
+
+languageServer {
+    negotiatePositionEncoding(listOf(PositionEncodingKind.UTF8, PositionEncodingKind.UTF16))
+    onInitialized { documents.complete(TextDocuments(server.positionEncoding)) }
+    textDocument { didOpen { documents.await().didOpen(it) } }
+}
+```
+
+A server that builds its own result in `onInitialize` calls `params.negotiatePositionEncoding(preference)` and
+passes the value to `TextDocuments(encoding)`; `TextDocuments(params, preference)` and
+`TextDocuments(serverCapabilities)` are shorthands for the same.
+
 ## Client
 
 `lsp4k-client` covers every LSP 3.18 method in both directions. Calls to the server are grouped by
@@ -208,13 +280,22 @@ session.server.textDocument.references(ReferenceParams(document, position, conte
 
 ## Installation
 
-Add to your `build.gradle.kts`:
+Nothing is published yet, so build from source. Clone `lsp4k` next to a `jsonrpc4k` checkout (the build uses
+the sibling `../jsonrpc4k` automatically). Then either include lsp4k in your build as a composite build, in
+your `settings.gradle.kts`:
+
+```kotlin
+includeBuild("../lsp4k")
+```
 
 ```kotlin
 dependencies {
-    implementation("io.lsp4k:lsp4k-server:0.1.0")
+    implementation("io.lsp4k:lsp4k-server") // resolved from the included build
 }
 ```
+
+or publish to your local Maven repository with `./gradlew publishToMavenLocal`, add `mavenLocal()` to your
+repositories and depend on `io.lsp4k:lsp4k-server:0.1.0-SNAPSHOT`. No remote repository serves these artifacts.
 
 ## Building
 

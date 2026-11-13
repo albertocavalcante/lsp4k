@@ -6,6 +6,7 @@ import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.LspMethods
+import io.lsp4k.protocol.PositionEncodingKind
 import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.ServerInfo
 import io.lsp4k.protocol.SetTraceParams
@@ -77,6 +78,9 @@ public data class LifecycleHandlers(
  * @property requestHandlers Request handlers keyed by JSON-RPC method name.
  * @property notificationHandlers Notification handlers keyed by JSON-RPC method name.
  * @property lifecycle Hooks for `initialize`, `initialized`, `shutdown`, `exit` and `$/setTrace`.
+ * @property positionEncodingPreference When set, the default `initialize` result advertises the encoding negotiated
+ *   from this server preference and the client's offer (see [negotiatePositionEncoding]); null leaves
+ *   [capabilities] as configured. A custom initialize hook is not affected.
  */
 public data class LanguageServerConfig(
     val serverInfo: ServerInfo?,
@@ -84,6 +88,7 @@ public data class LanguageServerConfig(
     val requestHandlers: Map<String, ServerRequestHandler>,
     val notificationHandlers: Map<String, ServerNotificationHandler>,
     val lifecycle: LifecycleHandlers = LifecycleHandlers(),
+    val positionEncodingPreference: List<PositionEncodingKind>? = null,
 )
 
 private val reservedRequestMethods: Set<String> = setOf(LspMethods.INITIALIZE, LspMethods.SHUTDOWN)

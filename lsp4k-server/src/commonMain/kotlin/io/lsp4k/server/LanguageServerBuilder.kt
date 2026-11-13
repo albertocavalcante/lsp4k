@@ -3,6 +3,7 @@ package io.lsp4k.server
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
 import io.lsp4k.protocol.LspMethods
+import io.lsp4k.protocol.PositionEncodingKind
 import io.lsp4k.protocol.ProgressParams
 import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.ServerInfo
@@ -33,6 +34,7 @@ public class LanguageServerBuilder internal constructor() {
     internal var serverInfo: ServerInfo? = null
     internal var capabilities: ServerCapabilities = ServerCapabilities()
     internal var lifecycle: LifecycleHandlers = LifecycleHandlers()
+    internal var positionEncodingPreference: List<PositionEncodingKind>? = null
 
     /**
      * Sets the server name and optional version advertised in the default `initialize` result.
@@ -160,4 +162,5 @@ internal fun LanguageServerBuilder.toConfig(): LanguageServerConfig =
         requestHandlers = registry.requests.toMap(),
         notificationHandlers = registry.notifications.toMap(),
         lifecycle = lifecycle,
+        positionEncodingPreference = positionEncodingPreference,
     )
