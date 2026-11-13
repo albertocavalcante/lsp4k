@@ -149,7 +149,9 @@ class LspIntegrationTest {
             initResult shouldNotBe null
             initResult!!.serverInfo?.name shouldBe "TestServer"
             initResult.serverInfo?.version shouldBe "1.0.0"
-            initResult.capabilities.textDocumentSync?.right?.change shouldBe TextDocumentSyncKind.Full
+            initResult.capabilities.textDocumentSync
+                ?.right
+                ?.change shouldBe TextDocumentSyncKind.Full
             initResult.capabilities.hoverProvider shouldBe Either.left(true)
 
             // Send initialized notification

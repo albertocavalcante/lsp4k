@@ -86,7 +86,11 @@ class LanguageServerBuilderTest {
                     textDocumentSync = TextDocumentSyncKind.Full
                 }
             }
-        val textDocumentSync = config.capabilities.textDocumentSync.shouldNotBeNull().right.shouldNotBeNull()
+        val textDocumentSync =
+            config.capabilities.textDocumentSync
+                .shouldNotBeNull()
+                .right
+                .shouldNotBeNull()
         textDocumentSync.change shouldBe TextDocumentSyncKind.Full
         textDocumentSync.openClose shouldBe true
     }
