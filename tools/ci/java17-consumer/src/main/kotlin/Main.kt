@@ -30,7 +30,11 @@ fun main() =
             val server =
                 languageServer {
                     onInitialize { params ->
-                        check(params.workspaceFolders.valueOrNull?.single()?.name == "fixture")
+                        check(
+                            params.workspaceFolders.valueOrNull
+                                ?.single()
+                                ?.name == "fixture",
+                        )
                         check(params.initializationOptions == JsonPrimitive("options"))
                         InitializeResult(ServerCapabilities())
                     }

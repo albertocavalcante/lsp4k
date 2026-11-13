@@ -158,8 +158,7 @@ internal fun <O, R> optionsOrRegistration(
     options: KSerializer<O>,
     registration: KSerializer<R>,
     key: String = DOCUMENT_SELECTOR,
-): KSerializer<Either<O, R>> =
-    strictUnion(name, options, registration, { it.isObjectWithout(key) }, { it.isObjectWith(key) })
+): KSerializer<Either<O, R>> = strictUnion(name, options, registration, { it.isObjectWithout(key) }, { it.isObjectWith(key) })
 
 private const val DOCUMENT_SELECTOR: String = "documentSelector"
 
