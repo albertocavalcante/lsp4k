@@ -139,7 +139,7 @@ public class ServerCapabilitiesBuilder internal constructor() {
 
     private fun Boolean.toEither3(): Either3<Boolean, Nothing, Nothing>? = if (this) Either3.first(true) else null
 
-    internal fun build(): ServerCapabilities = baseCapabilities().withNavigationForms().withLanguageForms()
+    internal fun build(): ServerCapabilities = withLanguageForms(withNavigationForms(baseCapabilities()))
 
     private fun baseCapabilities(): ServerCapabilities =
         ServerCapabilities(
@@ -178,8 +178,8 @@ public class ServerCapabilitiesBuilder internal constructor() {
             experimental = experimental,
         )
 
-    private fun ServerCapabilities.withNavigationForms(): ServerCapabilities =
-        copy(
+    private fun withNavigationForms(base: ServerCapabilities): ServerCapabilities =
+        base.copy(
             declarationProvider = forms.declaration ?: declarationProvider.toEither3(),
             typeDefinitionProvider = forms.typeDefinition ?: typeDefinitionProvider.toEither3(),
             implementationProvider = forms.implementation ?: implementationProvider.toEither3(),
@@ -190,8 +190,8 @@ public class ServerCapabilitiesBuilder internal constructor() {
             callHierarchyProvider = forms.callHierarchy ?: callHierarchyProvider.toEither3(),
         )
 
-    private fun ServerCapabilities.withLanguageForms(): ServerCapabilities =
-        copy(
+    private fun withLanguageForms(base: ServerCapabilities): ServerCapabilities =
+        base.copy(
             monikerProvider = forms.moniker ?: monikerProvider.toEither3(),
             typeHierarchyProvider = forms.typeHierarchy ?: typeHierarchyProvider.toEither3(),
             inlineValueProvider = forms.inlineValue ?: inlineValueProvider.toEither3(),
