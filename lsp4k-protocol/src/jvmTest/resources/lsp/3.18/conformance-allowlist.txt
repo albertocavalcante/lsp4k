@@ -1,0 +1,10 @@
+# Ratcheting allow-list for MetaModelConformanceTest (lsp4k-protocol jvmTest).
+#
+# Each entry is one violation key followed by the reason it is accepted for now, grouped under the header of the
+# gap that explains it:
+#
+#   [LP-<n>] <gap title>
+#   <violation key> <reason>
+#
+# The test fails for a violation that is not listed here and for an entry whose violation no longer occurs, so a
+# change that fixes a gap must delete its entries. G2.1 requires this file to have no entries.

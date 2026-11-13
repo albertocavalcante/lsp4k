@@ -21,6 +21,8 @@ kotlin {
         jvmTest {
             dependencies {
                 implementation(libs.kotest.runner.junit5)
+                // Test only: the meta-model conformance test checks its wire Json against jsonrpc4k's.
+                implementation(libs.jsonrpc4k.core)
             }
         }
     }
