@@ -1,7 +1,7 @@
 package io.lsp4k.protocol
 
-import kotlin.jvm.JvmInline
 import kotlinx.serialization.Serializable
+import kotlin.jvm.JvmInline
 
 /**
  * Parameters for textDocument/foldingRange request.

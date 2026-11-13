@@ -62,7 +62,10 @@ class ProgressAndCapabilitiesTest {
 
     @Test
     fun `initialize params decode a work done token`() {
-        val decoded = json.decodeFromString<InitializeParams>("""{"processId":null,"rootUri":null,"capabilities":{},"workDoneToken":"init"}""")
+        val decoded =
+            json.decodeFromString<InitializeParams>(
+                """{"processId":null,"rootUri":null,"capabilities":{},"workDoneToken":"init"}""",
+            )
         decoded.workDoneToken shouldBe Either.right("init")
     }
 
@@ -80,9 +83,11 @@ class ProgressAndCapabilitiesTest {
         json.decodeFromString<CompletionOptions>("""{"workDoneProgress":true}""").workDoneProgress shouldBe true
         json.decodeFromString<SignatureHelpOptions>("""{"workDoneProgress":false}""").workDoneProgress shouldBe false
         json.decodeFromString<DocumentLinkOptions>("""{"workDoneProgress":true}""").workDoneProgress shouldBe true
-        json.decodeFromString<SemanticTokensOptions>(
-            """{"legend":{"tokenTypes":[],"tokenModifiers":[]},"workDoneProgress":true}""",
-        ).workDoneProgress shouldBe true
+        val semantic =
+            json.decodeFromString<SemanticTokensOptions>(
+                """{"legend":{"tokenTypes":[],"tokenModifiers":[]},"workDoneProgress":true}""",
+            )
+        semantic.workDoneProgress shouldBe true
     }
 
     // ==================== client capabilities ====================
@@ -133,7 +138,8 @@ class ProgressAndCapabilitiesTest {
         val lens =
             json.decodeFromString<CodeLensClientCapabilities>("""{"resolveSupport":{"properties":["command"]}}""")
         lens.resolveSupport shouldBe ClientCodeLensResolveOptions(properties = listOf("command"))
-        json.decodeFromString<SignatureInformationCapability>("""{"noActiveParameterSupport":true}""")
+        json
+            .decodeFromString<SignatureInformationCapability>("""{"noActiveParameterSupport":true}""")
             .noActiveParameterSupport shouldBe true
     }
 
@@ -168,7 +174,8 @@ class ProgressAndCapabilitiesTest {
         json.encodeToString(PositionEncodingKind.UTF8) shouldBe "\"utf-8\""
         json.decodeFromString<PositionEncodingKind>("\"utf-16\"") shouldBe PositionEncodingKind.UTF16
         json.decodeFromString<PositionEncodingKind>("\"utf-64\"") shouldBe PositionEncodingKind("utf-64")
-        json.decodeFromString<GeneralClientCapabilities>("""{"positionEncodings":["utf-32","x"]}""")
+        json
+            .decodeFromString<GeneralClientCapabilities>("""{"positionEncodings":["utf-32","x"]}""")
             .positionEncodings shouldBe listOf(PositionEncodingKind.UTF32, PositionEncodingKind("x"))
         json.encodeToString(ServerCapabilities(positionEncoding = PositionEncodingKind.UTF8)) shouldBe
             """{"positionEncoding":"utf-8"}"""
