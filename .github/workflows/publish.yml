@@ -60,7 +60,7 @@ jobs:
           fi
           printf 'version=%s\n' "$version" >>"$GITHUB_OUTPUT"
 
-      - name: Preflight complete publication to a private file repository
+      - name: Preflight configured publication to a private file repository
         run: |
           preflight_dir=$(mktemp -d "$RUNNER_TEMP/lsp4k-publish-preflight.XXXXXXXX")
           trap 'rm -rf "$preflight_dir"' EXIT

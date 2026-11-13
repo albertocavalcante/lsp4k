@@ -28,7 +28,11 @@ gradle.projectsEvaluated {
             }.distinct()
     check(publicationVersions.size == 1) { "Mixed Maven publication versions are not supported: $publicationVersions" }
     val publicationVersion = publicationVersions.single()
-    val taggedVersion = providers.environmentVariable("RELEASE_VERSION").orNull.orEmpty()
+    val taggedVersion =
+        root.providers
+            .environmentVariable("RELEASE_VERSION")
+            .orNull
+            .orEmpty()
     check(taggedVersion.isEmpty() || taggedVersion == publicationVersion) {
         "Tag version '$taggedVersion' does not match Maven publication version '$publicationVersion'"
     }
@@ -42,6 +46,31 @@ gradle.projectsEvaluated {
     }
     check(exactVersion.matches(expected) && !expected.contains("snapshot", ignoreCase = true)) {
         "Release publication requires an exact non-SNAPSHOT jsonrpc4k catalog version, got '$expected'"
+    }
+    // A host-specific model must not publish a partial release as the complete SDK.
+    val requiredPublications =
+        setOf(
+            "kotlinMultiplatform",
+            "jvm",
+            "js",
+            "linuxX64",
+            "linuxArm64",
+            "mingwX64",
+            "macosX64",
+            "macosArm64",
+        )
+    listOf("lsp4k-protocol", "lsp4k-client", "lsp4k-server").forEach { name ->
+        val publications =
+            root
+                .project(":$name")
+                .extensions
+                .getByType<PublishingExtension>()
+                .publications
+                .withType<MavenPublication>()
+                .map { it.name }
+                .toSet()
+        val missing = requiredPublications - publications
+        check(missing.isEmpty()) { "Release publication for $name is missing required publications: ${missing.sorted()}" }
     }
     val graphs =
         listOf("lsp4k-client", "lsp4k-server").map { name ->

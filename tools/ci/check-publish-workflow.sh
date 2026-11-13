@@ -26,7 +26,7 @@ check_token_env() {
 		END { if (!found) exit 1 }
 	' "$workflow"
 }
-preflight='Preflight complete publication to a private file repository'
+preflight='Preflight configured publication to a private file repository'
 extract_run 'Select tagged publication version' "$fixture_root/version.sh"
 extract_run "$preflight" "$fixture_root/preflight.sh"
 extract_run 'Publish' "$fixture_root/publish.sh"

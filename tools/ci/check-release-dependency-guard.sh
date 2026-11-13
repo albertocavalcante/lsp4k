@@ -25,7 +25,13 @@ subprojects {
     val runtime = configurations.create("jvmRuntimeClasspath")
     dependencies.add(runtime.name, "io.github.albertocavalcante:jsonrpc4k-transport:${System.getenv("LSP_GUARD_REQUESTED")}")
     extensions.configure<org.gradle.api.publish.PublishingExtension> {
-        publications.create<org.gradle.api.publish.maven.MavenPublication>("fixture") { artifactId = project.name }
+        val missing = System.getenv("LSP_GUARD_MISSING_PUBLICATION")
+        val names = listOf("kotlinMultiplatform", "jvm", "js", "linuxX64", "linuxArm64", "mingwX64", "macosX64", "macosArm64")
+        names.filter { it != missing }.forEach { publication ->
+            publications.create<org.gradle.api.publish.maven.MavenPublication>(publication) {
+                artifactId = "${project.name}-$publication"
+            }
+        }
         repositories.maven { name = "Fixture"; url = uri(requireNotNull(System.getenv("LSP_GUARD_OUTPUT"))) }
     }
 }
@@ -68,6 +74,22 @@ for version in 1.2.3-SNAPSHOT '1.+' latest.release '[1.0,2.0)'; do
 	grep -Fq 'requires an exact non-SNAPSHOT jsonrpc4k catalog version' "$fixture_root/rejected.log"
 	[[ ! -e $LSP_GUARD_OUTPUT ]]
 done
+# Release checks use actual MavenPublication names. Test both tagged and manual paths;
+# an absent Apple publication must fail before any file repository output is created.
+for missing in macosX64 macosArm64; do
+	for tag in '' 1.0; do
+		if LSP_GUARD_MISSING_PUBLICATION="$missing" run_guard 1.2.3 1.2.3 1.0 1.0 "$tag" >"$fixture_root/missing-target.log" 2>&1; then
+			printf 'Release unexpectedly accepted missing publication: %s\n' "$missing" >&2
+			exit 1
+		fi
+		grep -Fq "missing required publications: [$missing]" "$fixture_root/missing-target.log"
+		[[ ! -e $LSP_GUARD_OUTPUT ]]
+	done
+done
+# A manual snapshot remains scoped to whichever targets are configured on the host.
+LSP_GUARD_MISSING_PUBLICATION=macosArm64 run_guard 0.1.0-SNAPSHOT 0.1.0-SNAPSHOT 0.1.0-SNAPSHOT
+[[ -d $LSP_GUARD_OUTPUT ]]
+rm -rf "$LSP_GUARD_OUTPUT"
 if run_guard 1.2.3 1.2.4 >"$fixture_root/mismatch.log" 2>&1; then
 	printf 'Mismatched resolved JSON-RPC version unexpectedly accepted\n' >&2
 	exit 1
