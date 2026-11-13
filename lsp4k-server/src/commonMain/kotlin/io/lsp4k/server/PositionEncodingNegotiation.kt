@@ -27,3 +27,13 @@ public fun negotiatePositionEncoding(
 public fun InitializeParams.negotiatePositionEncoding(
     serverPreference: List<PositionEncodingKind> = DEFAULT_POSITION_ENCODING_PREFERENCE,
 ): PositionEncodingKind = negotiatePositionEncoding(capabilities.general?.positionEncodings, serverPreference)
+
+/**
+ * Negotiates the position encoding in the default `initialize` result: the first of [preference] that the client
+ * lists in `general.positionEncodings` is advertised as `positionEncoding`, UTF-16 when none matches.
+ * Read the outcome from [LanguageServer.positionEncoding]. A handler given to
+ * [LanguageServerBuilder.onInitialize] builds its own result; negotiate there with [InitializeParams.negotiatePositionEncoding].
+ */
+public fun LanguageServerBuilder.negotiatePositionEncoding(preference: List<PositionEncodingKind>) {
+    positionEncodingPreference = preference.ifEmpty { DEFAULT_POSITION_ENCODING_PREFERENCE }
+}

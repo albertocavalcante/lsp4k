@@ -54,16 +54,6 @@ public class LanguageServerBuilder internal constructor() {
     }
 
     /**
-     * Negotiates the position encoding in the default `initialize` result: the first of [preference] that the client
-     * lists in `general.positionEncodings` is advertised as `positionEncoding`, UTF-16 when none matches.
-     * Read the outcome from [LanguageServer.positionEncoding]. A handler given to [onInitialize] builds its own
-     * result; negotiate there with [negotiatePositionEncoding].
-     */
-    public fun negotiatePositionEncoding(vararg preference: PositionEncodingKind) {
-        positionEncodingPreference = if (preference.isEmpty()) DEFAULT_POSITION_ENCODING_PREFERENCE else preference.toList()
-    }
-
-    /**
      * Handles `initialize` and chooses the result from the client's parameters, replacing the default result
      * built from [serverInfo] and [capabilities]. Throwing fails the request and lets the client retry.
      */

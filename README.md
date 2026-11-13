@@ -228,7 +228,7 @@ The builder wires it into the default `initialize` result, and the outcome is `s
 val documents = CompletableDeferred<TextDocuments>()
 
 languageServer {
-    negotiatePositionEncoding(PositionEncodingKind.UTF8, PositionEncodingKind.UTF16)
+    negotiatePositionEncoding(listOf(PositionEncodingKind.UTF8, PositionEncodingKind.UTF16))
     onInitialized { documents.complete(TextDocuments(server.positionEncoding)) }
     textDocument { didOpen { documents.await().didOpen(it) } }
 }

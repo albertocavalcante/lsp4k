@@ -63,7 +63,7 @@ class PositionEncodingNegotiationTest {
     @Test
     fun `the default initialize result advertises the negotiated encoding`() =
         runTest {
-            val peer = startPeer(backgroundScope) { negotiatePositionEncoding(utf8, utf16) }
+            val peer = startPeer(backgroundScope) { negotiatePositionEncoding(listOf(utf8, utf16)) }
             val response = peer.initialize(initializeParams().copy(capabilities = offered(utf16, utf8)))
 
             advertised(response.result()) shouldBe utf8
@@ -73,7 +73,7 @@ class PositionEncodingNegotiationTest {
     @Test
     fun `a client that offers nothing gets utf-16 from the builder wiring`() =
         runTest {
-            val peer = startPeer(backgroundScope) { negotiatePositionEncoding(utf8) }
+            val peer = startPeer(backgroundScope) { negotiatePositionEncoding(listOf(utf8)) }
             val response = peer.initialize()
 
             advertised(response.result()) shouldBe utf16

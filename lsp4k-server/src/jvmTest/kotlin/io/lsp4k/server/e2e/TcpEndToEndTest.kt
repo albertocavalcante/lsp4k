@@ -28,6 +28,7 @@ import io.lsp4k.server.LanguageServer
 import io.lsp4k.server.ServerState
 import io.lsp4k.server.TextDocuments
 import io.lsp4k.server.languageServer
+import io.lsp4k.server.negotiatePositionEncoding
 import io.lsp4k.server.start
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -64,7 +65,7 @@ private class ServerProbe {
     val config =
         languageServer {
             serverInfo("e2e-server", "1.0.0")
-            negotiatePositionEncoding(PositionEncodingKind.UTF8, PositionEncodingKind.UTF16)
+            negotiatePositionEncoding(listOf(PositionEncodingKind.UTF8, PositionEncodingKind.UTF16))
             capabilities {
                 hoverProvider = true
                 documentSymbolProvider = true
