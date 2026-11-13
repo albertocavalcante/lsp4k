@@ -1,6 +1,8 @@
 package io.lsp4k.client
 
+import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.Connection
+import io.jsonrpc4k.core.InboundResourceLimits
 import io.jsonrpc4k.core.JsonRpcCodec
 import io.jsonrpc4k.core.NotificationHandler
 import io.jsonrpc4k.transport.Transport
@@ -124,15 +126,28 @@ public class LanguageClientSession internal constructor(
     public suspend fun awaitTermination(): Throwable? = lifecycle.awaitTermination()
 }
 
+/** Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows. */
+public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy = BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024)
+
 /**
  * Start a language client session with the given configuration and transport.
  * The supplied scope and transport remain caller-owned; closing a session does not close the transport.
+ *
+ * Inbound messages from the server are dispatched concurrently and bounded by [policy] (jsonrpc4k bounded
+ * dispatch): request handlers run concurrently, notifications are barriers that run in wire order after every
+ * earlier request finished, and `$/cancelRequest` cancels the handler of the request it names, which is then
+ * answered with `RequestCancelled` (-32800). Handlers may await requests to the server.
+ *
+ * @param policy Concurrency and queue limits; defaults to [DEFAULT_DISPATCH_POLICY].
+ * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.
  */
 public suspend fun LanguageClientConfig.start(
     transport: Transport,
     scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    policy: BoundedDispatchPolicy = DEFAULT_DISPATCH_POLICY,
+    inboundLimits: InboundResourceLimits? = null,
 ): LanguageClientSession {
-    val lifecycle = SessionLifecycle(scope)
+    val lifecycle = SessionLifecycle(scope, policy, inboundLimits)
     val session = LanguageClientSession(this, lifecycle.connection, lifecycle)
     var started = false
     try {

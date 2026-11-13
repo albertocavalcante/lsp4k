@@ -12,7 +12,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonElement
 import kotlin.concurrent.Volatile
 
@@ -20,11 +19,12 @@ import kotlin.concurrent.Volatile
  * A running language server instance.
  *
  * Created by [LanguageServerConfig.start]. It runs the LSP lifecycle state machine ([state]) and dispatches
- * inbound messages, one at a time, to the configured handlers:
+ * inbound messages to the configured handlers with bounded concurrency: requests run concurrently,
+ * notifications run in wire order after every earlier request finished, and a cancelled request is answered
+ * with `RequestCancelled` (-32800):
  *
- * - The `initialized` hook runs outside the receive loop and may await client requests. Every other handler runs
- *   inside the loop, so a client request awaited from it fails with [IllegalStateException]; launch those in your
- *   own scope.
+ * - Handlers may await client requests. The `initialized` hook additionally runs outside the dispatch queue,
+ *   so a long running hook does not delay later messages.
  * - Before a successful `initialize`, requests fail with `ServerNotInitialized` (-32002) and notifications other
  *   than `exit` are dropped. A failed `initialize` may be retried; a second successful one is rejected with
  *   `InvalidRequest` (-32600).
@@ -158,7 +158,7 @@ public class LanguageServer internal constructor(
         traceLevel = decoded.value
         val hook = config.lifecycle.setTrace ?: return
         val context = HandlerContext(this)
-        withContext(InboundHandlerMarker()) { context.hook(decoded) }
+        context.hook(decoded)
     }
 
     private suspend fun cancelProgress(params: JsonElement?) {
@@ -167,7 +167,7 @@ public class LanguageServer internal constructor(
         progress.cancel(decodeParams(method, WorkDoneProgressCancelParams.serializer(), params).token)
         val handler = config.notificationHandlers[method] ?: return
         val context = HandlerContext(this)
-        withContext(InboundHandlerMarker()) { handler.handle(context, params) }
+        handler.handle(context, params)
     }
 
     private suspend fun dispatchRequest(
@@ -186,7 +186,7 @@ public class LanguageServer internal constructor(
     ) {
         if (!lifecycle.isServing) return
         val context = HandlerContext(this)
-        withContext(InboundHandlerMarker()) { handler.handle(context, params) }
+        handler.handle(context, params)
     }
 
     private fun requestContext(
@@ -203,7 +203,7 @@ public class LanguageServer internal constructor(
         block: suspend () -> T,
     ): T =
         try {
-            withContext(InboundHandlerMarker()) { block() }
+            block()
         } finally {
             if (currentCoroutineContext().isActive) context.workDoneProgress?.endIfRunning()
         }

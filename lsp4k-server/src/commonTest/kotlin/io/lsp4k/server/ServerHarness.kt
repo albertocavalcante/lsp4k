@@ -80,7 +80,13 @@ internal class ClientPeer(
     suspend fun request(
         method: String,
         params: JsonElement? = null,
-    ): JsonObject {
+    ): JsonObject = begin(method, params).second.await()
+
+    /** Sends a request with raw [params] without waiting; returns its id and the pending response. */
+    suspend fun begin(
+        method: String,
+        params: JsonElement? = null,
+    ): Pair<Int, CompletableDeferred<JsonObject>> {
         val id = ++lastId
         val response = CompletableDeferred<JsonObject>()
         pending[id] = response
@@ -92,7 +98,12 @@ internal class ClientPeer(
                 if (params != null) put("params", params)
             },
         )
-        return response.await()
+        return id to response
+    }
+
+    /** Sends `$/cancelRequest` for the request [id]. */
+    suspend fun cancel(id: Int) {
+        notify("\$/cancelRequest", buildJsonObject { put("id", id) })
     }
 
     /** Sends a notification with raw [params]. */

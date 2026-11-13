@@ -3,7 +3,9 @@ package io.lsp4k.server.integration
 import io.jsonrpc4k.core.JsonRpcCodec
 import io.jsonrpc4k.core.JsonRpcException
 import io.jsonrpc4k.core.JsonRpcMessageDecoder
+import io.jsonrpc4k.core.Message
 import io.jsonrpc4k.core.NotificationMessage
+import io.jsonrpc4k.core.Payload
 import io.jsonrpc4k.core.RequestId
 import io.jsonrpc4k.core.RequestMessage
 import io.jsonrpc4k.core.ResponseError
@@ -341,7 +343,7 @@ class PublicSessionOwnershipTest {
                 assertFalse(termination.isCompleted)
                 transport.releaseSend.complete(Unit)
                 assertEquals(null, withTimeout(1.seconds) { termination.await() })
-                val response = JsonRpcMessageDecoder().feed(transport.sent.single()).single() as ResponseMessage
+                val response = decodeFrame(transport.sent.single()) as ResponseMessage
                 assertEquals(RequestId.of(7), response.id)
                 assertEquals(ResponseError.SERVER_NOT_INITIALIZED, response.error?.code)
                 assertEquals(1, server.exitCode)
@@ -420,7 +422,7 @@ private class ShutdownTransport(
     override val isConnected: Boolean get() = !closed
 
     override suspend fun send(data: ByteArray) {
-        when (val message = JsonRpcMessageDecoder().feed(data).single()) {
+        when (val message = decodeFrame(data)) {
             is RequestMessage -> {
                 val response =
                     shutdownError?.let { ResponseMessage.error(message.id, it) }
@@ -465,3 +467,6 @@ private class BlockingResponseTransport(
         closed = true
     }
 }
+
+/** Decodes a frame that holds exactly one message. */
+private fun decodeFrame(data: ByteArray): Message = (JsonRpcMessageDecoder().feed(data).single() as Payload.Single).message
