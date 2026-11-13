@@ -237,6 +237,12 @@ public object LspMethods {
     /** `workspace/foldingRange/refresh` - Request from server to client to refresh folding ranges. */
     public const val WORKSPACE_FOLDING_RANGE_REFRESH: String = "workspace/foldingRange/refresh"
 
+    /** `workspace/textDocumentContent` - Request from client to server for the content of a text document. */
+    public const val WORKSPACE_TEXT_DOCUMENT_CONTENT: String = "workspace/textDocumentContent"
+
+    /** `workspace/textDocumentContent/refresh` - Request from server to client to refresh a text document's content. */
+    public const val WORKSPACE_TEXT_DOCUMENT_CONTENT_REFRESH: String = "workspace/textDocumentContent/refresh"
+
     /** `workspace/willCreateFiles` - Request sent before files are created. */
     public const val WORKSPACE_WILL_CREATE_FILES: String = "workspace/willCreateFiles"
 

@@ -862,6 +862,13 @@ public data class ServerWorkspaceCapabilities(
      * The server is interested in file notifications/requests.
      */
     val fileOperations: FileOperationOptions? = null,
+    /**
+     * The server is a provider of text document content for the listed URI schemes.
+     *
+     * @since 3.18.0
+     */
+    @Serializable(with = TextDocumentContentProviderSer::class)
+    val textDocumentContent: Either<TextDocumentContentOptions, TextDocumentContentRegistrationOptions>? = null,
 )
 
 /**
@@ -1129,6 +1136,12 @@ public data class WorkspaceClientCapabilities(
      * Capabilities specific to the folding range requests scoped to the workspace.
      */
     val foldingRange: FoldingRangeWorkspaceClientCapabilities? = null,
+    /**
+     * Capabilities specific to the `workspace/textDocumentContent` request.
+     *
+     * @since 3.18.0
+     */
+    val textDocumentContent: TextDocumentContentClientCapabilities? = null,
 )
 
 // ============================================================================
@@ -1160,6 +1173,18 @@ public data class WorkspaceEditClientCapabilities(
      * Whether the client supports change annotations.
      */
     val changeAnnotationSupport: ChangeAnnotationSupport? = null,
+    /**
+     * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
+     *
+     * @since 3.18.0
+     */
+    val metadataSupport: Boolean? = null,
+    /**
+     * Whether the client supports snippets as text edits.
+     *
+     * @since 3.18.0
+     */
+    val snippetEditSupport: Boolean? = null,
 )
 
 /**
@@ -1522,6 +1547,12 @@ public data class TextDocumentClientCapabilities(
      * Client capabilities specific to inline completions.
      */
     val inlineCompletion: InlineCompletionClientCapabilities? = null,
+    /**
+     * Capabilities specific to the document filters the client understands.
+     *
+     * @since 3.18.0
+     */
+    val filters: TextDocumentFilterClientCapabilities? = null,
 )
 
 /**

@@ -3,6 +3,7 @@ package io.lsp4k.protocol
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -265,6 +266,15 @@ public data class TextDocumentPositionParams(
 )
 
 /**
+ * An entry of `TextDocumentEdit.edits`: a [TextEdit], an [AnnotatedTextEdit] or a [SnippetTextEdit].
+ *
+ * On the wire the member is chosen by content: `snippet` selects [SnippetTextEdit], `newText` with
+ * `annotationId` selects [AnnotatedTextEdit], and `newText` alone selects [TextEdit].
+ */
+@Serializable(with = DocumentTextEditSerializer::class)
+public sealed interface DocumentTextEdit
+
+/**
  * A text edit applicable to a text document.
  */
 @Serializable
@@ -277,7 +287,7 @@ public data class TextEdit(
      * The string to be inserted. For delete operations use an empty string.
      */
     val newText: String,
-)
+) : DocumentTextEdit
 
 /**
  * A special text edit with an additional change annotation.
@@ -287,20 +297,30 @@ public data class AnnotatedTextEdit(
     val range: Range,
     val newText: String,
     val annotationId: String,
-)
+) : DocumentTextEdit
 
 /**
- * A snippet text edit. The snippet can contain placeholders and tab stops
- * following the TextMate snippet syntax.
+ * An interactive text edit. The snippet can contain placeholders and tab stops
+ * following the TextMate snippet syntax. Clients support it when the
+ * `workspace.workspaceEdit.snippetEditSupport` capability is set.
  *
- * @since 3.18.0 (proposed)
+ * @since 3.18.0
  */
 @Serializable
 public data class SnippetTextEdit(
+    /**
+     * The range of the text document to be manipulated.
+     */
     val range: Range,
+    /**
+     * The snippet to be inserted.
+     */
     val snippet: StringValue,
+    /**
+     * The actual identifier of the snippet edit.
+     */
     val annotationId: String? = null,
-)
+) : DocumentTextEdit
 
 /**
  * A string value used in snippet text edits.
@@ -313,38 +333,40 @@ public data class StringValue(
 )
 
 /**
- * A text edit that is either a plain [TextEdit] or an [AnnotatedTextEdit].
- * Per LSP spec, `TextDocumentEdit.edits` can contain both types.
+ * Serializer for [DocumentTextEdit]. The union member is selected by the JSON keys of the object;
+ * anything that is not an object, has neither `snippet` nor `newText`, or has both is rejected.
  */
-public typealias TextOrAnnotatedEdit = Either<TextEdit, AnnotatedTextEdit>
-
-/**
- * Serializer for [TextOrAnnotatedEdit] that discriminates based on the
- * presence of the `annotationId` field: if present, deserializes as
- * [AnnotatedTextEdit] (Right); otherwise as [TextEdit] (Left).
- */
-public object TextOrAnnotatedEditSerializer : KSerializer<TextOrAnnotatedEdit> {
-    override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor("TextOrAnnotatedEdit")
+public object DocumentTextEditSerializer : KSerializer<DocumentTextEdit> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("DocumentTextEdit")
 
     override fun serialize(
         encoder: Encoder,
-        value: TextOrAnnotatedEdit,
+        value: DocumentTextEdit,
     ) {
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
-            is Either.Left -> jsonEncoder.encodeSerializableValue(TextEdit.serializer(), value.value)
-            is Either.Right -> jsonEncoder.encodeSerializableValue(AnnotatedTextEdit.serializer(), value.value)
+            is TextEdit -> jsonEncoder.encodeSerializableValue(TextEdit.serializer(), value)
+            is AnnotatedTextEdit -> jsonEncoder.encodeSerializableValue(AnnotatedTextEdit.serializer(), value)
+            is SnippetTextEdit -> jsonEncoder.encodeSerializableValue(SnippetTextEdit.serializer(), value)
         }
     }
 
-    override fun deserialize(decoder: Decoder): TextOrAnnotatedEdit {
+    override fun deserialize(decoder: Decoder): DocumentTextEdit {
         val jsonDecoder = decoder as JsonDecoder
         val element = jsonDecoder.decodeJsonElement()
-        return if (element is JsonObject && element.containsKey("annotationId")) {
-            Either.Right(jsonDecoder.json.decodeFromJsonElement(AnnotatedTextEdit.serializer(), element))
-        } else {
-            Either.Left(jsonDecoder.json.decodeFromJsonElement(TextEdit.serializer(), element))
+        if (element !is JsonObject) {
+            throw SerializationException("Invalid DocumentTextEdit, expected an object: $element")
+        }
+        val hasSnippet = element.containsKey("snippet")
+        val hasNewText = element.containsKey("newText")
+        return when {
+            hasSnippet && !hasNewText ->
+                jsonDecoder.json.decodeFromJsonElement(SnippetTextEdit.serializer(), element)
+            hasNewText && !hasSnippet && element.containsKey("annotationId") ->
+                jsonDecoder.json.decodeFromJsonElement(AnnotatedTextEdit.serializer(), element)
+            hasNewText && !hasSnippet ->
+                jsonDecoder.json.decodeFromJsonElement(TextEdit.serializer(), element)
+            else -> throw SerializationException("Invalid DocumentTextEdit, expected newText or snippet: $element")
         }
     }
 }
@@ -359,13 +381,10 @@ public data class TextDocumentEdit(
      */
     val textDocument: OptionalVersionedTextDocumentIdentifier,
     /**
-     * The edits to be applied.
-     * Per LSP spec, each edit can be either a [TextEdit] or an [AnnotatedTextEdit].
+     * The edits to be applied. [AnnotatedTextEdit] is guarded by the client capability
+     * `changeAnnotationSupport` and [SnippetTextEdit] by `snippetEditSupport`.
      */
-    val edits: List<
-        @Serializable(with = TextOrAnnotatedEditSerializer::class)
-        TextOrAnnotatedEdit,
-    >,
+    val edits: List<DocumentTextEdit>,
 )
 
 /**

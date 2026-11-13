@@ -500,24 +500,3 @@ public data class DiagnosticRegistrationOptions(
      */
     val workDoneProgress: Boolean? = null,
 )
-
-/**
- * A document filter denotes a document through properties like language, scheme, or pattern.
- *
- * @since 3.17.0
- */
-@Serializable
-public data class DocumentFilter(
-    /**
-     * A language id, like `typescript`.
-     */
-    val language: String? = null,
-    /**
-     * A Uri scheme, like `file` or `untitled`.
-     */
-    val scheme: String? = null,
-    /**
-     * A glob pattern, like `*.{ts,js}`.
-     */
-    val pattern: String? = null,
-)

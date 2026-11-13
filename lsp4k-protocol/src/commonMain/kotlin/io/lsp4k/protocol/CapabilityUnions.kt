@@ -28,9 +28,9 @@ private fun JsonElement.isBoolean(): Boolean = this is JsonPrimitive && !isStrin
 
 private fun JsonElement.isInteger(): Boolean = this is JsonPrimitive && !isString && intOrNull != null
 
-private fun JsonElement.isStringLiteral(): Boolean = this is JsonPrimitive && isString
+internal fun JsonElement.isStringLiteral(): Boolean = this is JsonPrimitive && isString
 
-private fun JsonElement.isObject(): Boolean = this is JsonObject
+internal fun JsonElement.isObject(): Boolean = this is JsonObject
 
 private fun JsonElement.hasKind(kind: String): Boolean =
     this is JsonObject && (this["kind"] as? JsonPrimitive)?.takeIf { it.isString }?.content == kind
@@ -43,7 +43,7 @@ private fun JsonElement.isObjectWithoutKind(): Boolean = this is JsonObject && "
  * Builds a strict serializer for `L | R`: the JSON kind of the element selects the side,
  * and any element matching neither side is rejected.
  */
-private fun <L, R> strictUnion(
+internal fun <L, R> strictUnion(
     name: String,
     leftSerializer: KSerializer<L>,
     rightSerializer: KSerializer<R>,
