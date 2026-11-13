@@ -138,14 +138,17 @@ internal fun assertContainsAll(
     if (expected is JsonObject) {
         assertTrue(actual is JsonObject, "$path: expected an object but was $actual")
         for ((key, value) in expected) assertContainsAll(value, actual[key], "$path.$key")
-    } else if (expected is JsonPrimitive && !expected.isString && actual is JsonPrimitive && !actual.isString) {
+    } else if (isNonString(expected) && isNonString(actual)) {
         // A Double such as 1.0 is written as 1.0 on some targets and 1 on others; compare numbers by value.
-        val wanted = expected.doubleOrNull
-        if (wanted != null) assertEquals(wanted, actual.doubleOrNull, path) else assertEquals(expected, actual, path)
+        val wanted = (expected as JsonPrimitive).doubleOrNull
+        val got = (actual as JsonPrimitive).doubleOrNull
+        if (wanted != null) assertEquals(wanted, got, path) else assertEquals(expected, actual, path)
     } else {
         assertEquals(expected, actual, path)
     }
 }
+
+private fun isNonString(element: JsonElement?): Boolean = element is JsonPrimitive && !element.isString
 
 internal fun isNullResult(result: JsonElement?): Boolean = result == null || result is JsonNull
 
