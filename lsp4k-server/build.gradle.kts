@@ -23,6 +23,8 @@ kotlin {
         }
 
         jvmTest {
+            // MethodCoverageTest reads the LSP meta model vendored for the lsp4k-protocol conformance test.
+            resources.srcDir(rootDir.resolve("lsp4k-protocol/src/jvmTest/resources"))
             dependencies {
                 implementation(libs.kotest.runner.junit5)
             }
