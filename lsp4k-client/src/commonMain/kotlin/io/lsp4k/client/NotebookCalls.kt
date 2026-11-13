@@ -15,8 +15,7 @@ public class NotebookCalls internal constructor(
     /**
      * Notify the server that a notebook document was opened.
      */
-    public suspend fun didOpen(params: DidOpenNotebookDocumentParams): Unit =
-        caller.notify(LspMethods.NOTEBOOK_DOCUMENT_DID_OPEN, params)
+    public suspend fun didOpen(params: DidOpenNotebookDocumentParams): Unit = caller.notify(LspMethods.NOTEBOOK_DOCUMENT_DID_OPEN, params)
 
     /**
      * Notify the server that a notebook document was changed.
@@ -27,8 +26,7 @@ public class NotebookCalls internal constructor(
     /**
      * Notify the server that a notebook document was saved.
      */
-    public suspend fun didSave(params: DidSaveNotebookDocumentParams): Unit =
-        caller.notify(LspMethods.NOTEBOOK_DOCUMENT_DID_SAVE, params)
+    public suspend fun didSave(params: DidSaveNotebookDocumentParams): Unit = caller.notify(LspMethods.NOTEBOOK_DOCUMENT_DID_SAVE, params)
 
     /**
      * Notify the server that a notebook document was closed.

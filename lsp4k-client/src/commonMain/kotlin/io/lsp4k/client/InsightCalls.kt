@@ -44,14 +44,12 @@ public class InsightCalls internal constructor(
     /**
      * Request inlay hints for a given text document range.
      */
-    public suspend fun inlayHint(params: InlayHintParams): List<InlayHint>? =
-        caller.request(LspMethods.TEXT_DOCUMENT_INLAY_HINT, params)
+    public suspend fun inlayHint(params: InlayHintParams): List<InlayHint>? = caller.request(LspMethods.TEXT_DOCUMENT_INLAY_HINT, params)
 
     /**
      * Resolve additional information for a given inlay hint.
      */
-    public suspend fun inlayHintResolve(hint: InlayHint): InlayHint? =
-        caller.request(LspMethods.INLAY_HINT_RESOLVE, hint)
+    public suspend fun inlayHintResolve(hint: InlayHint): InlayHint? = caller.request(LspMethods.INLAY_HINT_RESOLVE, hint)
 
     /**
      * Request pull diagnostics for a given text document.
@@ -63,8 +61,7 @@ public class InsightCalls internal constructor(
     /**
      * Request monikers for a given text document position.
      */
-    public suspend fun moniker(params: MonikerParams): List<Moniker>? =
-        caller.request(LspMethods.TEXT_DOCUMENT_MONIKER, params)
+    public suspend fun moniker(params: MonikerParams): List<Moniker>? = caller.request(LspMethods.TEXT_DOCUMENT_MONIKER, params)
 
     /**
      * Request inline values for a given text document.

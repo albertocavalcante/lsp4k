@@ -38,32 +38,27 @@ public class TextDocumentCalls internal constructor(
     /**
      * Notify the server that a text document was opened.
      */
-    public suspend fun didOpen(params: DidOpenTextDocumentParams): Unit =
-        caller.notify(LspMethods.TEXT_DOCUMENT_DID_OPEN, params)
+    public suspend fun didOpen(params: DidOpenTextDocumentParams): Unit = caller.notify(LspMethods.TEXT_DOCUMENT_DID_OPEN, params)
 
     /**
      * Notify the server that a text document was changed.
      */
-    public suspend fun didChange(params: DidChangeTextDocumentParams): Unit =
-        caller.notify(LspMethods.TEXT_DOCUMENT_DID_CHANGE, params)
+    public suspend fun didChange(params: DidChangeTextDocumentParams): Unit = caller.notify(LspMethods.TEXT_DOCUMENT_DID_CHANGE, params)
 
     /**
      * Notify the server that a text document was closed.
      */
-    public suspend fun didClose(params: DidCloseTextDocumentParams): Unit =
-        caller.notify(LspMethods.TEXT_DOCUMENT_DID_CLOSE, params)
+    public suspend fun didClose(params: DidCloseTextDocumentParams): Unit = caller.notify(LspMethods.TEXT_DOCUMENT_DID_CLOSE, params)
 
     /**
      * Notify the server that a text document was saved.
      */
-    public suspend fun didSave(params: DidSaveTextDocumentParams): Unit =
-        caller.notify(LspMethods.TEXT_DOCUMENT_DID_SAVE, params)
+    public suspend fun didSave(params: DidSaveTextDocumentParams): Unit = caller.notify(LspMethods.TEXT_DOCUMENT_DID_SAVE, params)
 
     /**
      * Notify the server that a text document will be saved.
      */
-    public suspend fun willSave(params: WillSaveTextDocumentParams): Unit =
-        caller.notify(LspMethods.TEXT_DOCUMENT_WILL_SAVE, params)
+    public suspend fun willSave(params: WillSaveTextDocumentParams): Unit = caller.notify(LspMethods.TEXT_DOCUMENT_WILL_SAVE, params)
 
     /**
      * Request text edits before a document is saved.
@@ -74,20 +69,17 @@ public class TextDocumentCalls internal constructor(
     /**
      * Request completion at a given text document position, preserving the server's array or list shape.
      */
-    public suspend fun completion(params: CompletionParams): CompletionResult? =
-        caller.request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
+    public suspend fun completion(params: CompletionParams): CompletionResult? = caller.request(LspMethods.TEXT_DOCUMENT_COMPLETION, params)
 
     /**
      * Resolve additional information for a given completion item.
      */
-    public suspend fun completionResolve(item: CompletionItem): CompletionItem? =
-        caller.request(LspMethods.COMPLETION_ITEM_RESOLVE, item)
+    public suspend fun completionResolve(item: CompletionItem): CompletionItem? = caller.request(LspMethods.COMPLETION_ITEM_RESOLVE, item)
 
     /**
      * Request hover information at a given text document position.
      */
-    public suspend fun hover(params: HoverParams): Hover? =
-        caller.request(LspMethods.TEXT_DOCUMENT_HOVER, params)
+    public suspend fun hover(params: HoverParams): Hover? = caller.request(LspMethods.TEXT_DOCUMENT_HOVER, params)
 
     /**
      * Request signature help at a given text document position.
@@ -105,8 +97,7 @@ public class TextDocumentCalls internal constructor(
      * Request the definition of a symbol at a given text document position, preserving single
      * locations and location or link arrays.
      */
-    public suspend fun definition(params: DefinitionParams): DefinitionResult? =
-        caller.request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
+    public suspend fun definition(params: DefinitionParams): DefinitionResult? = caller.request(LspMethods.TEXT_DOCUMENT_DEFINITION, params)
 
     /**
      * Request the type definition of a symbol at a given text document position.
@@ -123,8 +114,7 @@ public class TextDocumentCalls internal constructor(
     /**
      * Request references to a symbol at a given text document position.
      */
-    public suspend fun references(params: ReferenceParams): List<Location>? =
-        caller.request(LspMethods.TEXT_DOCUMENT_REFERENCES, params)
+    public suspend fun references(params: ReferenceParams): List<Location>? = caller.request(LspMethods.TEXT_DOCUMENT_REFERENCES, params)
 
     /**
      * Request document highlights at a given text document position.
