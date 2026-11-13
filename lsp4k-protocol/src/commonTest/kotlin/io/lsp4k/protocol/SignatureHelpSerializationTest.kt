@@ -172,7 +172,7 @@ class SignatureHelpSerializationTest {
         val decoded = json.decodeFromString<SignatureHelp>(encoded)
         decoded.signatures shouldBe emptyList()
         decoded.activeSignature shouldBe null
-        decoded.activeParameter shouldBe null
+        decoded.activeParameter shouldBe Maybe.Absent
     }
 
     @Test
@@ -204,13 +204,13 @@ class SignatureHelpSerializationTest {
                         SignatureInformation(label = "fun test(a: Int, b: String)"),
                     ),
                 activeSignature = 2,
-                activeParameter = 1,
+                activeParameter = Maybe.Of(1),
             )
         val encoded = json.encodeToString(help)
         val decoded = json.decodeFromString<SignatureHelp>(encoded)
         decoded.signatures.size shouldBe 3
         decoded.activeSignature shouldBe 2
-        decoded.activeParameter shouldBe 1
+        decoded.activeParameter shouldBe Maybe.Of(1)
     }
 
     @Test
@@ -236,7 +236,7 @@ class SignatureHelpSerializationTest {
                         ),
                     ),
                 activeSignature = 0,
-                activeParameter = 0,
+                activeParameter = Maybe.Of(0),
             )
         val encoded = json.encodeToString(help)
         val decoded = json.decodeFromString<SignatureHelp>(encoded)
@@ -256,7 +256,7 @@ class SignatureHelpSerializationTest {
         decoded.label shouldBe "fun example()"
         decoded.documentation shouldBe null
         decoded.parameters shouldBe null
-        decoded.activeParameter shouldBe null
+        decoded.activeParameter shouldBe Maybe.Absent
     }
 
     @Test
@@ -320,11 +320,11 @@ class SignatureHelpSerializationTest {
                                 ),
                         ),
                     ),
-                activeParameter = 0,
+                activeParameter = Maybe.Of(0),
             )
         val encoded = json.encodeToString(info)
         val decoded = json.decodeFromString<SignatureInformation>(encoded)
-        decoded.activeParameter shouldBe 0
+        decoded.activeParameter shouldBe Maybe.Of(0)
         decoded.parameters
             ?.first()
             ?.documentation

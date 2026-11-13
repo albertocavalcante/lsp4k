@@ -14,6 +14,7 @@ import io.lsp4k.protocol.Either
 import io.lsp4k.protocol.HoverParams
 import io.lsp4k.protocol.InitializeParams
 import io.lsp4k.protocol.InitializeResult
+import io.lsp4k.protocol.Maybe
 import io.lsp4k.protocol.Position
 import io.lsp4k.protocol.ServerCapabilities
 import io.lsp4k.protocol.TextDocumentIdentifier
@@ -72,7 +73,7 @@ class PublicInitializationTest {
                     initializationOptions = JsonPrimitive("settings"),
                     capabilities = ClientCapabilities(experimental = JsonPrimitive("client-feature")),
                     trace = TraceValue.Verbose,
-                    workspaceFolders = listOf(WorkspaceFolder("file:///workspace", "workspace")),
+                    workspaceFolders = Maybe.Of(listOf(WorkspaceFolder("file:///workspace", "workspace"))),
                 )
 
             assertEquals(negotiated, client.initialize(params))

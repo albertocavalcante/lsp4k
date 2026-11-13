@@ -243,13 +243,13 @@ class InitializeSerializationTest {
         val params =
             InitializeParams(
                 processId = 1000,
-                rootPath = "/legacy/path",
+                rootPath = Maybe.Of("/legacy/path"),
                 rootUri = "file:///project",
                 capabilities = ClientCapabilities(),
             )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<InitializeParams>(encoded)
-        decoded.rootPath shouldBe "/legacy/path"
+        decoded.rootPath shouldBe Maybe.Of("/legacy/path")
     }
 
     @Test
@@ -292,15 +292,19 @@ class InitializeSerializationTest {
                 rootUri = "file:///project",
                 capabilities = ClientCapabilities(),
                 workspaceFolders =
-                    listOf(
-                        WorkspaceFolder(uri = "file:///project/main", name = "main"),
-                        WorkspaceFolder(uri = "file:///project/test", name = "test"),
+                    Maybe.Of(
+                        listOf(
+                            WorkspaceFolder(uri = "file:///project/main", name = "main"),
+                            WorkspaceFolder(uri = "file:///project/test", name = "test"),
+                        ),
                     ),
             )
         val encoded = json.encodeToString(params)
         val decoded = json.decodeFromString<InitializeParams>(encoded)
-        decoded.workspaceFolders?.size shouldBe 2
-        decoded.workspaceFolders?.first()?.name shouldBe "main"
+        decoded.workspaceFolders.valueOrNull?.size shouldBe 2
+        decoded.workspaceFolders.valueOrNull
+            ?.first()
+            ?.name shouldBe "main"
     }
 
     @Test
@@ -310,14 +314,16 @@ class InitializeSerializationTest {
                 processId = 9999,
                 clientInfo = ClientInfo(name = "my-editor", version = "2.5.0"),
                 locale = "de-DE",
-                rootPath = "/deprecated/path",
+                rootPath = Maybe.Of("/deprecated/path"),
                 rootUri = "file:///workspace/project",
                 initializationOptions = JsonPrimitive("custom-options"),
                 capabilities = ClientCapabilities(),
                 trace = TraceValue.Messages,
                 workspaceFolders =
-                    listOf(
-                        WorkspaceFolder(uri = "file:///workspace/project", name = "project"),
+                    Maybe.Of(
+                        listOf(
+                            WorkspaceFolder(uri = "file:///workspace/project", name = "project"),
+                        ),
                     ),
             )
         val encoded = json.encodeToString(params)
@@ -409,18 +415,18 @@ class InitializeSerializationTest {
     fun `ServerCapabilities with navigation providers`() {
         val caps =
             ServerCapabilities(
-                declarationProvider = Either.left(true),
+                declarationProvider = Either3.first(true),
                 definitionProvider = Either.left(true),
-                typeDefinitionProvider = Either.left(true),
-                implementationProvider = Either.left(true),
+                typeDefinitionProvider = Either3.first(true),
+                implementationProvider = Either3.first(true),
                 referencesProvider = Either.left(true),
             )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<ServerCapabilities>(encoded)
-        decoded.declarationProvider shouldBe Either.left(true)
+        decoded.declarationProvider shouldBe Either3.first(true)
         decoded.definitionProvider shouldBe Either.left(true)
-        decoded.typeDefinitionProvider shouldBe Either.left(true)
-        decoded.implementationProvider shouldBe Either.left(true)
+        decoded.typeDefinitionProvider shouldBe Either3.first(true)
+        decoded.implementationProvider shouldBe Either3.first(true)
         decoded.referencesProvider shouldBe Either.left(true)
     }
 
@@ -553,8 +559,8 @@ class InitializeSerializationTest {
                 codeActionProvider = Either.left(true),
                 documentFormattingProvider = Either.left(true),
                 renameProvider = Either.left(true),
-                foldingRangeProvider = Either.left(true),
-                selectionRangeProvider = Either.left(true),
+                foldingRangeProvider = Either3.first(true),
+                selectionRangeProvider = Either3.first(true),
             )
         val encoded = json.encodeToString(caps)
         val decoded = json.decodeFromString<ServerCapabilities>(encoded)

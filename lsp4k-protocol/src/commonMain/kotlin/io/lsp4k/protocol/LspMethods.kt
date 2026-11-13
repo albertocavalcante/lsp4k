@@ -157,6 +157,9 @@ public object LspMethods {
     /** `textDocument/semanticTokens/full` - Request for full semantic tokens of a document. */
     public const val TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL: String = "textDocument/semanticTokens/full"
 
+    /** `textDocument/semanticTokens` - Registration method shared by the three semantic tokens requests. */
+    public const val TEXT_DOCUMENT_SEMANTIC_TOKENS: String = "textDocument/semanticTokens"
+
     /** `textDocument/semanticTokens/full/delta` - Request for semantic token deltas since a previous result. */
     public const val TEXT_DOCUMENT_SEMANTIC_TOKENS_FULL_DELTA: String = "textDocument/semanticTokens/full/delta"
 
@@ -313,6 +316,9 @@ public object LspMethods {
 
     /** `notebookDocument/didClose` - Notification sent when a notebook document is closed. */
     public const val NOTEBOOK_DOCUMENT_DID_CLOSE: String = "notebookDocument/didClose"
+
+    /** `notebookDocument/sync` - Registration method shared by the four notebook document sync notifications. */
+    public const val NOTEBOOK_DOCUMENT_SYNC: String = "notebookDocument/sync"
 
     // -- Telemetry --
 

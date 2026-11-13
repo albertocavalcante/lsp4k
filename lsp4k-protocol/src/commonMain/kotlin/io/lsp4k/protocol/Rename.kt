@@ -31,7 +31,7 @@ public data class RenameParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
 )
 
@@ -51,7 +51,7 @@ public data class PrepareRenameParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
 )
 

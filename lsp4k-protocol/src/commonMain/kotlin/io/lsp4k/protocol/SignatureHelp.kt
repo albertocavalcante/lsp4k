@@ -1,5 +1,6 @@
 package io.lsp4k.protocol
 
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -32,7 +33,7 @@ public data class SignatureHelpParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
 )
 
@@ -121,7 +122,9 @@ public data class SignatureHelp(
      * defaults to 0 if the active signature has parameters. If the active
      * signature has no parameters it is ignored.
      */
-    val activeParameter: Int? = null,
+    @Serializable(with = MaybeIntSerializer::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val activeParameter: Maybe<Int> = Maybe.Absent,
 )
 
 /**
@@ -137,16 +140,19 @@ public data class SignatureInformation(
      * The human-readable doc-comment of this signature.
      * Can be a plain string or a MarkupContent object.
      */
-    @Serializable(with = NullableStringOrMarkupContentSerializer::class)
+    @Serializable(with = StringOrMarkupContentSerializer::class)
     val documentation: Either<String, MarkupContent>? = null,
     /**
      * The parameters of this signature.
      */
     val parameters: List<ParameterInformation>? = null,
     /**
-     * The index of the active parameter.
+     * The index of the active parameter. An explicit null means no parameter is active.
+     * Absent means the property is not sent.
      */
-    val activeParameter: Int? = null,
+    @Serializable(with = MaybeIntSerializer::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val activeParameter: Maybe<Int> = Maybe.Absent,
 )
 
 /**
@@ -211,6 +217,6 @@ public data class ParameterInformation(
      * The human-readable doc-comment of this parameter.
      * Can be a plain string or a MarkupContent object.
      */
-    @Serializable(with = NullableStringOrMarkupContentSerializer::class)
+    @Serializable(with = StringOrMarkupContentSerializer::class)
     val documentation: Either<String, MarkupContent>? = null,
 )

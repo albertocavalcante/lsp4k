@@ -1,81 +1,9 @@
 package io.lsp4k.protocol
 
-import kotlinx.serialization.KSerializer
+import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonEncoder
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-
-/**
- * Generic serializer for LSP capability fields that can be either a boolean or an options object.
- * Per LSP spec, many ServerCapabilities fields accept `boolean | XxxOptions`.
- * - `true` or options object means the capability is supported
- * - `false` or absent means not supported
- */
-public open class BooleanOrSerializer<T>(
-    private val optionsSerializer: KSerializer<T>,
-) : KSerializer<Either<Boolean, T>> {
-    override val descriptor: SerialDescriptor =
-        buildClassSerialDescriptor(
-            "BooleanOr<${optionsSerializer.descriptor.serialName}>",
-        )
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<Boolean, T>,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        when (value) {
-            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeSerializableValue(optionsSerializer, value.value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<Boolean, T> {
-        val jsonDecoder = decoder as JsonDecoder
-        val element = jsonDecoder.decodeJsonElement()
-        return when {
-            element is JsonPrimitive && element.booleanOrNull != null ->
-                Either.Left(element.booleanOrNull!!)
-            else ->
-                Either.Right(jsonDecoder.json.decodeFromJsonElement(optionsSerializer, element))
-        }
-    }
-}
-
-/**
- * Nullable variant of [BooleanOrSerializer].
- */
-public open class NullableBooleanOrSerializer<T>(
-    private val inner: BooleanOrSerializer<T>,
-) : KSerializer<Either<Boolean, T>?> {
-    override val descriptor: SerialDescriptor = inner.descriptor
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<Boolean, T>?,
-    ) {
-        if (value == null) {
-            encoder.encodeNull()
-        } else {
-            inner.serialize(encoder, value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<Boolean, T>? =
-        if (decoder.decodeNotNullMark()) {
-            inner.deserialize(decoder)
-        } else {
-            decoder.decodeNull()
-        }
-}
 
 /**
  * Defines how the host (editor) should sync document changes to the language server.
@@ -517,102 +445,6 @@ public data class WorkspaceSymbolOptions(
     val workDoneProgress: Boolean? = null,
 )
 
-// ============================================================================
-// Concrete BooleanOr serializers for ServerCapabilities fields
-// ============================================================================
-
-internal object HoverProviderSer : NullableBooleanOrSerializer<HoverOptions>(
-    BooleanOrSerializer(HoverOptions.serializer()),
-)
-
-internal object DeclarationProviderSer : NullableBooleanOrSerializer<DeclarationOptions>(
-    BooleanOrSerializer(DeclarationOptions.serializer()),
-)
-
-internal object DefinitionProviderSer : NullableBooleanOrSerializer<DefinitionOptions>(
-    BooleanOrSerializer(DefinitionOptions.serializer()),
-)
-
-internal object TypeDefinitionProviderSer : NullableBooleanOrSerializer<TypeDefinitionOptions>(
-    BooleanOrSerializer(TypeDefinitionOptions.serializer()),
-)
-
-internal object ImplementationProviderSer : NullableBooleanOrSerializer<ImplementationOptions>(
-    BooleanOrSerializer(ImplementationOptions.serializer()),
-)
-
-internal object ReferencesProviderSer : NullableBooleanOrSerializer<ReferencesOptions>(
-    BooleanOrSerializer(ReferencesOptions.serializer()),
-)
-
-internal object DocumentHighlightProviderSer : NullableBooleanOrSerializer<DocumentHighlightOptions>(
-    BooleanOrSerializer(DocumentHighlightOptions.serializer()),
-)
-
-internal object DocumentSymbolProviderSer : NullableBooleanOrSerializer<DocumentSymbolOptions>(
-    BooleanOrSerializer(DocumentSymbolOptions.serializer()),
-)
-
-internal object CodeActionProviderSer : NullableBooleanOrSerializer<CodeActionOptions>(
-    BooleanOrSerializer(CodeActionOptions.serializer()),
-)
-
-internal object ColorProviderSer : NullableBooleanOrSerializer<DocumentColorOptions>(
-    BooleanOrSerializer(DocumentColorOptions.serializer()),
-)
-
-internal object DocumentFormattingProviderSer : NullableBooleanOrSerializer<DocumentFormattingOptions>(
-    BooleanOrSerializer(DocumentFormattingOptions.serializer()),
-)
-
-internal object DocumentRangeFormattingProviderSer : NullableBooleanOrSerializer<DocumentRangeFormattingOptions>(
-    BooleanOrSerializer(DocumentRangeFormattingOptions.serializer()),
-)
-
-internal object RenameProviderSer : NullableBooleanOrSerializer<RenameOptions>(
-    BooleanOrSerializer(RenameOptions.serializer()),
-)
-
-internal object FoldingRangeProviderSer : NullableBooleanOrSerializer<FoldingRangeOptions>(
-    BooleanOrSerializer(FoldingRangeOptions.serializer()),
-)
-
-internal object SelectionRangeProviderSer : NullableBooleanOrSerializer<SelectionRangeOptions>(
-    BooleanOrSerializer(SelectionRangeOptions.serializer()),
-)
-
-internal object LinkedEditingRangeProviderSer : NullableBooleanOrSerializer<LinkedEditingRangeOptions>(
-    BooleanOrSerializer(LinkedEditingRangeOptions.serializer()),
-)
-
-internal object CallHierarchyProviderSer : NullableBooleanOrSerializer<CallHierarchyOptions>(
-    BooleanOrSerializer(CallHierarchyOptions.serializer()),
-)
-
-internal object MonikerProviderSer : NullableBooleanOrSerializer<MonikerOptions>(
-    BooleanOrSerializer(MonikerOptions.serializer()),
-)
-
-internal object TypeHierarchyProviderSer : NullableBooleanOrSerializer<TypeHierarchyOptions>(
-    BooleanOrSerializer(TypeHierarchyOptions.serializer()),
-)
-
-internal object InlineValueProviderSer : NullableBooleanOrSerializer<InlineValueOptions>(
-    BooleanOrSerializer(InlineValueOptions.serializer()),
-)
-
-internal object InlineCompletionProviderSer : NullableBooleanOrSerializer<InlineCompletionOptions>(
-    BooleanOrSerializer(InlineCompletionOptions.serializer()),
-)
-
-internal object InlayHintProviderSer : NullableBooleanOrSerializer<InlayHintOptions>(
-    BooleanOrSerializer(InlayHintOptions.serializer()),
-)
-
-internal object WorkspaceSymbolProviderSer : NullableBooleanOrSerializer<WorkspaceSymbolOptions>(
-    BooleanOrSerializer(WorkspaceSymbolOptions.serializer()),
-)
-
 /**
  * Server capabilities.
  */
@@ -630,7 +462,8 @@ public data class ServerCapabilities(
     /**
      * Defines how notebook documents are synced.
      */
-    val notebookDocumentSync: NotebookDocumentSyncOptions? = null,
+    @Serializable(with = NotebookDocumentSyncProviderSer::class)
+    val notebookDocumentSync: Either<NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions>? = null,
     /**
      * The server provides hover support.
      */
@@ -648,7 +481,7 @@ public data class ServerCapabilities(
      * The server provides go to declaration support.
      */
     @Serializable(with = DeclarationProviderSer::class)
-    val declarationProvider: Either<Boolean, DeclarationOptions>? = null,
+    val declarationProvider: Either3<Boolean, DeclarationOptions, DeclarationRegistrationOptions>? = null,
     /**
      * The server provides goto definition support.
      */
@@ -658,12 +491,12 @@ public data class ServerCapabilities(
      * The server provides goto type definition support.
      */
     @Serializable(with = TypeDefinitionProviderSer::class)
-    val typeDefinitionProvider: Either<Boolean, TypeDefinitionOptions>? = null,
+    val typeDefinitionProvider: Either3<Boolean, TypeDefinitionOptions, TypeDefinitionRegistrationOptions>? = null,
     /**
      * The server provides goto implementation support.
      */
     @Serializable(with = ImplementationProviderSer::class)
-    val implementationProvider: Either<Boolean, ImplementationOptions>? = null,
+    val implementationProvider: Either3<Boolean, ImplementationOptions, ImplementationRegistrationOptions>? = null,
     /**
      * The server provides find references support.
      */
@@ -696,7 +529,7 @@ public data class ServerCapabilities(
      * The server provides color provider support.
      */
     @Serializable(with = ColorProviderSer::class)
-    val colorProvider: Either<Boolean, DocumentColorOptions>? = null,
+    val colorProvider: Either3<Boolean, DocumentColorOptions, DocumentColorRegistrationOptions>? = null,
     /**
      * The server provides document formatting.
      */
@@ -720,7 +553,7 @@ public data class ServerCapabilities(
      * The server provides folding provider support.
      */
     @Serializable(with = FoldingRangeProviderSer::class)
-    val foldingRangeProvider: Either<Boolean, FoldingRangeOptions>? = null,
+    val foldingRangeProvider: Either3<Boolean, FoldingRangeOptions, FoldingRangeRegistrationOptions>? = null,
     /**
      * The server provides execute command support.
      */
@@ -729,36 +562,37 @@ public data class ServerCapabilities(
      * The server provides selection range support.
      */
     @Serializable(with = SelectionRangeProviderSer::class)
-    val selectionRangeProvider: Either<Boolean, SelectionRangeOptions>? = null,
+    val selectionRangeProvider: Either3<Boolean, SelectionRangeOptions, SelectionRangeRegistrationOptions>? = null,
     /**
      * The server provides linked editing range support.
      */
     @Serializable(with = LinkedEditingRangeProviderSer::class)
-    val linkedEditingRangeProvider: Either<Boolean, LinkedEditingRangeOptions>? = null,
+    val linkedEditingRangeProvider: Either3<Boolean, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions>? = null,
     /**
      * The server provides call hierarchy support.
      */
     @Serializable(with = CallHierarchyProviderSer::class)
-    val callHierarchyProvider: Either<Boolean, CallHierarchyOptions>? = null,
+    val callHierarchyProvider: Either3<Boolean, CallHierarchyOptions, CallHierarchyRegistrationOptions>? = null,
     /**
      * The server provides semantic tokens support.
      */
-    val semanticTokensProvider: SemanticTokensOptions? = null,
+    @Serializable(with = SemanticTokensProviderSer::class)
+    val semanticTokensProvider: Either<SemanticTokensOptions, SemanticTokensRegistrationOptions>? = null,
     /**
      * The server provides moniker support.
      */
     @Serializable(with = MonikerProviderSer::class)
-    val monikerProvider: Either<Boolean, MonikerOptions>? = null,
+    val monikerProvider: Either3<Boolean, MonikerOptions, MonikerRegistrationOptions>? = null,
     /**
      * The server provides type hierarchy support.
      */
     @Serializable(with = TypeHierarchyProviderSer::class)
-    val typeHierarchyProvider: Either<Boolean, TypeHierarchyOptions>? = null,
+    val typeHierarchyProvider: Either3<Boolean, TypeHierarchyOptions, TypeHierarchyRegistrationOptions>? = null,
     /**
      * The server provides inline value support.
      */
     @Serializable(with = InlineValueProviderSer::class)
-    val inlineValueProvider: Either<Boolean, InlineValueOptions>? = null,
+    val inlineValueProvider: Either3<Boolean, InlineValueOptions, InlineValueRegistrationOptions>? = null,
     /**
      * The server provides inline completion support.
      * @since 3.18.0
@@ -769,11 +603,12 @@ public data class ServerCapabilities(
      * The server provides inlay hints support.
      */
     @Serializable(with = InlayHintProviderSer::class)
-    val inlayHintProvider: Either<Boolean, InlayHintOptions>? = null,
+    val inlayHintProvider: Either3<Boolean, InlayHintOptions, InlayHintRegistrationOptions>? = null,
     /**
      * The server provides diagnostic support.
      */
-    val diagnosticProvider: DiagnosticOptions? = null,
+    @Serializable(with = DiagnosticProviderSer::class)
+    val diagnosticProvider: Either<DiagnosticOptions, DiagnosticRegistrationOptions>? = null,
     /**
      * The server provides workspace symbol support.
      */
@@ -2490,7 +2325,9 @@ public data class InitializeParams(
      * The rootPath of the workspace. Is null if no folder is open.
      * @deprecated Use rootUri instead.
      */
-    val rootPath: String? = null,
+    @Serializable(with = MaybeStringSerializer::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val rootPath: Maybe<String> = Maybe.Absent,
     /**
      * The rootUri of the workspace. Is null if no folder is open.
      */
@@ -2510,11 +2347,13 @@ public data class InitializeParams(
     /**
      * The workspace folders configured in the client when the server starts.
      */
-    val workspaceFolders: List<WorkspaceFolder>? = null,
+    @Serializable(with = MaybeWorkspaceFoldersSerializer::class)
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    val workspaceFolders: Maybe<List<WorkspaceFolder>> = Maybe.Absent,
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
 )
 

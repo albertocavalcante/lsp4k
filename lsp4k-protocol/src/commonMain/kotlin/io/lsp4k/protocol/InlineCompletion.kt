@@ -2,14 +2,8 @@ package io.lsp4k.protocol
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonEncoder
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonElement
 
 @Serializable(with = InlineCompletionTriggerKindSerializer::class)
 public enum class InlineCompletionTriggerKind(
@@ -52,42 +46,26 @@ public data class InlineCompletionParams(
     /**
      * An optional token that a server can use to report work done progress.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val workDoneToken: ProgressToken? = null,
     /**
      * An optional token that a server can use to report partial results.
      */
-    @Serializable(with = NullableProgressTokenSerializer::class)
+    @Serializable(with = ProgressTokenSerializer::class)
     val partialResultToken: ProgressToken? = null,
 )
 
 /**
- * Serializer for InlineCompletionItem.insertText which can be either a plain string or a StringValue.
+ * Serializer for InlineCompletionItem.insertText, which is a plain string or a [StringValue] object.
+ * Any other JSON value is rejected.
  */
-public object InlineCompletionInsertTextSerializer : KSerializer<Either<String, StringValue>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("InlineCompletionInsertText")
-
-    override fun serialize(
-        encoder: Encoder,
-        value: Either<String, StringValue>,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        when (value) {
-            is Either.Left -> jsonEncoder.encodeJsonElement(JsonPrimitive(value.value))
-            is Either.Right -> jsonEncoder.encodeSerializableValue(StringValue.serializer(), value.value)
-        }
-    }
-
-    override fun deserialize(decoder: Decoder): Either<String, StringValue> {
-        val jsonDecoder = decoder as JsonDecoder
-        val element = jsonDecoder.decodeJsonElement()
-        return when (element) {
-            is JsonPrimitive -> Either.Left(element.content)
-            is JsonObject -> Either.Right(jsonDecoder.json.decodeFromJsonElement(StringValue.serializer(), element))
-            else -> throw IllegalArgumentException("insertText must be a string or StringValue object")
-        }
-    }
-}
+public object InlineCompletionInsertTextSerializer : KSerializer<Either<String, StringValue>> by strictUnion(
+    "InlineCompletionInsertText",
+    String.serializer(),
+    StringValue.serializer(),
+    JsonElement::isStringLiteral,
+    JsonElement::isObject,
+)
 
 @Serializable
 public data class InlineCompletionItem(
