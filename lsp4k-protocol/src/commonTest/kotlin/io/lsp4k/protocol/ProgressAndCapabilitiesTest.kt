@@ -62,7 +62,10 @@ class ProgressAndCapabilitiesTest {
 
     @Test
     fun `initialize params decode a work done token`() {
-        val decoded = json.decodeFromString<InitializeParams>("""{"processId":null,"rootUri":null,"capabilities":{},"workDoneToken":"init"}""")
+        val decoded =
+            json.decodeFromString<InitializeParams>(
+                """{"processId":null,"rootUri":null,"capabilities":{},"workDoneToken":"init"}""",
+            )
         decoded.workDoneToken shouldBe Either.right("init")
     }
 
@@ -80,9 +83,11 @@ class ProgressAndCapabilitiesTest {
         json.decodeFromString<CompletionOptions>("""{"workDoneProgress":true}""").workDoneProgress shouldBe true
         json.decodeFromString<SignatureHelpOptions>("""{"workDoneProgress":false}""").workDoneProgress shouldBe false
         json.decodeFromString<DocumentLinkOptions>("""{"workDoneProgress":true}""").workDoneProgress shouldBe true
-        json.decodeFromString<SemanticTokensOptions>(
-            """{"legend":{"tokenTypes":[],"tokenModifiers":[]},"workDoneProgress":true}""",
-        ).workDoneProgress shouldBe true
+        val semantic =
+            json.decodeFromString<SemanticTokensOptions>(
+                """{"legend":{"tokenTypes":[],"tokenModifiers":[]},"workDoneProgress":true}""",
+            )
+        semantic.workDoneProgress shouldBe true
     }
 
     // ==================== client capabilities ====================

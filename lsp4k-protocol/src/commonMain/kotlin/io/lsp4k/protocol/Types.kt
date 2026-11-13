@@ -1,6 +1,5 @@
 package io.lsp4k.protocol
 
-import kotlin.jvm.JvmInline
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -14,6 +13,7 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.jvm.JvmInline
 
 /**
  * Abstract base serializer for integer-backed enum types in LSP.
