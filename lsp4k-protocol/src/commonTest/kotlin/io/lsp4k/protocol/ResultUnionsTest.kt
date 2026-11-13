@@ -85,7 +85,10 @@ class ResultUnionsTest {
         val bare = """{"title":"Fix"}"""
         val decoded = serializer.roundTrip("[$command,$action,$bare]")
         decoded[0].shouldBeInstanceOf<CommandOrCodeAction.OfCommand>().command.command shouldBe "run"
-        decoded[1].shouldBeInstanceOf<CommandOrCodeAction.OfCodeAction>().codeAction.command?.command shouldBe "run"
+        decoded[1]
+            .shouldBeInstanceOf<CommandOrCodeAction.OfCodeAction>()
+            .codeAction.command
+            ?.command shouldBe "run"
         decoded[2].shouldBeInstanceOf<CommandOrCodeAction.OfCodeAction>()
         serializer.roundTrip("[]") shouldBe emptyList()
     }
@@ -161,13 +164,18 @@ class ResultUnionsTest {
         val serializer = SemanticTokensDeltaResult.serializer()
         serializer.roundTrip("""{"resultId":"1","data":[0,1,2,3,4]}""").shouldBeInstanceOf<SemanticTokensDeltaResult.Tokens>()
         val delta = serializer.roundTrip("""{"resultId":"2","edits":[{"start":1,"deleteCount":2,"data":[5]}]}""")
-        delta.shouldBeInstanceOf<SemanticTokensDeltaResult.Delta>().delta.edits.single().start shouldBe 1
+        delta
+            .shouldBeInstanceOf<SemanticTokensDeltaResult.Delta>()
+            .delta.edits
+            .single()
+            .start shouldBe 1
         serializer.rejects("{}", """{"data":[],"edits":[]}""", "[]")
     }
 
     @Test
     fun `semantic tokens partial results encode their chunk`() {
-        json.encodeToString(SemanticTokensPartialResult.serializer(), SemanticTokensPartialResult(listOf(1, 2))) shouldBe """{"data":[1,2]}"""
+        json.encodeToString(SemanticTokensPartialResult.serializer(), SemanticTokensPartialResult(listOf(1, 2))) shouldBe
+            """{"data":[1,2]}"""
         json.encodeToString(
             SemanticTokensDeltaPartialResult.serializer(),
             SemanticTokensDeltaPartialResult(listOf(SemanticTokensEdit(start = 0, deleteCount = 1))),
