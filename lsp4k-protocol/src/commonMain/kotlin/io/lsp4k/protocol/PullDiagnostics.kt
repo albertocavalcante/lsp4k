@@ -4,16 +4,15 @@ import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonDecoder
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.serializer
 
 /**
  * Parameters for the textDocument/diagnostic request.
@@ -128,7 +127,7 @@ public data class RelatedFullDocumentDiagnosticReport(
      * @since 3.17.0
      */
     @Serializable(with = RelatedDocumentsSerializer::class)
-    val relatedDocuments: Map<DocumentUri, DocumentDiagnosticReport>? = null,
+    val relatedDocuments: Map<DocumentUri, RelatedDocumentReport>? = null,
 )
 
 /**
@@ -155,7 +154,7 @@ public data class RelatedUnchangedDocumentDiagnosticReport(
      * @since 3.17.0
      */
     @Serializable(with = RelatedDocumentsSerializer::class)
-    val relatedDocuments: Map<DocumentUri, DocumentDiagnosticReport>? = null,
+    val relatedDocuments: Map<DocumentUri, RelatedDocumentReport>? = null,
 )
 
 /**
@@ -169,17 +168,17 @@ public data class RelatedUnchangedDocumentDiagnosticReport(
 @Serializable(with = DocumentDiagnosticReportSerializer::class)
 public sealed interface DocumentDiagnosticReport {
     /**
-     * Wrapper for a full document diagnostic report.
+     * Wrapper for a full document diagnostic report, which may carry related documents.
      */
     public data class Full(
-        public val report: FullDocumentDiagnosticReport,
+        public val report: RelatedFullDocumentDiagnosticReport,
     ) : DocumentDiagnosticReport
 
     /**
-     * Wrapper for an unchanged document diagnostic report.
+     * Wrapper for an unchanged document diagnostic report, which may carry related documents.
      */
     public data class Unchanged(
-        public val report: UnchangedDocumentDiagnosticReport,
+        public val report: RelatedUnchangedDocumentDiagnosticReport,
     ) : DocumentDiagnosticReport
 }
 
@@ -196,9 +195,9 @@ public object DocumentDiagnosticReportSerializer : KSerializer<DocumentDiagnosti
         val jsonEncoder = encoder as JsonEncoder
         when (value) {
             is DocumentDiagnosticReport.Full ->
-                jsonEncoder.encodeSerializableValue(FullDocumentDiagnosticReport.serializer(), value.report)
+                jsonEncoder.encodeSerializableValue(RelatedFullDocumentDiagnosticReport.serializer(), value.report)
             is DocumentDiagnosticReport.Unchanged ->
-                jsonEncoder.encodeSerializableValue(UnchangedDocumentDiagnosticReport.serializer(), value.report)
+                jsonEncoder.encodeSerializableValue(RelatedUnchangedDocumentDiagnosticReport.serializer(), value.report)
         }
     }
 
@@ -208,70 +207,50 @@ public object DocumentDiagnosticReportSerializer : KSerializer<DocumentDiagnosti
         return when {
             element is JsonObject && element["kind"]?.jsonPrimitive?.content == "full" -> {
                 DocumentDiagnosticReport.Full(
-                    jsonDecoder.json.decodeFromJsonElement(FullDocumentDiagnosticReport.serializer(), element),
+                    jsonDecoder.json.decodeFromJsonElement(RelatedFullDocumentDiagnosticReport.serializer(), element),
                 )
             }
             element is JsonObject && element["kind"]?.jsonPrimitive?.content == "unchanged" -> {
                 DocumentDiagnosticReport.Unchanged(
-                    jsonDecoder.json.decodeFromJsonElement(UnchangedDocumentDiagnosticReport.serializer(), element),
+                    jsonDecoder.json.decodeFromJsonElement(RelatedUnchangedDocumentDiagnosticReport.serializer(), element),
                 )
             }
-            else -> throw IllegalArgumentException("DocumentDiagnosticReport must have kind 'full' or 'unchanged'")
+            else -> throw SerializationException("DocumentDiagnosticReport must have kind 'full' or 'unchanged'")
         }
     }
 }
 
 /**
- * Serializer for the relatedDocuments map.
+ * A related document report: `FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport`,
+ * the value type of `relatedDocuments`.
+ *
+ * @since 3.17.0
  */
-public object RelatedDocumentsSerializer : KSerializer<Map<DocumentUri, DocumentDiagnosticReport>> {
-    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("RelatedDocuments")
+public typealias RelatedDocumentReport = Either<FullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport>
 
-    override fun serialize(
-        encoder: Encoder,
-        value: Map<DocumentUri, DocumentDiagnosticReport>,
-    ) {
-        val jsonEncoder = encoder as JsonEncoder
-        val jsonObject =
-            buildMap {
-                value.forEach { (uri, report) ->
-                    put(
-                        uri,
-                        when (report) {
-                            is DocumentDiagnosticReport.Full ->
-                                jsonEncoder.json.encodeToJsonElement(FullDocumentDiagnosticReport.serializer(), report.report)
-                            is DocumentDiagnosticReport.Unchanged ->
-                                jsonEncoder.json.encodeToJsonElement(UnchangedDocumentDiagnosticReport.serializer(), report.report)
-                        },
-                    )
-                }
-            }
-        jsonEncoder.encodeSerializableValue(
-            serializer<Map<String, JsonElement>>(),
-            jsonObject,
-        )
-    }
+/**
+ * The document diagnostic report used when reporting partial results:
+ * `DocumentDiagnosticReport | DocumentDiagnosticReportPartialResult`.
+ *
+ * The first literal sent must be a [DocumentDiagnosticReport] (a content object with a `kind`),
+ * followed by [DocumentDiagnosticReportPartialResult] literals for related documents.
+ *
+ * @since 3.18.1
+ */
+public typealias DocumentDiagnosticReportProgress = Either<DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult>
 
-    override fun deserialize(decoder: Decoder): Map<DocumentUri, DocumentDiagnosticReport> {
-        val jsonDecoder = decoder as JsonDecoder
-        val jsonObject = jsonDecoder.decodeJsonElement() as JsonObject
-        return jsonObject.mapValues { (_, element) ->
-            when {
-                element is JsonObject && element["kind"]?.jsonPrimitive?.content == "full" -> {
-                    DocumentDiagnosticReport.Full(
-                        jsonDecoder.json.decodeFromJsonElement(FullDocumentDiagnosticReport.serializer(), element),
-                    )
-                }
-                element is JsonObject && element["kind"]?.jsonPrimitive?.content == "unchanged" -> {
-                    DocumentDiagnosticReport.Unchanged(
-                        jsonDecoder.json.decodeFromJsonElement(UnchangedDocumentDiagnosticReport.serializer(), element),
-                    )
-                }
-                else -> throw IllegalArgumentException("Related document diagnostic must have kind 'full' or 'unchanged'")
-            }
-        }
-    }
-}
+/**
+ * Cancellation data returned from a diagnostic request (the `data` of the `ServerCancelled` error).
+ *
+ * @since 3.17.0
+ */
+@Serializable
+public data class DiagnosticServerCancellationData(
+    /**
+     * Whether the client should re-trigger the request.
+     */
+    val retriggerRequest: Boolean,
+)
 
 /**
  * A partial result for a document diagnostic report.
@@ -284,7 +263,7 @@ public data class DocumentDiagnosticReportPartialResult(
      * Partial result of related documents.
      */
     @Serializable(with = RelatedDocumentsSerializer::class)
-    val relatedDocuments: Map<DocumentUri, DocumentDiagnosticReport>,
+    val relatedDocuments: Map<DocumentUri, RelatedDocumentReport>,
 )
 
 /**

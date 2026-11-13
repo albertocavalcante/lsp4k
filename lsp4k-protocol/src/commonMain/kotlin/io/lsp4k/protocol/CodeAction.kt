@@ -33,6 +33,13 @@ public object CodeActionKind {
     public const val REFACTOR_INLINE: String = "refactor.inline"
 
     /**
+     * Base kind for refactoring move actions: 'refactor.move'.
+     *
+     * @since 3.18.0
+     */
+    public const val REFACTOR_MOVE: String = "refactor.move"
+
+    /**
      * Base kind for refactoring rewrite actions: 'refactor.rewrite'.
      */
     public const val REFACTOR_REWRITE: String = "refactor.rewrite"
@@ -51,7 +58,67 @@ public object CodeActionKind {
      * Base kind for a fix all source action: 'source.fixAll'.
      */
     public const val SOURCE_FIX_ALL: String = "source.fixAll"
+
+    /**
+     * Base kind for all code actions applying to the entire notebook's scope: 'notebook'.
+     *
+     * @since 3.18.0
+     */
+    public const val NOTEBOOK: String = "notebook"
 }
+
+/**
+ * Code action tags are extra annotations that tweak the behavior of a code action.
+ *
+ * @since 3.18.0
+ */
+@Serializable(with = CodeActionTagSerializer::class)
+public enum class CodeActionTag(
+    public val value: Int,
+) {
+    /**
+     * Marks the code action as LLM-generated.
+     */
+    LlmGenerated(1),
+
+    ;
+
+    public companion object {
+        public fun fromValue(value: Int): CodeActionTag =
+            entries.firstOrNull { it.value == value }
+                ?: throw IllegalArgumentException("Unknown CodeActionTag: $value")
+    }
+}
+
+/**
+ * Serializer for CodeActionTag that encodes/decodes as integer.
+ */
+public object CodeActionTagSerializer : IntEnumSerializer<CodeActionTag>(
+    "CodeActionTag",
+    CodeActionTag::fromValue,
+    { it.value },
+)
+
+/**
+ * Documentation for a class of code actions.
+ *
+ * @since 3.18.0
+ */
+@Serializable
+public data class CodeActionKindDocumentation(
+    /**
+     * The kind of the code action being documented. If the kind is generic, such as
+     * `refactor`, the documentation is shown whenever any refactorings are returned.
+     * A more specific kind, such as `refactor.extract`, only shows it when extract
+     * refactoring code actions are returned.
+     */
+    val kind: String,
+    /**
+     * Command that is used to display the documentation to the user.
+     * The title of this documentation code action is taken from [Command.title].
+     */
+    val command: Command,
+)
 
 /**
  * Parameters for a textDocument/codeAction request.
@@ -177,6 +244,12 @@ public data class CodeAction(
      * a `textDocument/codeAction` and a `codeAction/resolve` request.
      */
     val data: JsonElement? = null,
+    /**
+     * Tags for this code action.
+     *
+     * @since 3.18.0
+     */
+    val tags: List<CodeActionTag>? = null,
 )
 
 /**

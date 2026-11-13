@@ -237,7 +237,7 @@ class EitherSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),
-                message = "Type mismatch",
+                message = Either.Left("Type mismatch"),
                 code = Either.left(1001),
             )
         val encoded = json.encodeToString(diagnostic)
@@ -250,7 +250,7 @@ class EitherSerializationTest {
         val diagnostic =
             Diagnostic(
                 range = Range(Position(10, 0), Position(10, 20)),
-                message = "Unused variable",
+                message = Either.Left("Unused variable"),
                 code = Either.right("KT001"),
             )
         val encoded = json.encodeToString(diagnostic)
