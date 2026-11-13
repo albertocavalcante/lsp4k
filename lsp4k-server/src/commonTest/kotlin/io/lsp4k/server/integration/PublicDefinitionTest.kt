@@ -52,15 +52,15 @@ class PublicDefinitionTest {
             val peer = DefinitionPeer()
             val client = languageClient {}.start(peer, backgroundScope)
             peer.result = locationJson
-            assertEquals(DefinitionResult.Single(location), client.server.definition(params))
+            assertEquals(DefinitionResult.Single(location), client.server.textDocument.definition(params))
             peer.result = "[$locationJson]"
-            assertEquals(DefinitionResult.Locations(listOf(location)), client.server.definition(params))
+            assertEquals(DefinitionResult.Locations(listOf(location)), client.server.textDocument.definition(params))
             peer.result = "[$linkJson]"
-            assertEquals(DefinitionResult.Links(listOf(link)), client.server.definition(params))
+            assertEquals(DefinitionResult.Links(listOf(link)), client.server.textDocument.definition(params))
             peer.result = "[]"
-            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definition(params))
+            assertEquals(DefinitionResult.Locations(emptyList()), client.server.textDocument.definition(params))
             peer.result = "null"
-            assertEquals(null, client.server.definition(params))
+            assertEquals(null, client.server.textDocument.definition(params))
             client.close()
         }
 
@@ -79,7 +79,7 @@ class PublicDefinitionTest {
                 """[{"targetUri":"file:///x","targetRange":{}}]""",
             )) {
                 peer.result = bad
-                assertFailsWith<SerializationException> { client.server.definition(params) }
+                assertFailsWith<SerializationException> { client.server.textDocument.definition(params) }
             }
             client.close()
         }
@@ -119,7 +119,7 @@ class PublicDefinitionTest {
                 val client = languageClient { capabilities(capabilities) }.start(clientTransport, backgroundScope)
                 client.initialize()
                 responses.receive()
-                val actual = client.server.definition(params)
+                val actual = client.server.textDocument.definition(params)
                 val expected =
                     if (supportsLinks) DefinitionResult.Links(listOf(link)) else DefinitionResult.Locations(listOf(location))
                 assertEquals(expected, actual)
@@ -143,13 +143,13 @@ class PublicDefinitionTest {
             val client = languageClient {}.start(DefinitionTransport(toClient, toServer, null), backgroundScope)
             client.initialize()
             responses.receive()
-            assertEquals(result, client.server.definition(params))
+            assertEquals(result, client.server.textDocument.definition(params))
             assertEquals(Json.parseToJsonElement(locationJson), responses.receive()["result"])
             result = DefinitionResult.Links(emptyList())
-            assertEquals(DefinitionResult.Locations(emptyList()), client.server.definition(params))
+            assertEquals(DefinitionResult.Locations(emptyList()), client.server.textDocument.definition(params))
             assertEquals(Json.parseToJsonElement("[]"), responses.receive()["result"])
             result = null
-            assertEquals(null, client.server.definition(params))
+            assertEquals(null, client.server.textDocument.definition(params))
             val response = responses.receive()
             assertTrue("result" in response)
             assertEquals(JsonNull, response["result"])
