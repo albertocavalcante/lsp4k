@@ -4,6 +4,7 @@ import io.jsonrpc4k.core.Connection
 import io.jsonrpc4k.transport.Transport
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
@@ -41,6 +42,11 @@ internal class SessionLifecycle(
         scope.launch {
             runPump { connection.outgoing.collect { transport.send(it) } }
         }
+    }
+
+    /** Runs [block] in the session scope, inline until its first suspension; it is cancelled with the session. */
+    fun launchUndispatched(block: suspend () -> Unit) {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
     }
 
     private suspend fun runPump(block: suspend () -> Unit) {

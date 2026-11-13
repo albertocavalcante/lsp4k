@@ -197,6 +197,60 @@ class ProgressTest {
         }
 
     @Test
+    fun `a cancel sent while a request handler runs is read only after the handler returned`() =
+        runTest {
+            val entered = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val cancelled = CompletableDeferred<ProgressToken>()
+            var cancelledInHandler: Boolean? = null
+            val peer =
+                startPeer(backgroundScope) {
+                    textDocument {
+                        hover {
+                            val progress = checkNotNull(workDoneProgress)
+                            progress.begin("Hovering", cancellable = true)
+                            entered.complete(Unit)
+                            release.await()
+                            cancelledInHandler = progress.isCancelled
+                            null
+                        }
+                    }
+                    window { workDoneProgressCancel { cancelled.complete(it.token) } }
+                }
+            peer.initialize()
+
+            val token: ProgressToken = Either.left(9)
+            val hover = HoverParams(document, position, workDoneToken = token)
+            val response = async { peer.request(LspMethods.TEXT_DOCUMENT_HOVER, wire(hover)) }
+            entered.await()
+            peer.send(LspMethods.WINDOW_WORK_DONE_PROGRESS_CANCEL, WorkDoneProgressCancelParams(token))
+            release.complete(Unit)
+            response.await()
+
+            assertEquals(false, cancelledInHandler)
+            assertEquals(token, cancelled.await())
+        }
+
+    @Test
+    fun `the initialized hook can await a request to the client`() =
+        runTest {
+            val registered = CompletableDeferred<Unit>()
+            val peer =
+                startPeer(backgroundScope) {
+                    onInitialized {
+                        client.window.createWorkDoneProgress()
+                        registered.complete(Unit)
+                    }
+                }
+            peer.initialize()
+
+            val created = peer.requests.receive()
+            assertEquals(LspMethods.WINDOW_WORK_DONE_PROGRESS_CREATE, created.method())
+            peer.respond(created)
+            registered.await()
+        }
+
+    @Test
     fun `a rejected progress creation throws and keeps the token unused`() =
         runTest {
             val peer = startPeer(backgroundScope) {}

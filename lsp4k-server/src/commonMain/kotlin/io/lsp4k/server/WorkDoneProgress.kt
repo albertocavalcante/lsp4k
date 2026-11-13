@@ -25,6 +25,11 @@ private enum class Phase {
  * `window/workDoneProgress/cancel` for [token] while the operation runs, [isCancelled] becomes true and
  * [awaitCancelled] returns; the operation should then stop and call [end].
  *
+ * Limit: the receive loop handles one inbound message at a time, so while a request handler is running it
+ * does not read the client's cancel notification. For the progress of a request handler, [isCancelled] therefore
+ * flips only after the handler returned; use server initiated progress, reported from your own coroutine scope,
+ * for work that must observe cancellation while it runs.
+ *
  * @property token The progress token.
  */
 public class WorkDoneProgress internal constructor(
@@ -61,9 +66,16 @@ public class WorkDoneProgress internal constructor(
         requirePercentage(percentage)
         mutex.withLock {
             check(phase == Phase.Created) { "Work done progress $token already began" }
-            registry.add(this)
             val value = WorkDoneProgressBegin(title = title, cancellable = cancellable, message = message, percentage = percentage)
-            sender.progress(token, value, WorkDoneProgressBegin.serializer())
+            // Register before sending so a cancel that follows at once finds the operation; undo if the send fails.
+            registry.add(this)
+            var sent = false
+            try {
+                sender.progress(token, value, WorkDoneProgressBegin.serializer())
+                sent = true
+            } finally {
+                if (!sent) registry.remove(token)
+            }
             phase = Phase.Running
         }
     }

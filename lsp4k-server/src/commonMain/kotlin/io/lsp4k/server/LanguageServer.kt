@@ -22,6 +22,9 @@ import kotlin.concurrent.Volatile
  * Created by [LanguageServerConfig.start]. It runs the LSP lifecycle state machine ([state]) and dispatches
  * inbound messages, one at a time, to the configured handlers:
  *
+ * - The `initialized` hook runs outside the receive loop and may await client requests. Every other handler runs
+ *   inside the loop, so a client request awaited from it fails with [IllegalStateException]; launch those in your
+ *   own scope.
  * - Before a successful `initialize`, requests fail with `ServerNotInitialized` (-32002) and notifications other
  *   than `exit` are dropped. A failed `initialize` may be retried; a second successful one is rejected with
  *   `InvalidRequest` (-32600).
@@ -90,8 +93,6 @@ public class LanguageServer internal constructor(
     private suspend fun initialize(params: JsonElement?): JsonElement =
         lifecycle.initialize {
             val decoded = decodeParams(LspMethods.INITIALIZE, InitializeParams.serializer(), params)
-            // An omitted trace level defaults to off, including on a retry.
-            traceLevel = decoded.trace ?: TraceValue.Off
             val hook = config.lifecycle.initialize
             val result =
                 if (hook == null) {
@@ -101,6 +102,8 @@ public class LanguageServer internal constructor(
                     runHandler(context) { context.hook(decoded) }
                 }
             val encoded = wireJson.encodeToJsonElement(InitializeResult.serializer(), result)
+            // An omitted trace level defaults to off, including on a retry; a failed hook leaves it untouched.
+            traceLevel = decoded.trace ?: TraceValue.Off
             lifecycle.initializeParams = decoded
             encoded
         }
@@ -109,7 +112,17 @@ public class LanguageServer internal constructor(
         if (!lifecycle.markInitialized()) return
         val hook = config.lifecycle.initialized ?: return
         val context = HandlerContext(this)
-        withContext(InboundHandlerMarker()) { context.hook() }
+        // Off the receive loop, so the hook can await client requests such as registerCapability; it starts
+        // inline and only continues in the session scope once it suspends. A failure ends the session.
+        session.launchUndispatched {
+            try {
+                context.hook()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                session.fail(failure)
+            }
+        }
     }
 
     private suspend fun shutdown(): JsonElement? {

@@ -121,6 +121,10 @@ appScope.launch {
 
 The receive loop dispatches one message at a time, so awaiting a client request inside a handler would never
 see its response; such calls fail at once with `IllegalStateException`. Launch them in your own scope instead.
+The one exception is the `onInitialized` hook, which runs outside the loop and may call
+`client.registration.register`, `client.workspace.configuration` and the like. For the same reason a request
+handler does not see `window/workDoneProgress/cancel` while it runs: its `workDoneProgress.isCancelled` flips only
+after the handler returned. Work that must react to cancellation should use server initiated progress, as above.
 
 The server enforces the lifecycle: requests before `initialize` fail with `ServerNotInitialized`, a second
 `initialize` and every request after `shutdown` fail with `InvalidRequest`, notifications other than `exit`
