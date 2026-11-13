@@ -43,20 +43,17 @@ public class EditingCalls internal constructor(
     /**
      * Resolve additional information for a given code action.
      */
-    public suspend fun codeActionResolve(codeAction: CodeAction): CodeAction? =
-        caller.request(LspMethods.CODE_ACTION_RESOLVE, codeAction)
+    public suspend fun codeActionResolve(codeAction: CodeAction): CodeAction? = caller.request(LspMethods.CODE_ACTION_RESOLVE, codeAction)
 
     /**
      * Request code lenses for a given text document.
      */
-    public suspend fun codeLens(params: CodeLensParams): List<CodeLens>? =
-        caller.request(LspMethods.TEXT_DOCUMENT_CODE_LENS, params)
+    public suspend fun codeLens(params: CodeLensParams): List<CodeLens>? = caller.request(LspMethods.TEXT_DOCUMENT_CODE_LENS, params)
 
     /**
      * Resolve additional information for a given code lens.
      */
-    public suspend fun codeLensResolve(codeLens: CodeLens): CodeLens? =
-        caller.request(LspMethods.CODE_LENS_RESOLVE, codeLens)
+    public suspend fun codeLensResolve(codeLens: CodeLens): CodeLens? = caller.request(LspMethods.CODE_LENS_RESOLVE, codeLens)
 
     /**
      * Request document links for a given text document.
@@ -67,8 +64,7 @@ public class EditingCalls internal constructor(
     /**
      * Resolve additional information for a given document link.
      */
-    public suspend fun documentLinkResolve(link: DocumentLink): DocumentLink? =
-        caller.request(LspMethods.DOCUMENT_LINK_RESOLVE, link)
+    public suspend fun documentLinkResolve(link: DocumentLink): DocumentLink? = caller.request(LspMethods.DOCUMENT_LINK_RESOLVE, link)
 
     /**
      * Request document colors for a given text document.
@@ -110,8 +106,7 @@ public class EditingCalls internal constructor(
     /**
      * Request a rename of a symbol.
      */
-    public suspend fun rename(params: RenameParams): WorkspaceEdit? =
-        caller.request(LspMethods.TEXT_DOCUMENT_RENAME, params)
+    public suspend fun rename(params: RenameParams): WorkspaceEdit? = caller.request(LspMethods.TEXT_DOCUMENT_RENAME, params)
 
     /**
      * Request to prepare a rename.
