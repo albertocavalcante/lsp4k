@@ -187,7 +187,7 @@ class EditsContentFiltersSerializationTest {
     }
 
     @Test
-    fun `glob pattern rejects numbers, booleans and arrays`() {
+    fun `glob pattern rejects numbers and booleans and arrays`() {
         listOf("5", "true", "[]", "null").forEach { text ->
             assertFailsWith<SerializationException> { json.decodeFromString(GlobPatternSerializer, text) }
         }
