@@ -5,15 +5,65 @@ set -euo pipefail
 : "${GITHUB_RUN_ID:?A unique run ID is required}"
 : "${GITHUB_RUN_ATTEMPT:?A unique run attempt is required}"
 
+tools/ci/check-publish-workflow.sh
+tools/ci/registry-routing.sh
+tools/ci/check-release-dependency-guard.sh
+
 export LSP4K_FIXTURE_VERSION="0.0.0-fixture-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 LSP4K_FIXTURE_REPOSITORY=$(mktemp -d "$RUNNER_TEMP/lsp4k-publication.XXXXXXXX")
 export LSP4K_FIXTURE_REPOSITORY
 trap 'rm -rf "$LSP4K_FIXTURE_REPOSITORY"' EXIT
 
+export LSP4K_PREFLIGHT_REPOSITORY="$LSP4K_FIXTURE_REPOSITORY/preflight"
+LSP4K_PREFLIGHT_VERSION="$LSP4K_FIXTURE_VERSION-SNAPSHOT"
+preflight_log="$LSP4K_FIXTURE_REPOSITORY/missing.log"
+if env -u GITHUB_TOKEN -u GITHUB_ACTOR ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
+	-PVERSION_NAME="$LSP4K_PREFLIGHT_VERSION" -Pgpr.user= -Pgpr.key= \
+	-Plsp4k.useLocalJsonrpc4k=false -Pjsonrpc4k.repository=github \
+	--init-script tools/ci/registry-routing/redirect.init.gradle.kts \
+	--init-script tools/ci/release-dependency-guard.init.gradle.kts \
+	--init-script tools/ci/publication-preflight.init.gradle.kts \
+	publishAllPublicationsToPreflightRepository --refresh-dependencies >"$preflight_log" 2>&1; then
+	printf 'Publication preflight unexpectedly succeeded without JSON-RPC artifacts\n' >&2
+	exit 1
+fi
+jsonrpc_version=$(python3 -c 'import tomllib; print(tomllib.load(open("gradle/libs.versions.toml", "rb"))["versions"]["jsonrpc4k"])')
+if ! grep -Fq "Could not find io.github.albertocavalcante:jsonrpc4k-transport:$jsonrpc_version." "$preflight_log"; then
+	cat "$preflight_log" >&2
+	printf 'Publication preflight failed for an unrelated reason\n' >&2
+	exit 1
+fi
+
+# A manual or tagged non-snapshot publication must reject the current snapshot dependency.
+if env -u GITHUB_TOKEN -u GITHUB_ACTOR ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
+	-PVERSION_NAME="$LSP4K_FIXTURE_VERSION" -Pgpr.user= -Pgpr.key= \
+	-Plsp4k.useLocalJsonrpc4k=false -Pjsonrpc4k.repository=github \
+	--init-script tools/ci/registry-routing/redirect.init.gradle.kts \
+	--init-script tools/ci/release-dependency-guard.init.gradle.kts \
+	--init-script tools/ci/publication-preflight.init.gradle.kts \
+	publishAllPublicationsToPreflightRepository >"$preflight_log" 2>&1; then
+	printf 'Release publication unexpectedly accepted a snapshot dependency\n' >&2
+	exit 1
+fi
+if ! grep -Fq 'requires an exact non-SNAPSHOT jsonrpc4k catalog version' "$preflight_log"; then
+	cat "$preflight_log" >&2
+	printf 'Release guard failed for an unrelated reason\n' >&2
+	exit 1
+fi
+
 ./jsonrpc4k/gradlew -p jsonrpc4k --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
 	--init-script "$PWD/tools/ci/publication-fixture.init.gradle.kts" \
 	:jsonrpc4k-core:publishAllPublicationsToFixtureRepository \
 	:jsonrpc4k-transport:publishAllPublicationsToFixtureRepository
+
+# Exercise the real host publication selector against independently published core binaries.
+env -u GITHUB_TOKEN -u GITHUB_ACTOR ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
+	-PVERSION_NAME="$LSP4K_PREFLIGHT_VERSION" -Pgpr.user= -Pgpr.key= \
+	-Plsp4k.useLocalJsonrpc4k=false -Pjsonrpc4k.repository=github \
+	--init-script tools/ci/registry-routing/redirect.init.gradle.kts \
+	--init-script tools/ci/release-dependency-guard.init.gradle.kts \
+	--init-script tools/ci/publication-preflight.init.gradle.kts \
+	publishAllPublicationsToPreflightRepository --refresh-dependencies
 
 ./gradlew --no-daemon --max-workers=2 -Dorg.gradle.jvmargs=-Xmx1536m \
 	-PVERSION_NAME="$LSP4K_FIXTURE_VERSION" \

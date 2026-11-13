@@ -1,0 +1,91 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lsp4k-publication
+  cancel-in-progress: false
+
+env:
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'temurin'
+
+defaults:
+  run:
+    working-directory: lsp4k
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: lsp4k
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Set up JDK
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
+
+      - name: Select tagged publication version
+        id: version
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="${RELEASE_TAG#v}"
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9][0-9A-Za-z.+-]*$ || "$version" == *-SNAPSHOT ]]; then
+            echo "::error::Publication requires a non-snapshot version tag."
+            exit 1
+          fi
+          printf 'version=%s\n' "$version" >>"$GITHUB_OUTPUT"
+
+      - name: Preflight complete publication to a private file repository
+        run: |
+          preflight_dir=$(mktemp -d "$RUNNER_TEMP/lsp4k-publish-preflight.XXXXXXXX")
+          trap 'rm -rf "$preflight_dir"' EXIT
+          export LSP4K_PREFLIGHT_REPOSITORY="$preflight_dir/repository"
+          publication_args=()
+          if [[ -n "$RELEASE_VERSION" ]]; then
+            publication_args+=("-PVERSION_NAME=$RELEASE_VERSION")
+          fi
+          ./gradlew publishAllPublicationsToPreflightRepository --refresh-dependencies \
+            -Plsp4k.useLocalJsonrpc4k=false -Pjsonrpc4k.repository=github \
+            --init-script tools/ci/release-dependency-guard.init.gradle.kts \
+            --init-script tools/ci/publication-preflight.init.gradle.kts "${publication_args[@]}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Publish
+        run: |
+          publication_args=()
+          if [[ -n "$RELEASE_VERSION" ]]; then
+            publication_args+=("-PVERSION_NAME=$RELEASE_VERSION")
+          fi
+          ./gradlew publishAllPublicationsToGitHubPackagesRepository \
+            -Plsp4k.useLocalJsonrpc4k=false -Pjsonrpc4k.repository=github \
+            --init-script tools/ci/release-dependency-guard.init.gradle.kts "${publication_args[@]}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}

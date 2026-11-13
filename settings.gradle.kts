@@ -13,21 +13,41 @@ rootProject.name = "lsp4k"
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+val jsonrpcRepository = providers.gradleProperty("jsonrpc4k.repository").orNull
+require(jsonrpcRepository == null || jsonrpcRepository == "github") {
+    "jsonrpc4k.repository must be github when set"
+}
+
 dependencyResolutionManagement {
     repositories {
         if (providers.gradleProperty("lsp4k.useMavenLocal").orNull?.toBooleanStrict() == true) {
             mavenLocal()
         }
         mavenCentral()
-        maven {
+        val configureJsonrpcRepository: MavenArtifactRepository.() -> Unit = {
             name = "Jsonrpc4kGitHubPackages"
             url = uri("https://maven.pkg.github.com/albertocavalcante/jsonrpc4k")
-            credentials {
-                username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR") ?: ""
-                password = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN") ?: ""
+            val registryUser = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+            val registryToken = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
+            if (jsonrpcRepository != "github" || !registryToken.isNullOrEmpty()) {
+                if (jsonrpcRepository == "github") {
+                    require(!registryUser.isNullOrEmpty()) { "A GitHub Packages username is required with a token" }
+                }
+                credentials {
+                    username = registryUser ?: ""
+                    password = registryToken ?: ""
+                }
             }
-            content {
-                includeGroup("io.github.albertocavalcante")
+        }
+        if (jsonrpcRepository == "github") {
+            exclusiveContent {
+                forRepository { maven { configureJsonrpcRepository() } }
+                filter { includeModuleByRegex("io\\.github\\.albertocavalcante", "jsonrpc4k-(core|transport)(-.+)?") }
+            }
+        } else {
+            maven {
+                configureJsonrpcRepository()
+                content { includeGroup("io.github.albertocavalcante") }
             }
         }
     }

@@ -23,7 +23,7 @@ jobs:
   linux:
     name: Linux Check
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
 
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: dcf94c89ecf086ce7ef838c6c15d7aa315e76fa5
+          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: dcf94c89ecf086ce7ef838c6c15d7aa315e76fa5
+          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -133,7 +133,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: dcf94c89ecf086ce7ef838c6c15d7aa315e76fa5
+          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
           path: jsonrpc4k
           fetch-depth: 1
           persist-credentials: false
@@ -165,7 +165,7 @@ jobs:
   java17-consumer:
     name: Published Java 17 consumer
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -177,7 +177,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: albertocavalcante/jsonrpc4k
-          ref: dcf94c89ecf086ce7ef838c6c15d7aa315e76fa5
+          ref: d76da8c7e8c83f2ca29b73e5c70b3b14b03ad760
           path: jsonrpc4k
           persist-credentials: false
       - name: Set up Java 17 and 21
