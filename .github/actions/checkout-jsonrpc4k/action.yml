@@ -1,0 +1,28 @@
+name: Checkout pinned jsonrpc4k
+description: >-
+  Checks out the jsonrpc4k revision recorded as lsp4k.jsonrpc4kPin in gradle.properties into the jsonrpc4k
+  directory next to the lsp4k sources. Run it after checking out lsp4k into the workspace root.
+
+runs:
+  using: composite
+  steps:
+    - name: Read jsonrpc4k pin
+      id: pin
+      shell: bash
+      run: |
+        set -euo pipefail
+        pin=$(sed -n 's/^lsp4k\.jsonrpc4kPin=//p' gradle.properties | tr -d '\r')
+        if ! [[ $pin =~ ^[0-9a-f]{40}$ ]]; then
+          echo "::error::lsp4k.jsonrpc4kPin in gradle.properties must be a full 40-character commit SHA, got '$pin'"
+          exit 1
+        fi
+        echo "sha=$pin" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout jsonrpc4k
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: albertocavalcante/jsonrpc4k
+        ref: ${{ steps.pin.outputs.sha }}
+        path: jsonrpc4k
+        fetch-depth: 1
+        persist-credentials: false

@@ -85,15 +85,28 @@ The meta model's structures are not yet diffed against the `lsp4k-protocol` type
 
 | Target | What CI does |
 |--------|--------------|
-| JVM (toolchain 17, published for Java 17) | Runs all tests, including the end-to-end TCP session test (`TcpEndToEndTest`), on Linux; a separate job builds a Java 17 consumer |
-| JS (Node.js, browser) | Part of `./gradlew check` on the Linux job |
+| JVM (toolchain 17, published for Java 17) | Runs all tests, including the end-to-end TCP session test (`TcpEndToEndTest`), on Linux, plus Linux ARM64 and Windows ARM64 runners; a separate job builds a Java 17 consumer |
+| JS (Node.js, browser) | `./gradlew check` on the Linux job; Node.js tests also run on the Linux ARM64 and Windows ARM64 jobs |
 | macOS native (`macosArm64`, `macosX64`) | `./gradlew check` on a macOS runner with Apple targets enabled |
 | `linuxX64` | Tests run on the Linux job |
-| `linuxArm64` | Compile-only: there is no Linux arm64 job, so its tests never execute |
-| `mingwX64` (Windows) | Compile-only: lsp4k has no Windows job, so its tests never execute |
+| `linuxArm64` | Cross-linked on x64 Linux; the test executables run on a Linux ARM64 runner |
+| `mingwX64` (Windows) | Tests run on a Windows x64 runner; the same executables run on a Windows ARM64 runner under x64 emulation |
 
-Compile-only targets are built by `check` but their behaviour is unverified here. The end-to-end session test
-is JVM only.
+The end-to-end session test is JVM only.
+
+#### Platform support
+
+| Platform | JVM (17+) | Node.js | Kotlin/Native |
+|---|---|---|---|
+| Linux x64 | tested in CI | tested in CI | tested in CI (`linuxX64`) |
+| Linux ARM64 | tested in CI | tested in CI | tested in CI (`linuxArm64`, cross-compiled on x64, run on an ARM64 runner) |
+| macOS x64 | not tested in CI | not tested in CI | not tested in CI |
+| macOS ARM64 | tested in CI | tested in CI | tested in CI (`macosArm64`) |
+| Windows x64 | not tested in CI | not tested in CI | tested in CI (`mingwX64`) |
+| Windows ARM64 | tested in CI | tested in CI | x64 emulation: Kotlin/Native has no Windows ARM64 target, so the `mingwX64` executables run under Windows 11 x64 emulation |
+
+The Linux ARM64 and Windows ARM64 jobs run on GitHub-hosted ARM64 runners (`ubuntu-24.04-arm`, `windows-11-arm`).
+Kotlin/Native has no Linux ARM64 host (KT-36871) and no Windows ARM64 target (KT-68504).
 
 ### Transports
 
@@ -321,6 +334,15 @@ a sibling `../jsonrpc4k` checkout automatically when present. Use
 `-Plsp4k.useLocalJsonrpc4k=false` to force resolution from published artifacts.
 For GitHub Packages, provide `gpr.user`/`gpr.key` Gradle properties or
 `GITHUB_ACTOR`/`GITHUB_TOKEN` environment variables.
+
+#### jsonrpc4k pin
+
+`gradle.properties` records the jsonrpc4k revision lsp4k is validated against as `lsp4k.jsonrpc4kPin` (a full
+40-character commit SHA). CI reads the revision from that file when it checks out jsonrpc4k, so the pin lives in one
+place. When the build includes a jsonrpc4k checkout, `settings.gradle.kts` compares that checkout's git `HEAD` with the
+pin: the build fails when `CI=true` and prints a warning locally. To build against another jsonrpc4k revision, pass
+`-Plsp4k.allowJsonrpc4kPinMismatch=true`. To move the pin, change `lsp4k.jsonrpc4kPin` and check out that revision in
+your sibling jsonrpc4k.
 
 ### Specification conformance
 
