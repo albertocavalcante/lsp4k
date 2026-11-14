@@ -172,9 +172,12 @@ public fun languageServer(block: LanguageServerBuilder.() -> Unit): LanguageServ
  * When the transport's input ends, the session stops admitting messages, waits for the requests and notifications
  * already admitted (at most [BoundedDispatchPolicy.drainTimeout], after which the remaining requests are cancelled
  * and answered `RequestCancelled`), writes the queued responses and then ends. A client that closes its output right
- * after its last request therefore still receives the response. Queuing the cancellation errors and writing the
- * responses are each bounded by the drain timeout as well, so termination after the end of input takes at most three
- * times [BoundedDispatchPolicy.drainTimeout], even when the transport's send blocks.
+ * after its last request therefore still receives the response. Queuing the cancellation errors is bounded by the
+ * drain timeout as well, and writing the queued frames by the drain timeout but at least one second, so termination
+ * after the end of input takes at most twice [BoundedDispatchPolicy.drainTimeout] plus the larger of the drain timeout
+ * and one second, even when the transport's send blocks. A zero drain timeout cancels the running handlers at once and
+ * does not wait for their `RequestCancelled` errors, which may then be dropped; responses queued before that are
+ * still written.
  *
  * @param policy Concurrency, queue and drain limits; defaults to [DEFAULT_DISPATCH_POLICY].
  * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.

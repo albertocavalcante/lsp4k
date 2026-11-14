@@ -16,6 +16,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
+
+/**
+ * The least time the session waits for queued frames to be written after the end of input. Without it a zero drain
+ * timeout would end the session before the responses already queued reach the transport.
+ */
+private val MIN_FLUSH_TIMEOUT = 1.seconds
 
 /** Owns session jobs; the supplied scope and transport remain caller-owned. */
 internal class SessionLifecycle(
@@ -62,12 +69,14 @@ internal class SessionLifecycle(
      * Lets the work admitted before the end of input finish and its responses reach the transport before the session
      * ends: [Connection.endInput] waits for admitted requests and notifications, bounded by the policy's drain timeout,
      * and [Connection.flushOutgoing] waits until the outgoing pump has written every queued frame. The flush gets its
-     * own drain timeout, so a transport whose send blocks (a half-closed peer that stopped reading) cannot keep the
-     * session alive; the session then ends and the unsent frames are dropped.
+     * own bound, the drain timeout but at least [MIN_FLUSH_TIMEOUT], so a transport whose send blocks (a half-closed
+     * peer that stopped reading) cannot keep the session alive, and a zero drain timeout still writes the frames that
+     * were queued when [Connection.endInput] returned; after the bound the session ends and the unsent frames are
+     * dropped.
      */
     private suspend fun drainAfterEndOfInput() {
         connection.endInput()
-        withTimeoutOrNull(sessionPolicy.drainTimeout) { connection.flushOutgoing() }
+        withTimeoutOrNull(sessionPolicy.drainTimeout.coerceAtLeast(MIN_FLUSH_TIMEOUT)) { connection.flushOutgoing() }
     }
 
     private suspend fun runPump(block: suspend () -> Unit) {

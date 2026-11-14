@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -20,6 +21,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class ClientDispatchLanesTest {
@@ -164,5 +167,40 @@ class ClientDispatchLanesTest {
 
             assertEquals(null, withTimeout(10.seconds) { client.awaitTermination() })
             assertTrue(sending.isCompleted, "the response reached the transport's send")
+        }
+
+    @Test
+    fun `a zero drain timeout still writes the response queued before the server closed its output`() =
+        runTest {
+            val body =
+                """{"jsonrpc":"2.0","id":1,"method":"${LspMethods.WINDOW_SHOW_MESSAGE_REQUEST}","params":$messageRequest}"""
+            val sending = CompletableDeferred<Unit>()
+            val written = CompletableDeferred<String>()
+            val slow =
+                object : Transport {
+                    override val incoming: Flow<ByteArray> =
+                        flow {
+                            emit("Content-Length: ${body.encodeToByteArray().size}\r\n\r\n$body".encodeToByteArray())
+                            sending.await()
+                        }
+                    override val isConnected: Boolean = true
+
+                    override suspend fun send(data: ByteArray) {
+                        sending.complete(Unit)
+                        delay(500.milliseconds)
+                        written.complete(data.decodeToString())
+                    }
+
+                    override suspend fun close() = Unit
+                }
+            val policy = BoundedDispatchPolicy(maxConcurrentRequests = 4, maxQueuedMessages = 64, drainTimeout = Duration.ZERO)
+            val client =
+                languageClient {
+                    window { showMessageRequest { MessageActionItem("Yes") } }
+                }.start(slow, backgroundScope, policy)
+
+            assertEquals(null, withTimeout(10.seconds) { client.awaitTermination() })
+            assertTrue(written.isCompleted, "the response was written before the session ended")
+            assertTrue("\"title\":\"Yes\"" in written.await(), "unexpected frame: ${written.await()}")
         }
 }

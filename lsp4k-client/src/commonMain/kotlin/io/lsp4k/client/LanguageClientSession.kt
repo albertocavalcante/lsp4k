@@ -168,16 +168,18 @@ public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy =
  *
  * When the transport's input ends, the session stops admitting messages, waits for the requests and notifications
  * already admitted (at most [BoundedDispatchPolicy.drainTimeout], after which the remaining requests are cancelled
- * and answered `RequestCancelled`), writes the queued responses and then ends. Queuing the cancellation errors and
- * writing the responses are each bounded by the drain timeout as well, so this takes at most three times
- * [BoundedDispatchPolicy.drainTimeout] (15 seconds with [DEFAULT_DISPATCH_POLICY]).
+ * and answered `RequestCancelled`), writes the queued responses and then ends. Queuing the cancellation errors is
+ * bounded by the drain timeout as well, and writing the queued frames by the drain timeout but at least one second,
+ * so this takes at most twice [BoundedDispatchPolicy.drainTimeout] plus the larger of the drain timeout and one
+ * second (15 seconds with [DEFAULT_DISPATCH_POLICY]).
  *
  * The input usually ends because the server process exited or crashed. Requests the client sent to the server fail
  * only when the session ends, so while a server-to-client handler is still running (for example a
  * `window/showMessageRequest` waiting for the user), pending server requests and
  * [LanguageClientSession.awaitTermination] are delayed by up to that bound, and the handler's answer goes to a server
- * that may already be gone. Pass a policy with a shorter drain timeout to fail them sooner; `Duration.ZERO` cancels
- * running handlers at once.
+ * that may already be gone. Pass a policy with a shorter drain timeout to fail them sooner. `Duration.ZERO` cancels
+ * running handlers at once and does not wait for their `RequestCancelled` errors, which may then be dropped;
+ * responses queued before that are still written, within one second.
  *
  * @param policy Concurrency, queue and drain limits; defaults to [DEFAULT_DISPATCH_POLICY].
  * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.
