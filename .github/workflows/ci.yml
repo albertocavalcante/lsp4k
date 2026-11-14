@@ -51,6 +51,9 @@ jobs:
       - name: Check
         run: ./gradlew check -Plsp4k.jsonrpc4kBuild=jsonrpc4k -Plsp4k.enableAppleTargets=false
 
+      - name: Exercise the jsonrpc4k pin guard
+        run: tools/ci/check-jsonrpc4k-pin-guard.sh
+
       - name: Inspect local publication model
         run: tools/ci/check-publication-model.sh
 
