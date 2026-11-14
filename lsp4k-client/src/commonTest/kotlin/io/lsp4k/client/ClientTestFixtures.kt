@@ -58,6 +58,11 @@ internal class TestPeer(
     init {
         scope.launch { connection.outgoing.collect { toClient.send(it) } }
     }
+
+    /** Closes the server's output, so the client's transport reports the end of input; send nothing afterwards. */
+    fun closeOutput() {
+        toClient.close()
+    }
 }
 
 internal data class Received(

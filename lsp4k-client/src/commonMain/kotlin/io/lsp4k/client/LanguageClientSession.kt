@@ -126,8 +126,30 @@ public class LanguageClientSession internal constructor(
     public suspend fun awaitTermination(): Throwable? = lifecycle.awaitTermination()
 }
 
-/** Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows. */
-public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy = BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024)
+/**
+ * Notification methods the client dispatches on the jsonrpc4k control lane
+ * ([BoundedDispatchPolicy.controlNotifications]) instead of as barriers: `$/progress`, `window/logMessage`,
+ * `window/showMessage`, `textDocument/publishDiagnostics`, `telemetry/event` and `$/logTrace`. These only report
+ * server state to the client, so they must not wait behind a server-to-client request whose handler is waiting for
+ * the user, such as `window/showMessageRequest`. They keep their wire order among themselves. [start] adds them to
+ * every policy it is given.
+ */
+public val CLIENT_CONTROL_NOTIFICATIONS: Set<String> =
+    setOf(
+        LspMethods.PROGRESS,
+        LspMethods.WINDOW_LOG_MESSAGE,
+        LspMethods.WINDOW_SHOW_MESSAGE,
+        LspMethods.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
+        LspMethods.TELEMETRY_EVENT,
+        LspMethods.LOG_TRACE,
+    )
+
+/**
+ * Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows, the
+ * default 5 second drain timeout and [CLIENT_CONTROL_NOTIFICATIONS] on the control lane.
+ */
+public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy =
+    BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024, controlNotifications = CLIENT_CONTROL_NOTIFICATIONS)
 
 /**
  * Start a language client session with the given configuration and transport.
@@ -138,7 +160,28 @@ public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy = BoundedDispatchPolic
  * earlier request finished, and `$/cancelRequest` cancels the handler of the request it names, which is then
  * answered with `RequestCancelled` (-32800). Handlers may await requests to the server.
  *
- * @param policy Concurrency and queue limits; defaults to [DEFAULT_DISPATCH_POLICY].
+ * The notifications in [CLIENT_CONTROL_NOTIFICATIONS], added to [policy] whatever its own
+ * [BoundedDispatchPolicy.controlNotifications], skip the barrier: they run as soon as they arrive, in wire order
+ * among themselves and beside the running request handlers, so a `window/showMessageRequest` handler waiting for
+ * the user does not hold back progress, log messages or diagnostics. Their handlers can therefore run concurrently
+ * with request handlers. Other notifications, including custom ones, stay barriers unless [policy] lists them.
+ *
+ * When the transport's input ends, the session stops admitting messages, waits for the requests and notifications
+ * already admitted (at most [BoundedDispatchPolicy.drainTimeout], after which the remaining requests are cancelled
+ * and answered `RequestCancelled`), writes the queued responses and then ends. Queuing the cancellation errors is
+ * bounded by the drain timeout as well, and writing the queued frames by the drain timeout but at least one second,
+ * so this takes at most twice [BoundedDispatchPolicy.drainTimeout] plus the larger of the drain timeout and one
+ * second (15 seconds with [DEFAULT_DISPATCH_POLICY]).
+ *
+ * The input usually ends because the server process exited or crashed. Requests the client sent to the server fail
+ * only when the session ends, so while a server-to-client handler is still running (for example a
+ * `window/showMessageRequest` waiting for the user), pending server requests and
+ * [LanguageClientSession.awaitTermination] are delayed by up to that bound, and the handler's answer goes to a server
+ * that may already be gone. Pass a policy with a shorter drain timeout to fail them sooner. `Duration.ZERO` cancels
+ * running handlers at once and does not wait for their `RequestCancelled` errors, which may then be dropped;
+ * responses queued before that are still written, within one second.
+ *
+ * @param policy Concurrency, queue and drain limits; defaults to [DEFAULT_DISPATCH_POLICY].
  * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.
  */
 public suspend fun LanguageClientConfig.start(

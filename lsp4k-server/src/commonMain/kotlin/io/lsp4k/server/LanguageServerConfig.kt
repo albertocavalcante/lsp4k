@@ -113,8 +113,20 @@ internal fun requireNotReservedNotification(method: String) {
     }
 }
 
-/** Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows. */
-public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy = BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024)
+/**
+ * Notification methods the server dispatches on the jsonrpc4k control lane
+ * ([BoundedDispatchPolicy.controlNotifications]) instead of as barriers: `window/workDoneProgress/cancel`, so that a
+ * running request handler observes [WorkDoneProgress.isCancelled] for its work done progress. [start] adds them to
+ * every policy it is given.
+ */
+public val SERVER_CONTROL_NOTIFICATIONS: Set<String> = setOf(LspMethods.WINDOW_WORK_DONE_PROGRESS_CANCEL)
+
+/**
+ * Default for [start]: 16 concurrent request handlers and 1024 queued messages, the most jsonrpc4k allows, the
+ * default 5 second drain timeout and [SERVER_CONTROL_NOTIFICATIONS] on the control lane.
+ */
+public val DEFAULT_DISPATCH_POLICY: BoundedDispatchPolicy =
+    BoundedDispatchPolicy(maxConcurrentRequests = 16, maxQueuedMessages = 1024, controlNotifications = SERVER_CONTROL_NOTIFICATIONS)
 
 /**
  * DSL entry point for creating a [LanguageServerConfig].
@@ -151,7 +163,23 @@ public fun languageServer(block: LanguageServerBuilder.() -> Unit): LanguageServ
  * one at a time. Handlers may await requests to the client; nested chains of such waits can still use up the
  * concurrency limit.
  *
- * @param policy Concurrency and queue limits; defaults to [DEFAULT_DISPATCH_POLICY].
+ * The notifications in [SERVER_CONTROL_NOTIFICATIONS], added to [policy] whatever its own
+ * [BoundedDispatchPolicy.controlNotifications], skip the barrier: they run as soon as they arrive, in arrival order
+ * among themselves and beside the running request handlers. A `window/workDoneProgress/cancel` therefore reaches
+ * the request whose progress it cancels while that request runs, and a custom handler registered for it can run
+ * concurrently with request handlers. Methods that [policy] lists as well are added, not replaced.
+ *
+ * When the transport's input ends, the session stops admitting messages, waits for the requests and notifications
+ * already admitted (at most [BoundedDispatchPolicy.drainTimeout], after which the remaining requests are cancelled
+ * and answered `RequestCancelled`), writes the queued responses and then ends. A client that closes its output right
+ * after its last request therefore still receives the response. Queuing the cancellation errors is bounded by the
+ * drain timeout as well, and writing the queued frames by the drain timeout but at least one second, so termination
+ * after the end of input takes at most twice [BoundedDispatchPolicy.drainTimeout] plus the larger of the drain timeout
+ * and one second, even when the transport's send blocks. A zero drain timeout cancels the running handlers at once and
+ * does not wait for their `RequestCancelled` errors, which may then be dropped; responses queued before that are
+ * still written.
+ *
+ * @param policy Concurrency, queue and drain limits; defaults to [DEFAULT_DISPATCH_POLICY].
  * @param inboundLimits Optional framed input and application byte limits; null leaves input unbounded.
  */
 public suspend fun LanguageServerConfig.start(

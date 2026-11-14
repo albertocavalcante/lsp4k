@@ -179,7 +179,8 @@ public class WindowHandlersBuilder internal constructor(
 
     /**
      * Handles `window/workDoneProgress/create` requests. The server may report progress for the
-     * token once this handler returns, so subscribe with [ProgressStreams.workDone] inside it.
+     * token once it receives the answer, which is sent when this handler returns, so subscribe with
+     * [ProgressStreams.workDone] inside it.
      */
     public fun workDoneProgressCreate(handler: suspend (WorkDoneProgressCreateParams) -> Unit) {
         registerUnitRequest(LspMethods.WINDOW_WORK_DONE_PROGRESS_CREATE, handler)

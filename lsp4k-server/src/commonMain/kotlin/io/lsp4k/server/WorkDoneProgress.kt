@@ -25,10 +25,9 @@ private enum class Phase {
  * `window/workDoneProgress/cancel` for [token] while the operation runs, [isCancelled] becomes true and
  * [awaitCancelled] returns; the operation should then stop and call [end].
  *
- * Limit: the receive loop handles one inbound message at a time, so while a request handler is running it
- * does not read the client's cancel notification. For the progress of a request handler, [isCancelled] therefore
- * flips only after the handler returned; use server initiated progress, reported from your own coroutine scope,
- * for work that must observe cancellation while it runs.
+ * The server dispatches `window/workDoneProgress/cancel` on the jsonrpc4k control lane ([SERVER_CONTROL_NOTIFICATIONS]),
+ * not as a barrier behind running requests, so a request handler observes the cancellation of its own
+ * [RequestContext.workDoneProgress] while it runs.
  *
  * @property token The progress token.
  */
