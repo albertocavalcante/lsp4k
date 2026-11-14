@@ -72,13 +72,20 @@ fun verifyJsonrpc4kPin(jsonrpcDirectory: File) {
     }
     if (providers.gradleProperty("lsp4k.allowJsonrpc4kPinMismatch").orNull?.toBooleanStrict() == true) return
 
-    val revision = providers.exec {
-        commandLine("git", "-C", jsonrpcDirectory.absolutePath, "rev-parse", "HEAD")
-        isIgnoreExitValue = true
-    }
+    val revision =
+        providers.exec {
+            commandLine("git", "-C", jsonrpcDirectory.absolutePath, "rev-parse", "HEAD")
+            isIgnoreExitValue = true
+        }
     val head =
         runCatching {
-            if (revision.result.get().exitValue == 0) revision.standardOutput.asText.get().trim() else null
+            if (revision.result.get().exitValue == 0) {
+                revision.standardOutput.asText
+                    .get()
+                    .trim()
+            } else {
+                null
+            }
         }.getOrNull()
     if (head == pin) return
 

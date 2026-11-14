@@ -1,0 +1,4 @@
+# Keep checkouts byte-identical across platforms: the vendored LSP meta model is pinned by SHA-256, so a CRLF
+# conversion on Windows would change its checksum.
+* text=auto eol=lf
+*.bat text eol=crlf
