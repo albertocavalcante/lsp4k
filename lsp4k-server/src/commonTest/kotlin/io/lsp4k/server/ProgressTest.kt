@@ -1,5 +1,6 @@
 package io.lsp4k.server
 
+import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.JsonRpcException
 import io.jsonrpc4k.core.ResponseError
 import io.lsp4k.protocol.DefinitionParams
@@ -29,7 +30,9 @@ import io.lsp4k.protocol.TextDocumentIdentifier
 import io.lsp4k.protocol.WorkDoneProgressCancelParams
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
@@ -39,6 +42,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class ProgressTest {
     private val document = TextDocumentIdentifier("file:///progress.kt")
@@ -197,39 +201,47 @@ class ProgressTest {
         }
 
     @Test
-    fun `a cancel sent while a request handler runs is read only after the handler returned`() =
-        runTest {
-            val entered = CompletableDeferred<Unit>()
-            val release = CompletableDeferred<Unit>()
-            val cancelled = CompletableDeferred<ProgressToken>()
-            var cancelledInHandler: Boolean? = null
-            val peer =
-                startPeer(backgroundScope) {
-                    textDocument {
-                        hover {
-                            val progress = checkNotNull(workDoneProgress)
-                            progress.begin("Hovering", cancellable = true)
-                            entered.complete(Unit)
-                            release.await()
-                            cancelledInHandler = progress.isCancelled
-                            null
-                        }
+    fun `a request handler observes the cancel of its work done progress while it runs`() =
+        runTest { assertCancelReachesRunningHandler(DEFAULT_DISPATCH_POLICY) }
+
+    @Test
+    fun `the progress cancel reaches a running handler with a policy that lists no control notifications`() =
+        runTest { assertCancelReachesRunningHandler(BoundedDispatchPolicy(maxConcurrentRequests = 4, maxQueuedMessages = 64)) }
+
+    /**
+     * A hover handler begins its request work done progress and waits for the client's cancel without returning;
+     * the cancel must reach it through the control lane while it runs.
+     */
+    private suspend fun TestScope.assertCancelReachesRunningHandler(policy: BoundedDispatchPolicy) {
+        val entered = CompletableDeferred<Unit>()
+        val cancelled = CompletableDeferred<ProgressToken>()
+        var cancelledInHandler: Boolean? = null
+        val peer =
+            startPeer(backgroundScope, policy) {
+                textDocument {
+                    hover {
+                        val progress = checkNotNull(workDoneProgress)
+                        progress.begin("Hovering", cancellable = true)
+                        entered.complete(Unit)
+                        // Without the control lane the cancel waits behind this handler, so the wait times out.
+                        cancelledInHandler = withTimeoutOrNull(10.seconds) { progress.awaitCancelled() } != null && progress.isCancelled
+                        null
                     }
-                    window { workDoneProgressCancel { cancelled.complete(it.token) } }
                 }
-            peer.initialize()
+                window { workDoneProgressCancel { cancelled.complete(it.token) } }
+            }
+        peer.initialize()
 
-            val token: ProgressToken = Either.left(9)
-            val hover = HoverParams(document, position, workDoneToken = token)
-            val response = async { peer.request(LspMethods.TEXT_DOCUMENT_HOVER, wire(hover)) }
-            entered.await()
-            peer.send(LspMethods.WINDOW_WORK_DONE_PROGRESS_CANCEL, WorkDoneProgressCancelParams(token))
-            release.complete(Unit)
-            response.await()
+        val token: ProgressToken = Either.left(9)
+        val hover = HoverParams(document, position, workDoneToken = token)
+        val response = async { peer.request(LspMethods.TEXT_DOCUMENT_HOVER, wire(hover)) }
+        entered.await()
+        peer.send(LspMethods.WINDOW_WORK_DONE_PROGRESS_CANCEL, WorkDoneProgressCancelParams(token))
+        assertEquals(JsonNull, response.await().result())
 
-            assertEquals(false, cancelledInHandler)
-            assertEquals(token, cancelled.await())
-        }
+        assertEquals(true, cancelledInHandler)
+        assertEquals(token, cancelled.await())
+    }
 
     @Test
     fun `the initialized hook can await a request to the client`() =

@@ -4,6 +4,7 @@ import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.Connection
 import io.jsonrpc4k.core.InboundResourceLimits
 import io.jsonrpc4k.transport.Transport
+import io.lsp4k.server.SERVER_CONTROL_NOTIFICATIONS
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -28,11 +29,12 @@ internal class SessionLifecycle(
 
     private val job = SupervisorJob(parent.coroutineContext[Job])
     private val scope = CoroutineScope(parent.coroutineContext + job)
+    private val sessionPolicy = policy.copy(controlNotifications = policy.controlNotifications + SERVER_CONTROL_NOTIFICATIONS)
     val connection =
         if (limits == null) {
-            Connection(policy = policy, scope = scope)
+            Connection(policy = sessionPolicy, scope = scope)
         } else {
-            Connection(policy = policy, limits = limits, scope = scope)
+            Connection(policy = sessionPolicy, limits = limits, scope = scope)
         }
     private val end = MutableStateFlow<End?>(null)
     private val terminated = CompletableDeferred<Throwable?>()
@@ -46,7 +48,10 @@ internal class SessionLifecycle(
 
     fun start(transport: Transport) {
         scope.launch {
-            runPump { transport.incoming.collect { connection.receive(it) } }
+            runPump {
+                transport.incoming.collect { connection.receive(it) }
+                drainAfterEndOfInput()
+            }
         }
         scope.launch {
             runPump { connection.outgoing.collect { transport.send(it) } }
@@ -56,6 +61,16 @@ internal class SessionLifecycle(
     /** Runs [block] in the session scope, inline until its first suspension; it is cancelled with the session. */
     fun launchUndispatched(block: suspend () -> Unit) {
         scope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
+    }
+
+    /**
+     * Lets the work admitted before the end of input finish and its responses reach the transport before the session
+     * ends: [Connection.endInput] waits for admitted requests and notifications, bounded by the policy's drain timeout,
+     * and [Connection.flushOutgoing] waits until the outgoing pump has written every queued frame.
+     */
+    private suspend fun drainAfterEndOfInput() {
+        connection.endInput()
+        connection.flushOutgoing()
     }
 
     private suspend fun runPump(block: suspend () -> Unit) {

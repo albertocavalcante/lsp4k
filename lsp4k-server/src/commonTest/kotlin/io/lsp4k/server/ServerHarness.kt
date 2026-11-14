@@ -1,5 +1,6 @@
 package io.lsp4k.server
 
+import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.JsonRpcCodec
 import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.ClientCapabilities
@@ -155,6 +156,11 @@ internal class ClientPeer(
         )
     }
 
+    /** Closes the client's output, so the server's transport reports the end of input. */
+    fun closeOutput() {
+        toServer.close()
+    }
+
     /** Waits until the server processed every message sent before. */
     suspend fun sync() {
         request(SYNC_METHOD)
@@ -176,10 +182,11 @@ internal class ClientPeer(
 /** Starts a server configured by [block] that talks to a new [ClientPeer]. */
 internal suspend fun startPeer(
     scope: CoroutineScope,
+    policy: BoundedDispatchPolicy = DEFAULT_DISPATCH_POLICY,
     block: LanguageServerBuilder.() -> Unit,
 ): ClientPeer {
     val peer = ClientPeer(scope)
-    peer.server = languageServer(block).start(peer.transport, scope)
+    peer.server = languageServer(block).start(peer.transport, scope, policy)
     return peer
 }
 

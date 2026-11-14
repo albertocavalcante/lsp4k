@@ -49,9 +49,12 @@ public sealed interface WorkDoneUpdate {
  * The streams are hot and unbuffered per subscriber: a value is only delivered to flows that are
  * already being collected when the notification arrives. Start collecting before the request that
  * carries the token is sent (for client-initiated work done and partial results), or inside the
- * `window/workDoneProgress/create` handler (for server-initiated work done), which is guaranteed to
- * run before the server may report progress for that token. A subscriber that falls more than
- * [BUFFER_CAPACITY] notifications behind loses the oldest ones.
+ * `window/workDoneProgress/create` handler (for server-initiated work done): the client answers the
+ * request only after that handler returns, and a server reports progress for the token only once it
+ * has the answer. `$/progress` runs on the control lane ([CLIENT_CONTROL_NOTIFICATIONS]), so it is
+ * not held back behind a running request handler, and a server that reports progress without
+ * waiting for that answer can reach the stream before the handler subscribed. A subscriber that
+ * falls more than [BUFFER_CAPACITY] notifications behind loses the oldest ones.
  */
 public class ProgressStreams internal constructor(
     @PublishedApi internal val json: Json,

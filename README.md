@@ -176,9 +176,9 @@ appScope.launch {
 ```
 
 Inbound messages are dispatched concurrently with bounded limits (jsonrpc4k `BoundedDispatchPolicy`; the
-default allows 16 running request handlers and 1024 queued messages). Pass `policy = ...` and optionally
-`inboundLimits = ...` to `start` to change them; `BoundedDispatchPolicy(1, 1024)` runs one request at a time.
-The same holds for `languageClient {}.start(...)`.
+default allows 16 running request handlers and 1024 queued messages, with a 5 second drain timeout). Pass
+`policy = ...` and optionally `inboundLimits = ...` to `start` to change them; `BoundedDispatchPolicy(1, 1024)`
+runs one request at a time. The same holds for `languageClient {}.start(...)`.
 
 - Requests run concurrently. A request that arrives while the queue is full is answered with a server busy error.
 - Notifications are barriers: every earlier request finishes before a notification runs, and later messages
@@ -188,9 +188,19 @@ The same holds for `languageClient {}.start(...)`.
   (-32800). Cancelling a request to the client, or letting it time out, sends `$/cancelRequest` to the peer.
 - A handler may await client requests such as `client.workspace.configuration`: responses are read outside the
   dispatch queue. A chain of nested waits can still use up the concurrency limit.
-- Because notifications wait for earlier requests, a running request handler does not see
-  `window/workDoneProgress/cancel`: its `workDoneProgress.isCancelled` flips only after the handler returned.
-  Work that must react to cancellation should use server initiated progress, as above.
+- Control notifications skip the barrier: they run as soon as they arrive, in wire order among themselves and
+  beside the running request handlers, so their handlers can run concurrently with request handlers. The
+  server's set, `SERVER_CONTROL_NOTIFICATIONS`, holds `window/workDoneProgress/cancel`, so a running request
+  handler sees `workDoneProgress.isCancelled` flip and `awaitCancelled()` return while it works. The client's
+  set, `CLIENT_CONTROL_NOTIFICATIONS`, holds `$/progress`, `window/logMessage`, `window/showMessage`,
+  `textDocument/publishDiagnostics`, `telemetry/event` and `$/logTrace`, so a `window/showMessageRequest`
+  handler waiting for the user does not hold them back. `start` adds the set to any policy it is given; list
+  further methods in `BoundedDispatchPolicy.controlNotifications` to add them. Every other notification,
+  including `didOpen`, `didChange` and `didClose`, stays a barrier.
+- When the transport's input ends, the session stops admitting messages, lets the requests and notifications
+  already admitted finish, writes their responses and then ends, so a peer that closes its output right after
+  its last request still receives the response. `BoundedDispatchPolicy.drainTimeout` bounds the wait; requests
+  still running then are cancelled and answered with `RequestCancelled`.
 
 The server enforces the lifecycle: requests before `initialize` fail with `ServerNotInitialized`, a second
 `initialize` and every request after `shutdown` fail with `InvalidRequest`, notifications other than `exit`
