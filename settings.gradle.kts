@@ -60,10 +60,50 @@ val useLocalJsonrpc4k =
     providers.gradleProperty("lsp4k.useLocalJsonrpc4k").orNull?.toBooleanStrict()
         ?: localJsonrpc4kBuild.isDirectory
 
+/**
+ * Compares the sibling jsonrpc4k checkout's git HEAD with the revision pinned as `lsp4k.jsonrpc4kPin` in
+ * gradle.properties. A mismatch (or an unreadable HEAD) fails the build when running in CI and warns locally.
+ * `-Plsp4k.allowJsonrpc4kPinMismatch=true` opts out, for local work against another jsonrpc4k revision.
+ */
+fun verifyJsonrpc4kPin(jsonrpcDirectory: File) {
+    val pin = providers.gradleProperty("lsp4k.jsonrpc4kPin").orNull
+    require(pin != null && Regex("[0-9a-f]{40}").matches(pin)) {
+        "lsp4k.jsonrpc4kPin in gradle.properties must be a full 40-character lowercase commit SHA, got '$pin'"
+    }
+    if (providers.gradleProperty("lsp4k.allowJsonrpc4kPinMismatch").orNull?.toBooleanStrict() == true) return
+
+    val revision =
+        providers.exec {
+            commandLine("git", "-C", jsonrpcDirectory.absolutePath, "rev-parse", "HEAD")
+            isIgnoreExitValue = true
+        }
+    val head =
+        runCatching {
+            if (revision.result.get().exitValue == 0) {
+                revision.standardOutput.asText
+                    .get()
+                    .trim()
+            } else {
+                null
+            }
+        }.getOrNull()
+    if (head == pin) return
+
+    val found = head ?: "unknown (not a readable git checkout)"
+    val message =
+        "The jsonrpc4k checkout at ${jsonrpcDirectory.absolutePath} is at $found, but lsp4k pins $pin " +
+            "(lsp4k.jsonrpc4kPin in gradle.properties). Check out the pinned revision, or pass " +
+            "-Plsp4k.allowJsonrpc4kPinMismatch=true to build against another revision."
+    check(System.getenv("CI") != "true") { message }
+    Logging.getLogger("lsp4k").warn("WARNING: $message")
+}
+
 if (useLocalJsonrpc4k) {
     check(localJsonrpc4kBuild.isDirectory) {
         "Local jsonrpc4k build does not exist: ${localJsonrpc4kBuild.absolutePath}"
     }
+
+    verifyJsonrpc4kPin(localJsonrpc4kBuild)
 
     includeBuild(localJsonrpc4kBuild) {
         dependencySubstitution {

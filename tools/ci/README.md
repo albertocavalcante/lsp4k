@@ -46,3 +46,9 @@ coordinated release profile and inspect the produced root metadata and every int
 requires clean consumers to resolve those immutable artifacts and their variants without missing or conflicting metadata.
 The current file-repository and synthetic model checks do not establish that release gate. Track the remaining work in
 [issue #2](https://github.com/albertocavalcante/lsp4k/issues/2).
+
+# jsonrpc4k pin guard check
+
+`check-jsonrpc4k-pin-guard.sh` builds a throwaway sibling jsonrpc4k checkout whose git HEAD cannot equal
+`lsp4k.jsonrpc4kPin` and runs `./gradlew help` against it. It asserts that `settings.gradle.kts` fails the build under
+`CI=true`, only warns when `CI` is not `true`, and stays silent with `-Plsp4k.allowJsonrpc4kPinMismatch=true`.
