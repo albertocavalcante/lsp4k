@@ -2,12 +2,16 @@ package io.lsp4k.client
 
 import io.jsonrpc4k.core.BoundedDispatchPolicy
 import io.jsonrpc4k.core.NotificationHandler
+import io.jsonrpc4k.transport.Transport
 import io.lsp4k.protocol.LspMethods
 import io.lsp4k.protocol.MessageActionItem
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
@@ -15,6 +19,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 class ClientDispatchLanesTest {
@@ -128,7 +133,36 @@ class ClientDispatchLanesTest {
             entered.await()
             peer.closeOutput()
 
-            assertEquals(Json.parseToJsonElement("""{"title":"Yes"}"""), chosen.await())
-            assertEquals(null, client.awaitTermination())
+            assertEquals(Json.parseToJsonElement("""{"title":"Yes"}"""), withTimeout(10.seconds) { chosen.await() })
+            assertEquals(null, withTimeout(10.seconds) { client.awaitTermination() })
+        }
+
+    @Test
+    fun `a transport whose send blocks after the server closed its output does not keep the session alive`() =
+        runTest {
+            val body =
+                """{"jsonrpc":"2.0","id":1,"method":"${LspMethods.WINDOW_SHOW_MESSAGE_REQUEST}","params":$messageRequest}"""
+            val sending = CompletableDeferred<Unit>()
+            val stalled =
+                object : Transport {
+                    override val incoming: Flow<ByteArray> =
+                        flowOf("Content-Length: ${body.encodeToByteArray().size}\r\n\r\n$body".encodeToByteArray())
+                    override val isConnected: Boolean = true
+
+                    override suspend fun send(data: ByteArray) {
+                        sending.complete(Unit)
+                        awaitCancellation()
+                    }
+
+                    override suspend fun close() = Unit
+                }
+            val policy = BoundedDispatchPolicy(maxConcurrentRequests = 4, maxQueuedMessages = 64, drainTimeout = 2.seconds)
+            val client =
+                languageClient {
+                    window { showMessageRequest { MessageActionItem("Yes") } }
+                }.start(stalled, backgroundScope, policy)
+
+            assertEquals(null, withTimeout(10.seconds) { client.awaitTermination() })
+            assertTrue(sending.isCompleted, "the response reached the transport's send")
         }
 }

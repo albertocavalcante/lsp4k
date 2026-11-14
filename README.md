@@ -200,7 +200,10 @@ runs one request at a time. The same holds for `languageClient {}.start(...)`.
 - When the transport's input ends, the session stops admitting messages, lets the requests and notifications
   already admitted finish, writes their responses and then ends, so a peer that closes its output right after
   its last request still receives the response. `BoundedDispatchPolicy.drainTimeout` bounds the wait; requests
-  still running then are cancelled and answered with `RequestCancelled`.
+  still running then are cancelled and answered with `RequestCancelled`. Writing the responses is bounded by the
+  same timeout, so a transport whose send blocks cannot keep the session alive; the whole drain takes at most
+  three times the drain timeout. On the client this also delays failing its pending requests to the server and
+  `awaitTermination` by up to that bound after the server's output ends; pass a shorter drain timeout to shorten it.
 
 The server enforces the lifecycle: requests before `initialize` fail with `ServerNotInitialized`, a second
 `initialize` and every request after `shutdown` fail with `InvalidRequest`, notifications other than `exit`

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.cancellation.CancellationException
 
 /** Owns session jobs; the supplied scope and transport remain caller-owned. */
@@ -60,11 +61,13 @@ internal class SessionLifecycle(
     /**
      * Lets the work admitted before the end of input finish and its responses reach the transport before the session
      * ends: [Connection.endInput] waits for admitted requests and notifications, bounded by the policy's drain timeout,
-     * and [Connection.flushOutgoing] waits until the outgoing pump has written every queued frame.
+     * and [Connection.flushOutgoing] waits until the outgoing pump has written every queued frame. The flush gets its
+     * own drain timeout, so a transport whose send blocks (a half-closed peer that stopped reading) cannot keep the
+     * session alive; the session then ends and the unsent frames are dropped.
      */
     private suspend fun drainAfterEndOfInput() {
         connection.endInput()
-        connection.flushOutgoing()
+        withTimeoutOrNull(sessionPolicy.drainTimeout) { connection.flushOutgoing() }
     }
 
     private suspend fun runPump(block: suspend () -> Unit) {
